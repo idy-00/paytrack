@@ -1,0 +1,1403 @@
+import { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { gsap } from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { Menu, X, ArrowRight, CheckCircle2, Star } from 'lucide-react'
+
+gsap.registerPlugin(ScrollTrigger)
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   CSS VARIABLES — Acajou & Or palette injected at root
+───────────────────────────────────────────────────────────────────────────── */
+const CSS_VARS = `
+  :root {
+    --c-bg:        #F6F2EC;
+    --c-surface:   #FFFFFF;
+    --c-elevated:  #FBF8F4;
+    --c-border:    #E0D8CF;
+    --c-primary:   #7B4A1E;
+    --c-accent:    #D4891A;
+    --c-text-1:    #1A140C;
+    --c-text-2:    #5C4A36;
+    --c-text-3:    #9B887A;
+    --c-success:   #2E7D5A;
+    --c-warning:   #C46318;
+    --c-danger:    #B82929;
+  }
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,300;1,9..144,400;1,9..144,500&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+`
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   SVG ILLUSTRATIONS — redrawn for Acajou & Or palette
+───────────────────────────────────────────────────────────────────────────── */
+
+function IlluLedgerDetail() {
+  return (
+    <svg viewBox="0 0 320 240" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+      <rect width="320" height="240" rx="12" fill="#FBF8F4"/>
+      <rect x="0" y="0" width="320" height="4" rx="2" fill="#7B4A1E" opacity="0.15"/>
+      <text x="20" y="32" fill="#7B4A1E" fontSize="11" fontFamily="'Fraunces', serif" fontWeight="600" letterSpacing="0.04em">
+        DOSSIER · VT-2026-0091
+      </text>
+      <line x1="20" y1="42" x2="300" y2="42" stroke="#E0D8CF" strokeWidth="1"/>
+      <text x="20" y="62" fill="#1A140C" fontSize="14" fontFamily="'Fraunces', serif" fontWeight="500">Moussa Diallo</text>
+      <text x="20" y="78" fill="#9B887A" fontSize="9" fontFamily="'Plus Jakarta Sans', sans-serif">Boutique Téléphonie · Dakar-Médina</text>
+      <text x="20" y="100" fill="#5C4A36" fontSize="10" fontFamily="'Plus Jakarta Sans', sans-serif">Samsung Galaxy A35 · 6 tranches</text>
+      <text x="20" y="116" fill="#7B4A1E" fontSize="11" fontFamily="'JetBrains Mono', monospace" fontWeight="600">375 000 FCFA</text>
+      <line x1="20" y1="126" x2="300" y2="126" stroke="#E0D8CF" strokeWidth="0.8" strokeDasharray="4,3"/>
+      {/* Progress bar */}
+      <rect x="20" y="134" width="280" height="5" rx="2.5" fill="#E0D8CF"/>
+      <rect x="20" y="134" width="168" height="5" rx="2.5" fill="#D4891A"/>
+      <text x="20" y="152" fill="#9B887A" fontSize="8" fontFamily="'JetBrains Mono', monospace">Payé: 225 000</text>
+      <text x="200" y="152" fill="#C46318" fontSize="8" fontFamily="'JetBrains Mono', monospace">Restant: 150 000</text>
+      <line x1="20" y1="162" x2="300" y2="162" stroke="#E0D8CF" strokeWidth="1"/>
+      {/* Tranches */}
+      {[
+        { y: 178, n: 'T1', date: '15 Fév', status: 'paye' },
+        { y: 194, n: 'T2', date: '15 Mar', status: 'paye' },
+        { y: 210, n: 'T3', date: '15 Avr', status: 'paye' },
+        { y: 226, n: 'T4', date: '15 Mai', status: 'retard' },
+      ].map(({ y, n, date, status }) => (
+        <g key={n}>
+          <circle cx="30" cy={y} r="5"
+            fill={status === 'paye' ? '#2E7D5A' : status === 'retard' ? '#C46318' : '#E0D8CF'}/>
+          <text x="44" y={y + 4} fill="#5C4A36" fontSize="8.5" fontFamily="'Plus Jakarta Sans', sans-serif">{n} · {date}</text>
+          <text x="280" y={y + 4} fill={status === 'paye' ? '#2E7D5A' : '#C46318'} fontSize="8"
+            fontFamily="'JetBrains Mono', monospace" textAnchor="end">
+            {status === 'paye' ? '62 500 ✓' : '62 500 !'}
+          </text>
+        </g>
+      ))}
+    </svg>
+  )
+}
+
+function IlluRegisterBook() {
+  return (
+    <svg viewBox="0 0 300 260" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+      {/* Book spine */}
+      <rect x="0" y="0" width="300" height="260" rx="4" fill="#6B3A14"/>
+      <rect x="16" y="0" width="284" height="260" rx="4" fill="#FBF8F4"/>
+      <rect x="16" y="0" width="6" height="260" fill="#5A3010" opacity="0.4"/>
+      {/* Ruled lines */}
+      {[40,56,72,88,104,120,136,152,168,184,200,216,232].map(y => (
+        <line key={y} x1="28" y1={y} x2="292" y2={y} stroke="#E0D8CF" strokeWidth="0.7"/>
+      ))}
+      {/* Red margin line */}
+      <line x1="55" y1="8" x2="55" y2="252" stroke="#B82929" strokeWidth="0.8" opacity="0.3"/>
+      {/* Header */}
+      <text x="160" y="26" fill="#7B4A1E" fontSize="11" fontFamily="'Fraunces', serif" fontWeight="600"
+        textAnchor="middle" letterSpacing="0.06em">REGISTRE DES CRÉANCES</text>
+      {/* Entries */}
+      <text x="64" y="56" fill="#1A140C" fontSize="8.5" fontFamily="'Plus Jakarta Sans', sans-serif">A. Ndiaye · iPhone 15 · 650 000 FCFA</text>
+      <text x="64" y="72" fill="#1A140C" fontSize="8.5" fontFamily="'Plus Jakarta Sans', sans-serif">I. Fall · TV Samsung 55" · 285 000 FCFA</text>
+      <text x="64" y="88" fill="#C46318" fontSize="8.5" fontFamily="'Plus Jakarta Sans', sans-serif">F. Sarr · Frigo LG · 180 000 FCFA ▲</text>
+      <text x="64" y="104" fill="#1A140C" fontSize="8.5" fontFamily="'Plus Jakarta Sans', sans-serif">C. Mbaye · Laptop HP · 420 000 FCFA</text>
+      <text x="64" y="120" fill="#1A140C" fontSize="8.5" fontFamily="'Plus Jakarta Sans', sans-serif">M. Diallo · Galaxy A35 · 375 000 FCFA</text>
+      <text x="64" y="136" fill="#2E7D5A" fontSize="8.5" fontFamily="'Plus Jakarta Sans', sans-serif">B. Kane · Clim Daikin · 520 000 FCFA ✓</text>
+      {/* Status dots */}
+      {[56,72,88,104,120,136].map((y, i) => (
+        <circle key={y} cx="40" cy={y - 2} r="4"
+          fill={['#D4891A','#2E7D5A','#C46318','#D4891A','#D4891A','#2E7D5A'][i]}/>
+      ))}
+      {/* Stamp */}
+      <circle cx="230" cy="200" r="38" stroke="#7B4A1E" strokeWidth="2" fill="none" opacity="0.15"/>
+      <circle cx="230" cy="200" r="32" stroke="#7B4A1E" strokeWidth="1" fill="none" opacity="0.1"/>
+      <text x="230" y="196" fill="#7B4A1E" fontSize="7.5" fontFamily="'Fraunces', serif" fontWeight="600"
+        textAnchor="middle" letterSpacing="0.08em">PAYTRACK</text>
+      <text x="230" y="208" fill="#D4891A" fontSize="6.5" fontFamily="'Fraunces', serif" fontStyle="italic"
+        textAnchor="middle">Certifié conforme</text>
+    </svg>
+  )
+}
+
+function IlluQRNewStyle() {
+  return (
+    <svg viewBox="0 0 260 260" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+      <rect width="260" height="260" rx="16" fill="#FBF8F4"/>
+      <rect x="0" y="0" width="260" height="56" rx="16" fill="#7B4A1E"/>
+      <rect x="0" y="40" width="260" height="16" fill="#7B4A1E"/>
+      <text x="130" y="24" fill="white" fontSize="11" fontFamily="'Fraunces', serif" fontWeight="600"
+        textAnchor="middle" letterSpacing="0.04em">DOSSIER QR</text>
+      <text x="130" y="40" fill="rgba(255,255,255,0.5)" fontSize="7" fontFamily="'Plus Jakarta Sans', sans-serif"
+        textAnchor="middle">VT-2026-0091 · Moussa Diallo</text>
+      {/* QR finders */}
+      <rect x="30" y="70" width="42" height="42" rx="6" fill="#1A140C"/>
+      <rect x="35" y="75" width="32" height="32" rx="3" fill="#FBF8F4"/>
+      <rect x="40" y="80" width="22" height="22" rx="1" fill="#1A140C"/>
+      <rect x="188" y="70" width="42" height="42" rx="6" fill="#1A140C"/>
+      <rect x="193" y="75" width="32" height="32" rx="3" fill="#FBF8F4"/>
+      <rect x="198" y="80" width="22" height="22" rx="1" fill="#1A140C"/>
+      <rect x="30" y="148" width="42" height="42" rx="6" fill="#1A140C"/>
+      <rect x="35" y="153" width="32" height="32" rx="3" fill="#FBF8F4"/>
+      <rect x="40" y="158" width="22" height="22" rx="1" fill="#1A140C"/>
+      {/* Data dots */}
+      {[
+        [188,150],[194,150],[200,150],[206,150],[212,150],
+        [188,156],[200,156],[206,156],
+        [194,162],[200,162],[212,162],
+        [188,168],[194,168],[206,168],[212,168],
+        [188,174],[200,174],[206,174],
+        [194,180],[212,180],
+        [188,186],[200,186],[206,186],[212,186],
+      ].map(([x, y], i) => (
+        <rect key={i} x={x} y={y} width="5" height="5" rx="1" fill="#1A140C" opacity={0.75}/>
+      ))}
+      {/* Central brand mark */}
+      <rect x="108" y="118" width="44" height="24" rx="4" fill="#7B4A1E"/>
+      <text x="130" y="133" fill="#D4891A" fontSize="9" fontFamily="'Fraunces', serif" fontWeight="600"
+        textAnchor="middle">PT</text>
+      <text x="130" y="210" fill="#9B887A" fontSize="7.5" fontFamily="'Plus Jakarta Sans', sans-serif"
+        textAnchor="middle">Scanner pour consulter votre dossier</text>
+      {/* Progress */}
+      <rect x="30" y="222" width="200" height="5" rx="2.5" fill="#E0D8CF"/>
+      <rect x="30" y="222" width="120" height="5" rx="2.5" fill="#D4891A"/>
+      <text x="130" y="242" fill="#9B887A" fontSize="7" fontFamily="'JetBrains Mono', monospace"
+        textAnchor="middle">3 / 6 tranches · 225 000 FCFA payés</text>
+    </svg>
+  )
+}
+
+function IlluReceiptNew() {
+  return (
+    <svg viewBox="0 0 220 280" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+      <defs>
+        <filter id="rcShadow">
+          <feDropShadow dx="0" dy="6" stdDeviation="10" floodColor="#7B4A1E" floodOpacity="0.12"/>
+        </filter>
+      </defs>
+      <rect x="10" y="0" width="200" height="250" rx="12" fill="white" filter="url(#rcShadow)"/>
+      <path d="M10 242 Q20 230 30 242 Q40 254 50 242 Q60 230 70 242 Q80 254 90 242 Q100 230 110 242 Q120 254 130 242 Q140 230 150 242 Q160 254 170 242 Q180 230 190 242 Q200 254 210 242 L210 250 Q210 262 198 262 L22 262 Q10 262 10 250Z"
+        fill="#F6F2EC"/>
+      <rect x="10" y="0" width="200" height="56" rx="12" fill="#7B4A1E"/>
+      <rect x="10" y="44" width="200" height="12" fill="#7B4A1E"/>
+      <text x="110" y="22" fill="white" fontSize="12" fontFamily="'Fraunces', serif" fontWeight="600"
+        textAnchor="middle">PayTrack</text>
+      <text x="110" y="38" fill="rgba(255,255,255,0.5)" fontSize="7.5" fontFamily="'Plus Jakarta Sans', sans-serif"
+        textAnchor="middle">Reçu de paiement confirmé</text>
+      <text x="110" y="84" fill="#2E7D5A" fontSize="22" fontFamily="'JetBrains Mono', monospace" fontWeight="600"
+        textAnchor="middle">62 500 FCFA</text>
+      <text x="110" y="98" fill="#9B887A" fontSize="7.5" fontFamily="'Plus Jakarta Sans', sans-serif"
+        textAnchor="middle">Tranche 3/6 · RC-A4F2B9</text>
+      <line x1="28" y1="108" x2="192" y2="108" stroke="#F6F2EC" strokeWidth="1"/>
+      {[
+        { label: 'Client', value: 'Moussa Diallo', y: 122 },
+        { label: 'Article', value: 'Galaxy A35', y: 140 },
+        { label: 'Référence', value: 'VT-2026-0091', y: 158 },
+        { label: 'Mode', value: 'Wave', y: 176 },
+        { label: 'Date', value: '03 Juil 2026', y: 194 },
+      ].map(({ label, value, y }) => (
+        <g key={y}>
+          <text x="28" y={y} fill="#9B887A" fontSize="7.5" fontFamily="'Plus Jakarta Sans', sans-serif">{label}</text>
+          <text x="192" y={y} fill="#1A140C" fontSize="7.5" fontFamily="'Plus Jakarta Sans', sans-serif"
+            textAnchor="end" fontWeight="600">{value}</text>
+          <line x1="28" y1={y + 5} x2="192" y2={y + 5} stroke="#F6F2EC" strokeWidth="0.8" strokeDasharray="3,3"/>
+        </g>
+      ))}
+      <rect x="24" y="206" width="172" height="24" rx="6" fill="#FBF8F4" stroke="#E0D8CF" strokeWidth="1"/>
+      <text x="36" y="221" fill="#5C4A36" fontSize="7.5" fontFamily="'Plus Jakarta Sans', sans-serif" fontWeight="600">
+        Reste à payer
+      </text>
+      <text x="188" y="221" fill="#C46318" fontSize="8.5" fontFamily="'JetBrains Mono', monospace"
+        textAnchor="end" fontWeight="600">150 000 FCFA</text>
+    </svg>
+  )
+}
+
+function IlluNotifNew() {
+  return (
+    <svg viewBox="0 0 200 240" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+      <rect x="38" y="8" width="124" height="224" rx="22" fill="white" stroke="#E0D8CF" strokeWidth="1.5"/>
+      <rect x="52" y="20" width="96" height="14" rx="7" fill="#F6F2EC"/>
+      <circle cx="100" cy="27" r="3.5" fill="#E0D8CF"/>
+      {/* Notif 1 */}
+      <rect x="50" y="44" width="100" height="50" rx="10" fill="#FBF8F4" stroke="#E0D8CF" strokeWidth="0.8"/>
+      <rect x="57" y="50" width="20" height="20" rx="5" fill="#7B4A1E"/>
+      <text x="67" y="63" fill="#D4891A" fontSize="8" textAnchor="middle" fontFamily="'Fraunces', serif" fontWeight="700">PT</text>
+      <rect x="84" y="53" width="52" height="5" rx="2.5" fill="#1A140C" opacity="0.75"/>
+      <rect x="84" y="62" width="40" height="4" rx="2" fill="#9B887A" opacity="0.5"/>
+      <rect x="84" y="70" width="32" height="4" rx="2" fill="#9B887A" opacity="0.3"/>
+      <text x="57" y="100" fill="#9B887A" fontSize="6" fontFamily="'Plus Jakarta Sans', sans-serif">J-1 échéance · 62 500 FCFA</text>
+      {/* Notif 2 — WhatsApp */}
+      <rect x="50" y="104" width="100" height="50" rx="10" fill="#F0FFF8" stroke="#E0D8CF" strokeWidth="0.8"/>
+      <rect x="57" y="110" width="20" height="20" rx="5" fill="#25D366"/>
+      <text x="67" y="122" fill="white" fontSize="9" textAnchor="middle" fontWeight="700">W</text>
+      <rect x="84" y="113" width="48" height="5" rx="2.5" fill="#1A140C" opacity="0.75"/>
+      <rect x="84" y="122" width="56" height="4" rx="2" fill="#9B887A" opacity="0.5"/>
+      <rect x="84" y="130" width="36" height="4" rx="2" fill="#9B887A" opacity="0.3"/>
+      <text x="57" y="160" fill="#9B887A" fontSize="6" fontFamily="'Plus Jakarta Sans', sans-serif">Rappel auto · PayTrack</text>
+      {/* Success */}
+      <rect x="50" y="164" width="100" height="40" rx="10" fill="#F0FFF8" stroke="#2E7D5A" strokeWidth="0.8"/>
+      <circle cx="68" cy="184" r="10" fill="#2E7D5A"/>
+      <path d="M63 184 l3 3 6-6" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+      <rect x="84" y="176" width="44" height="5" rx="2.5" fill="#1A140C" opacity="0.75"/>
+      <text x="84" y="192" fill="#2E7D5A" fontSize="6.5" fontFamily="'Plus Jakarta Sans', sans-serif" fontWeight="600">Paiement confirmé ✓</text>
+      <rect x="80" y="218" width="40" height="4" rx="2" fill="#E0D8CF"/>
+    </svg>
+  )
+}
+
+function IlluMobileMoneyNew() {
+  return (
+    <svg viewBox="0 0 280 200" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+      {/* Phone */}
+      <rect x="10" y="30" width="62" height="110" rx="12" fill="white" stroke="#E0D8CF" strokeWidth="1.5"/>
+      <rect x="20" y="42" width="42" height="6" rx="3" fill="#F6F2EC"/>
+      <text x="41" y="76" fill="#1A140C" fontSize="9.5" fontFamily="'JetBrains Mono', monospace" fontWeight="600"
+        textAnchor="middle">62 500</text>
+      <text x="41" y="88" fill="#9B887A" fontSize="6.5" fontFamily="'Plus Jakarta Sans', sans-serif" textAnchor="middle">
+        FCFA · Wave
+      </text>
+      <rect x="20" y="96" width="42" height="18" rx="9" fill="#7B4A1E"/>
+      <text x="41" y="108" fill="white" fontSize="7.5" fontFamily="'Plus Jakarta Sans', sans-serif" textAnchor="middle"
+        fontWeight="600">Confirmer</text>
+      <rect x="30" y="128" width="22" height="4" rx="2" fill="#E0D8CF"/>
+      {/* Arrow */}
+      <path d="M74 85 L104 85" stroke="#2E7D5A" strokeWidth="2" strokeLinecap="round"/>
+      <path d="M98 80 L104 85 L98 90" stroke="#2E7D5A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      <rect x="76" y="76" width="24" height="10" rx="5" fill="#E8F5EE"/>
+      <text x="88" y="84" fill="#2E7D5A" fontSize="5.5" fontFamily="'Plus Jakarta Sans', sans-serif" textAnchor="middle"
+        fontWeight="600">Validé</text>
+      {/* Operators */}
+      <rect x="108" y="14" width="70" height="26" rx="7" fill="#FF6500" opacity="0.1"/>
+      <text x="143" y="30" fill="#FF6500" fontSize="8" fontFamily="'Plus Jakarta Sans', sans-serif" textAnchor="middle"
+        fontWeight="700">Orange Money</text>
+      <rect x="108" y="48" width="70" height="26" rx="7" fill="#0085C7" opacity="0.1"/>
+      <text x="143" y="64" fill="#0085C7" fontSize="8" fontFamily="'Plus Jakarta Sans', sans-serif" textAnchor="middle"
+        fontWeight="700">Wave</text>
+      <rect x="108" y="82" width="70" height="26" rx="7" fill="#00A850" opacity="0.1"/>
+      <text x="143" y="98" fill="#00A850" fontSize="8" fontFamily="'Plus Jakarta Sans', sans-serif" textAnchor="middle"
+        fontWeight="700">Free Money</text>
+      {/* Arrow 2 */}
+      <path d="M180 85 L200 85" stroke="#2E7D5A" strokeWidth="2" strokeLinecap="round"/>
+      <path d="M194 80 L200 85 L194 90" stroke="#2E7D5A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      {/* Receipt mini */}
+      <rect x="202" y="52" width="68" height="80" rx="8" fill="white" stroke="#E0D8CF" strokeWidth="1.2"/>
+      <rect x="202" y="52" width="68" height="18" rx="8" fill="#7B4A1E"/>
+      <rect x="202" y="62" width="68" height="8" fill="#7B4A1E"/>
+      <text x="236" y="64" fill="white" fontSize="6" fontFamily="'Fraunces', serif" textAnchor="middle">Reçu PayTrack</text>
+      <rect x="210" y="78" width="22" height="4" rx="2" fill="#F6F2EC"/>
+      <rect x="210" y="86" width="50" height="4" rx="2" fill="#F6F2EC"/>
+      <rect x="210" y="94" width="36" height="4" rx="2" fill="#E8F5EE"/>
+      <circle cx="236" cy="115" r="10" fill="#E8F5EE"/>
+      <path d="M231 115 l3 3 6-6" stroke="#2E7D5A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      {/* Label */}
+      <rect x="80" y="156" width="120" height="18" rx="9" fill="#E8F5EE"/>
+      <text x="140" y="168" fill="#2E7D5A" fontSize="7" fontFamily="'Plus Jakarta Sans', sans-serif" textAnchor="middle"
+        fontWeight="600">Solde mis à jour en temps réel</text>
+    </svg>
+  )
+}
+
+function IlluMultiShopNew() {
+  return (
+    <svg viewBox="0 0 260 220" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+      <circle cx="130" cy="110" r="32" fill="#7B4A1E"/>
+      <text x="130" y="106" fill="white" fontSize="9" fontFamily="'Fraunces', serif" fontWeight="600"
+        textAnchor="middle">PayTrack</text>
+      <text x="130" y="120" fill="rgba(212,137,26,0.9)" fontSize="7" fontFamily="'Fraunces', serif" fontStyle="italic"
+        textAnchor="middle">Central</text>
+      {[
+        [130, 110, 32, 18],
+        [130, 110, 228, 18],
+        [130, 110, 32, 202],
+        [130, 110, 228, 202],
+        [130, 110, 130, 12],
+        [130, 110, 130, 208],
+      ].map(([x1, y1, x2, y2], i) => (
+        <line key={i} x1={x1} y1={y1} x2={x2} y2={y2}
+          stroke="#E0D8CF" strokeWidth="1.5" strokeDasharray="4,4"/>
+      ))}
+      {[
+        { cx: 32, cy: 18, label: 'Dakar', c: '#7B4A1E' },
+        { cx: 228, cy: 18, label: 'Thiès', c: '#2E7D5A' },
+        { cx: 32, cy: 202, label: 'St-Louis', c: '#C46318' },
+        { cx: 228, cy: 202, label: 'Ziguinchor', c: '#9B887A' },
+        { cx: 130, cy: 12, label: 'Rufisque', c: '#7B4A1E' },
+        { cx: 130, cy: 208, label: 'Kaolack', c: '#2E7D5A' },
+      ].map(({ cx, cy, label, c }) => (
+        <g key={label}>
+          <circle cx={cx} cy={cy} r="20" fill={c} opacity="0.12"/>
+          <circle cx={cx} cy={cy} r="13" fill={c} opacity="0.2"/>
+          <circle cx={cx} cy={cy} r="8" fill={c}/>
+          <text x={cx} y={cy + 3} fill="white" fontSize="6.5" fontFamily="'Plus Jakarta Sans', sans-serif"
+            textAnchor="middle" fontWeight="700">
+            {label.slice(0, 2).toUpperCase()}
+          </text>
+          <text x={cx} y={cy + 26} fill="#5C4A36" fontSize="6" fontFamily="'Plus Jakarta Sans', sans-serif"
+            textAnchor="middle">{label}</text>
+        </g>
+      ))}
+    </svg>
+  )
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   HERO — Grand Registre
+───────────────────────────────────────────────────────────────────────────── */
+function HeroLedger() {
+  return (
+    <div className="relative w-full max-w-3xl mx-auto" style={{ fontFamily: "'Fraunces', Georgia, serif" }}>
+      {/* Stamp top-left */}
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+          style={{ background: '#7B4A1E' }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D4891A" strokeWidth="2"
+            strokeLinecap="round">
+            <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+          </svg>
+        </div>
+        <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '11px', fontWeight: 700,
+          letterSpacing: '0.12em', textTransform: 'uppercase', color: '#9B887A' }}>
+          PayTrack · Registre numérique
+        </span>
+      </div>
+
+      {/* Full-width rule */}
+      <div style={{ height: '1px', background: '#E0D8CF', marginBottom: '20px' }} />
+
+      {/* Two-column layout */}
+      <div className="grid gap-6" style={{ gridTemplateColumns: '1fr auto' }}>
+        {/* Left column — entry 1 */}
+        <div id="ledger-entry-1">
+          <p style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '10px', fontWeight: 600,
+            letterSpacing: '0.08em', textTransform: 'uppercase', color: '#9B887A', marginBottom: '8px' }}>
+            Dossier · VT-2026-0091
+          </p>
+          <h2 style={{ fontSize: 'clamp(22px, 3.5vw, 32px)', fontWeight: 600, color: '#1A140C',
+            lineHeight: 1.15, marginBottom: '4px', letterSpacing: '-0.01em' }}>
+            MOUSSA DIALLO
+          </h2>
+          <p style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '14px', color: '#9B887A',
+            marginBottom: '16px' }}>
+            Boutique Téléphonie · Dakar-Médina
+          </p>
+          <div style={{ height: '1px', background: '#E0D8CF', marginBottom: '14px' }} />
+          <p style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '13px', color: '#5C4A36',
+            marginBottom: '6px' }}>
+            Samsung Galaxy A35 · 6 tranches · 375 000 FCFA
+          </p>
+          <p id="ledger-amounts" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '13px',
+            color: '#7B4A1E', marginBottom: '10px' }}>
+            Payé: 225 000 · Restant: 150 000
+          </p>
+          {/* Amber progress bar */}
+          <div style={{ height: '4px', background: '#E0D8CF', borderRadius: '2px', marginBottom: '20px' }}>
+            <div style={{ height: '100%', width: '60%', background: '#D4891A', borderRadius: '2px',
+              transition: 'width 1.8s ease' }} id="ledger-progress" />
+          </div>
+          {/* Entry 2 — ghost */}
+          <div style={{ opacity: 0.3 }}>
+            <p style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '10px', fontWeight: 600,
+              letterSpacing: '0.08em', textTransform: 'uppercase', color: '#9B887A', marginBottom: '6px' }}>
+              Dossier · VT-2026-0088
+            </p>
+            <h2 style={{ fontSize: 'clamp(18px, 2.8vw, 26px)', fontWeight: 600, color: '#1A140C',
+              lineHeight: 1.2, marginBottom: '4px', letterSpacing: '-0.01em' }}>
+              AMINATA NDIAYE
+            </h2>
+            <p style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '13px', color: '#9B887A' }}>
+              iPhone 15 Pro Max · 12 tranches · 650 000 FCFA
+            </p>
+          </div>
+        </div>
+
+        {/* Right column — date stamps + tranche marks */}
+        <div className="hidden sm:flex flex-col gap-2 text-right" style={{ minWidth: '130px' }}>
+          <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '10px', color: '#9B887A',
+            marginBottom: '24px' }}>
+            03 / 07 / 2026
+          </p>
+          {[
+            { n: 'T1', date: '15 Fév', ok: true },
+            { n: 'T2', date: '15 Mar', ok: true },
+            { n: 'T3', date: '15 Avr', ok: true },
+            { n: 'T4', date: '15 Mai', ok: false },
+            { n: 'T5', date: '15 Juin', ok: null },
+            { n: 'T6', date: '15 Juil', ok: null },
+          ].map(({ n, date, ok }) => (
+            <div key={n} className="flex items-center justify-end gap-2">
+              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', color: '#9B887A' }}>
+                {n} · {date}
+              </span>
+              <span style={{ width: 8, height: 8, borderRadius: '50%', display: 'inline-block', flexShrink: 0,
+                background: ok === true ? '#2E7D5A' : ok === false ? '#C46318' : '#E0D8CF' }} />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Notarial seal */}
+      <div id="ledger-seal" className="absolute hidden lg:flex flex-col items-center justify-center"
+        style={{ bottom: '-20px', right: '-20px', width: '100px', height: '100px' }}>
+        <svg viewBox="0 0 100 100" fill="none" className="absolute inset-0 w-full h-full">
+          <circle cx="50" cy="50" r="47" stroke="#7B4A1E" strokeWidth="2"/>
+          <circle cx="50" cy="50" r="40" stroke="#7B4A1E" strokeWidth="0.8" strokeDasharray="3,3"/>
+          <text x="50" y="45" fill="#7B4A1E" fontSize="8" fontFamily="'Fraunces', serif" fontWeight="600"
+            textAnchor="middle" letterSpacing="0.05em">CHAQUE</text>
+          <text x="50" y="57" fill="#D4891A" fontSize="7.5" fontFamily="'Fraunces', serif" fontStyle="italic"
+            textAnchor="middle">tranche.</text>
+          <text x="50" y="68" fill="#7B4A1E" fontSize="8" fontFamily="'Fraunces', serif" fontWeight="600"
+            textAnchor="middle" letterSpacing="0.04em">SUIVIE.</text>
+        </svg>
+      </div>
+    </div>
+  )
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   NAVBAR
+───────────────────────────────────────────────────────────────────────────── */
+function NavBar() {
+  const ref = useRef(null)
+  const [open, setOpen] = useState(false)
+
+  useEffect(() => {
+    const fn = () => {
+      if (!ref.current) return
+      const s = window.scrollY > 24
+      ref.current.style.background = s ? 'rgba(246,242,236,0.94)' : 'transparent'
+      ref.current.style.backdropFilter = s ? 'blur(14px)' : 'blur(0)'
+      ref.current.style.borderBottom = s ? '1px solid #E0D8CF' : '1px solid transparent'
+    }
+    window.addEventListener('scroll', fn, { passive: true })
+    return () => window.removeEventListener('scroll', fn)
+  }, [])
+
+  return (
+    <nav ref={ref}
+      style={{ background: 'transparent', borderBottom: '1px solid transparent', transition: 'all .25s',
+        fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+      className="fixed top-0 inset-x-0 z-50 px-6 lg:px-12 h-16 flex items-center justify-between">
+      <Link to="/" className="flex items-center gap-2.5 no-underline flex-shrink-0">
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center"
+          style={{ background: '#7B4A1E' }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D4891A" strokeWidth="2.2"
+            strokeLinecap="round">
+            <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+          </svg>
+        </div>
+        <span style={{ fontFamily: "'Fraunces', Georgia, serif", fontSize: '19px', fontWeight: 600,
+          color: '#1A140C', letterSpacing: '-0.01em' }}>
+          PayTrack
+        </span>
+      </Link>
+
+      <div className="hidden md:flex items-center gap-7">
+        {[['#features', 'Fonctionnalités'], ['#how', 'Comment ça marche'], ['#pricing', 'Tarifs']].map(([h, l]) => (
+          <a key={h} href={h} style={{ fontSize: '14px', fontWeight: 500, color: '#5C4A36',
+            textDecoration: 'none', transition: 'color .2s' }}
+            onMouseEnter={e => { e.target.style.color = '#7B4A1E' }}
+            onMouseLeave={e => { e.target.style.color = '#5C4A36' }}>
+            {l}
+          </a>
+        ))}
+      </div>
+
+      <Link to="/login" className="hidden md:inline-flex items-center gap-2 no-underline"
+        style={{ padding: '9px 20px', borderRadius: '10px', fontSize: '14px', fontWeight: 600,
+          background: '#7B4A1E', color: 'white', boxShadow: '0 2px 10px rgba(123,74,30,0.25)',
+          transition: 'all .2s' }}
+        onMouseEnter={e => { e.currentTarget.style.background = '#6B3A14' }}
+        onMouseLeave={e => { e.currentTarget.style.background = '#7B4A1E' }}>
+        Connexion <ArrowRight size={14} />
+      </Link>
+
+      <button className="md:hidden" onClick={() => setOpen(v => !v)} aria-label="Menu"
+        style={{ color: '#7B4A1E' }}>
+        {open ? <X size={22} /> : <Menu size={22} />}
+      </button>
+
+      {open && (
+        <div className="md:hidden absolute top-16 inset-x-0 border-b px-6 py-5 flex flex-col gap-4 z-50"
+          style={{ background: '#F6F2EC', borderColor: '#E0D8CF', boxShadow: '0 8px 32px rgba(123,74,30,0.1)',
+            fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+          {[['#features', 'Fonctionnalités'], ['#how', 'Comment ça marche'], ['#pricing', 'Tarifs']].map(([h, l]) => (
+            <a key={h} href={h} onClick={() => setOpen(false)} style={{ fontSize: '15px', fontWeight: 500,
+              color: '#5C4A36', textDecoration: 'none' }}>
+              {l}
+            </a>
+          ))}
+          <Link to="/login" onClick={() => setOpen(false)} className="flex items-center justify-center gap-2 no-underline"
+            style={{ padding: '11px 0', borderRadius: '10px', fontSize: '15px', fontWeight: 600,
+              background: '#7B4A1E', color: 'white' }}>
+            Connexion <ArrowRight size={14} />
+          </Link>
+        </div>
+      )}
+    </nav>
+  )
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   PAGE
+───────────────────────────────────────────────────────────────────────────── */
+export default function LandingPage() {
+  const heroRef = useRef(null)
+  const tlRef = useRef(null)
+
+  useEffect(() => {
+    // Inject fonts + CSS vars
+    const styleEl = document.createElement('style')
+    styleEl.textContent = CSS_VARS
+    document.head.appendChild(styleEl)
+
+    // Hero animations
+    gsap.set('#ledger-stamp', { opacity: 0, x: -24 })
+    gsap.set('#ledger-rule', { scaleX: 0, transformOrigin: 'left center' })
+    gsap.set('#ledger-entry-1', { opacity: 0, y: 28 })
+    gsap.set('#ledger-date-col', { opacity: 0, x: 20 })
+    gsap.set('#ledger-seal', { opacity: 0, scale: 0.7, rotation: -15, transformOrigin: 'center' })
+    gsap.set('#ledger-cta', { opacity: 0, y: 16 })
+    gsap.set('#h-proof', { opacity: 0, y: 12 })
+
+    const tl = gsap.timeline({ delay: 0.2 })
+    tlRef.current = tl
+
+    tl.to('#ledger-stamp', { opacity: 1, x: 0, duration: 0.6, ease: 'power3.out' })
+      .to('#ledger-rule', { scaleX: 1, duration: 0.8, ease: 'power3.out' }, '-=0.2')
+      .to('#ledger-entry-1', { opacity: 1, y: 0, duration: 0.75, ease: 'power3.out' }, '-=0.4')
+      .to('#ledger-date-col', { opacity: 1, x: 0, duration: 0.6, ease: 'power2.out' }, '-=0.35')
+      .to('#ledger-seal', { opacity: 1, scale: 1, rotation: 0, duration: 0.9, ease: 'elastic.out(1,0.6)' }, '-=0.2')
+      .to('#ledger-cta', { opacity: 1, y: 0, duration: 0.55, ease: 'power2.out' }, '-=0.5')
+      .to('#h-proof', { opacity: 1, y: 0, duration: 0.45, ease: 'power2.out' }, '-=0.3')
+
+    // Mouse parallax
+    const onMouse = e => {
+      const xP = (e.clientX / window.innerWidth - 0.5) * 2
+      const yP = (e.clientY / window.innerHeight - 0.5) * 2
+      gsap.to('#bg-blob-1', { x: xP * -18, y: yP * -12, duration: 1.4, ease: 'power1.out' })
+      gsap.to('#bg-blob-2', { x: xP * 14, y: yP * 18, duration: 1.6, ease: 'power1.out' })
+    }
+    window.addEventListener('mousemove', onMouse)
+
+    // Feature rows reveal
+    gsap.utils.toArray('.feat-row').forEach((el, i) => {
+      const dir = i % 2 === 0 ? -40 : 40
+      gsap.set(el, { opacity: 0, x: dir })
+      gsap.to(el, {
+        opacity: 1, x: 0, duration: 0.8, ease: 'power3.out',
+        scrollTrigger: { trigger: el, start: 'top 82%' }
+      })
+    })
+
+    // Cards
+    gsap.utils.toArray('.rc').forEach((el, i) => {
+      gsap.set(el, { opacity: 0, y: 24 })
+      gsap.to(el, {
+        opacity: 1, y: 0, duration: 0.55, delay: (i % 3) * 0.08, ease: 'power2.out',
+        scrollTrigger: { trigger: el, start: 'top 88%' }
+      })
+    })
+
+    // Steps
+    gsap.utils.toArray('.step-item').forEach((el, i) => {
+      gsap.set(el, { opacity: 0, y: 22 })
+      gsap.to(el, {
+        opacity: 1, y: 0, duration: 0.5, delay: i * 0.12, ease: 'power2.out',
+        scrollTrigger: { trigger: '.steps-wrap', start: 'top 80%' }
+      })
+    })
+
+    // Counters
+    gsap.utils.toArray('[data-count]').forEach(el => {
+      const target = parseInt(el.dataset.count)
+      const suffix = el.dataset.suffix || ''
+      const obj = { val: 0 }
+      ScrollTrigger.create({
+        trigger: el, start: 'top 86%', once: true,
+        onEnter: () => gsap.to(obj, {
+          val: target, duration: 2, ease: 'power2.out',
+          onUpdate: () => { el.textContent = Math.round(obj.val).toLocaleString('fr-FR') + suffix }
+        })
+      })
+    })
+
+    // CTA block
+    gsap.set('#cta-block', { opacity: 0, y: 32 })
+    gsap.to('#cta-block', {
+      opacity: 1, y: 0, duration: 0.9, ease: 'power3.out',
+      scrollTrigger: { trigger: '#cta-block', start: 'top 76%' }
+    })
+
+    // 3D card hover
+    const cards = document.querySelectorAll('.card-3d')
+    cards.forEach(card => {
+      card.addEventListener('mousemove', e => {
+        const r = card.getBoundingClientRect()
+        const xRel = (e.clientX - r.left) / r.width - 0.5
+        const yRel = (e.clientY - r.top) / r.height - 0.5
+        gsap.to(card, {
+          rotateY: xRel * 6, rotateX: -yRel * 5,
+          duration: 0.4, ease: 'power1.out', transformPerspective: 900
+        })
+      })
+      card.addEventListener('mouseleave', () => {
+        gsap.to(card, { rotateY: 0, rotateX: 0, duration: 0.6, ease: 'power2.out' })
+      })
+    })
+
+    return () => {
+      window.removeEventListener('mousemove', onMouse)
+      if (tlRef.current) tlRef.current.kill()
+      ScrollTrigger.getAll().forEach(t => t.kill())
+      document.head.removeChild(styleEl)
+    }
+  }, [])
+
+  return (
+    <div style={{ background: '#F6F2EC', overflowX: 'hidden', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+      <NavBar />
+
+      {/* ── HERO ──────────────────────────────────────────────────────────── */}
+      <section ref={heroRef}
+        className="relative min-h-screen flex flex-col justify-center px-6 lg:px-12 pt-28 pb-24 overflow-hidden">
+        {/* Ambient blobs */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
+          <div id="bg-blob-1" className="absolute rounded-full"
+            style={{ width: 600, height: 600, top: -160, right: -100,
+              background: 'radial-gradient(circle, rgba(123,74,30,0.07) 0%, transparent 65%)' }} />
+          <div id="bg-blob-2" className="absolute rounded-full"
+            style={{ width: 480, height: 480, bottom: -100, left: -80,
+              background: 'radial-gradient(circle, rgba(212,137,26,0.06) 0%, transparent 65%)' }} />
+          {/* Subtle dot grid */}
+          <div className="absolute inset-0 opacity-[0.025]"
+            style={{ backgroundImage: 'radial-gradient(circle, #7B4A1E 1px, transparent 1px)',
+              backgroundSize: '30px 30px' }} />
+        </div>
+
+        <div className="relative z-10 max-w-4xl mx-auto w-full">
+          {/* Stamp header */}
+          <div id="ledger-stamp" className="flex items-center gap-3 mb-5">
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+              style={{ background: '#7B4A1E' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D4891A" strokeWidth="2"
+                strokeLinecap="round">
+                <path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
+              </svg>
+            </div>
+            <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.12em',
+              textTransform: 'uppercase', color: '#9B887A' }}>
+              PayTrack · Registre numérique de créances
+            </span>
+          </div>
+
+          {/* Full-width rule */}
+          <div id="ledger-rule" style={{ height: '1px', background: '#E0D8CF', marginBottom: '28px' }} />
+
+          {/* Ledger body */}
+          <div className="grid gap-8" style={{ gridTemplateColumns: '1fr auto' }}>
+            {/* Left — entry */}
+            <div id="ledger-entry-1">
+              <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em',
+                textTransform: 'uppercase', color: '#9B887A', marginBottom: '10px' }}>
+                Dossier en cours · VT-2026-0091
+              </p>
+              <h1 style={{ fontFamily: "'Fraunces', Georgia, serif",
+                fontSize: 'clamp(28px, 5vw, 52px)', fontWeight: 600,
+                color: '#1A140C', lineHeight: 1.1, marginBottom: '6px', letterSpacing: '-0.02em' }}>
+                MOUSSA DIALLO
+              </h1>
+              <p style={{ fontSize: '15px', color: '#9B887A', marginBottom: '20px' }}>
+                Boutique Téléphonie · Dakar-Médina
+              </p>
+
+              <div style={{ height: '1px', background: '#E0D8CF', marginBottom: '18px' }} />
+
+              <p style={{ fontSize: '14px', color: '#5C4A36', marginBottom: '8px',
+                fontFamily: "'Fraunces', Georgia, serif" }}>
+                Samsung Galaxy A35 · 6 tranches · 375 000 FCFA
+              </p>
+              <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '13px',
+                color: '#7B4A1E', marginBottom: '12px', letterSpacing: '0.01em' }}>
+                Payé: 225 000 · Restant: 150 000
+              </p>
+
+              {/* Amber progress bar — bleeds left */}
+              <div style={{ height: '3px', background: '#E0D8CF', borderRadius: '2px',
+                marginBottom: '24px', marginLeft: '-24px' }}>
+                <div style={{ height: '100%', width: '60%', background: '#D4891A', borderRadius: '2px' }} />
+              </div>
+
+              {/* Ghost entry 2 */}
+              <div style={{ opacity: 0.28 }}>
+                <div style={{ height: '1px', background: '#E0D8CF', marginBottom: '16px' }} />
+                <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em',
+                  textTransform: 'uppercase', color: '#9B887A', marginBottom: '8px' }}>
+                  Dossier · VT-2026-0088
+                </p>
+                <p style={{ fontFamily: "'Fraunces', Georgia, serif",
+                  fontSize: 'clamp(20px, 3vw, 32px)', fontWeight: 600, color: '#1A140C',
+                  lineHeight: 1.15, marginBottom: '4px' }}>
+                  AMINATA NDIAYE
+                </p>
+                <p style={{ fontSize: '13px', color: '#9B887A' }}>
+                  iPhone 15 Pro Max · 12 tranches · 650 000 FCFA
+                </p>
+              </div>
+            </div>
+
+            {/* Right — date / tranche marks */}
+            <div id="ledger-date-col" className="hidden sm:flex flex-col gap-2.5 text-right pt-1"
+              style={{ minWidth: '140px' }}>
+              <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '10px',
+                color: '#9B887A', marginBottom: '20px' }}>
+                03 / 07 / 2026
+              </p>
+              {[
+                { n: 'T1', date: '15 Fév', ok: true },
+                { n: 'T2', date: '15 Mar', ok: true },
+                { n: 'T3', date: '15 Avr', ok: true },
+                { n: 'T4', date: '15 Mai', ok: false },
+                { n: 'T5', date: '15 Juin', ok: null },
+                { n: 'T6', date: '15 Juil', ok: null },
+              ].map(({ n, date, ok }) => (
+                <div key={n} className="flex items-center justify-end gap-2">
+                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9.5px', color: '#9B887A' }}>
+                    {n} · {date}
+                  </span>
+                  <span style={{
+                    width: 9, height: 9, borderRadius: '50%', display: 'inline-block', flexShrink: 0,
+                    background: ok === true ? '#2E7D5A' : ok === false ? '#C46318' : '#E0D8CF',
+                    border: ok === null ? '1.5px solid #E0D8CF' : 'none'
+                  }} />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Notarial seal — absolute positioned */}
+          <div id="ledger-seal" className="hidden lg:flex"
+            style={{ position: 'absolute', bottom: '-8px', right: '48px',
+              width: '110px', height: '110px', alignItems: 'center', justifyContent: 'center' }}>
+            <svg viewBox="0 0 110 110" fill="none" className="absolute inset-0 w-full h-full">
+              <circle cx="55" cy="55" r="52" stroke="#7B4A1E" strokeWidth="2"/>
+              <circle cx="55" cy="55" r="44" stroke="#7B4A1E" strokeWidth="0.8" strokeDasharray="3,4"/>
+              <text x="55" y="46" fill="#7B4A1E" fontSize="8.5" fontFamily="'Fraunces', serif" fontWeight="600"
+                textAnchor="middle" letterSpacing="0.08em">CHAQUE</text>
+              <text x="55" y="60" fill="#D4891A" fontSize="9" fontFamily="'Fraunces', serif" fontStyle="italic"
+                textAnchor="middle">tranche.</text>
+              <text x="55" y="74" fill="#7B4A1E" fontSize="8.5" fontFamily="'Fraunces', serif" fontWeight="600"
+                textAnchor="middle" letterSpacing="0.06em">SUIVIE.</text>
+            </svg>
+          </div>
+
+          {/* CTA — underlined text link, not a button */}
+          <div id="ledger-cta" style={{ marginTop: '48px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ height: '1px', background: '#E0D8CF', marginBottom: '4px' }} />
+            <Link to="/login" className="inline-flex items-center gap-1 no-underline"
+              style={{ fontFamily: "'Fraunces', Georgia, serif", fontSize: 'clamp(18px, 2.5vw, 26px)',
+                fontWeight: 500, color: '#7B4A1E', textDecoration: 'underline',
+                textDecorationColor: '#D4891A', textUnderlineOffset: '6px',
+                textDecorationThickness: '2px', width: 'fit-content' }}>
+              Créer votre registre →
+            </Link>
+            <div id="h-proof" className="flex items-center gap-3"
+              style={{ fontSize: '13px', color: '#9B887A' }}>
+              <div className="flex">
+                {['#7B4A1E', '#2E7D5A', '#C46318', '#9B887A'].map((bg, i) => (
+                  <div key={i} style={{ background: bg, marginLeft: i === 0 ? 0 : -8, fontSize: 8,
+                    width: 28, height: 28, borderRadius: '50%', border: '2px solid #F6F2EC',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: 'white', fontWeight: 700 }}>
+                    {['MD', 'FA', 'IK', 'RD'][i]}
+                  </div>
+                ))}
+              </div>
+              <span>+200 commerçants font confiance à PayTrack</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── STATS ─────────────────────────────────────────────────────────── */}
+      <section style={{ background: '#7B4A1E', padding: '72px 24px' }}>
+        <div className="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4">
+          {[
+            { count: 200, suffix: '+', label: 'Commerçants actifs' },
+            { count: 5000, suffix: '+', label: 'Ventes gérées' },
+            { count: 98, suffix: '%', label: 'Taux de recouvrement' },
+            { count: 3, suffix: '×', label: 'Moins de litiges' },
+          ].map(({ count, suffix, label }, i) => (
+            <div key={label} className="text-center py-8 px-4"
+              style={{ borderRight: i < 3 ? '1px solid rgba(255,255,255,0.12)' : 'none' }}>
+              <div data-count={count} data-suffix={suffix}
+                style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 'clamp(38px, 5vw, 56px)',
+                  fontWeight: 600, color: '#D4891A', lineHeight: 1, marginBottom: '8px' }}>
+                0{suffix}
+              </div>
+              <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.45)' }}>{label}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── FEATURES ──────────────────────────────────────────────────────── */}
+      <section id="features" style={{ padding: '112px 24px' }}>
+        <div className="max-w-5xl mx-auto">
+          <div className="flex items-center gap-3 mb-5">
+            <div style={{ width: 32, height: '1px', background: '#D4891A' }} />
+            <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.12em',
+              textTransform: 'uppercase', color: '#D4891A' }}>
+              Fonctionnalités
+            </span>
+          </div>
+          <h2 style={{ fontFamily: "'Fraunces', Georgia, serif",
+            fontSize: 'clamp(28px, 4vw, 48px)', color: '#1A140C',
+            lineHeight: 1.1, letterSpacing: '-0.015em', maxWidth: '18ch', marginBottom: '64px' }}>
+            Tout ce dont vous avez besoin,{' '}
+            <em style={{ fontStyle: 'italic', fontWeight: 300, color: '#9B887A' }}>
+              rien de superflu.
+            </em>
+          </h2>
+
+          <div className="flex flex-col gap-24">
+
+            {/* Feature 1 — QR Code */}
+            <div className="feat-row grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+              <div>
+                <div style={{ width: 44, height: 44, borderRadius: '12px', background: 'rgba(123,74,30,0.08)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7B4A1E" strokeWidth="1.8"
+                    strokeLinecap="round">
+                    <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" />
+                    <rect x="3" y="14" width="7" height="7" />
+                    <path d="M14 14h.01M14 17h.01M17 14h.01M17 17h3M20 20h.01M17 20h.01" />
+                  </svg>
+                </div>
+                <h3 style={{ fontFamily: "'Fraunces', Georgia, serif", fontSize: '26px',
+                  color: '#1A140C', marginBottom: '14px', fontWeight: 600 }}>
+                  QR Code unique par dossier
+                </h3>
+                <p style={{ fontSize: '15px', color: '#5C4A36', lineHeight: 1.7, fontWeight: 300,
+                  maxWidth: '38ch', marginBottom: '20px' }}>
+                  Chaque vente génère un QR Code unique. Le client le scanne pour consulter son dossier
+                  en temps réel. Les montants restent masqués sans connexion.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {['Scan instant', 'Données sécurisées', 'Partage WhatsApp'].map(t => (
+                    <span key={t} style={{ fontSize: '12px', fontWeight: 500, padding: '5px 12px',
+                      borderRadius: '20px', background: 'rgba(123,74,30,0.08)', color: '#7B4A1E' }}>
+                      {t}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <div className="card-3d rounded-2xl overflow-hidden"
+                style={{ background: '#FBF8F4', border: '1px solid #E0D8CF', padding: '24px',
+                  boxShadow: '0 4px 24px rgba(123,74,30,0.07)', height: '280px',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ width: '240px', height: '240px' }}>
+                  <IlluQRNewStyle />
+                </div>
+              </div>
+            </div>
+
+            {/* Feature 2 — Reçus PDF */}
+            <div className="feat-row grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+              <div className="card-3d rounded-2xl overflow-hidden lg:order-1"
+                style={{ background: '#FBF8F4', border: '1px solid #E0D8CF', padding: '24px',
+                  boxShadow: '0 4px 24px rgba(123,74,30,0.07)', height: '280px',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ width: '180px', height: '240px' }}>
+                  <IlluReceiptNew />
+                </div>
+              </div>
+              <div className="lg:order-2">
+                <div style={{ width: 44, height: 44, borderRadius: '12px', background: 'rgba(46,125,90,0.08)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2E7D5A" strokeWidth="1.8"
+                    strokeLinecap="round">
+                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                    <polyline points="14,2 14,8 20,8" />
+                    <line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" />
+                  </svg>
+                </div>
+                <h3 style={{ fontFamily: "'Fraunces', Georgia, serif", fontSize: '26px',
+                  color: '#1A140C', marginBottom: '14px', fontWeight: 600 }}>
+                  Reçus PDF instantanés
+                </h3>
+                <p style={{ fontSize: '15px', color: '#5C4A36', lineHeight: 1.7, fontWeight: 300,
+                  maxWidth: '38ch', marginBottom: '20px' }}>
+                  Chaque paiement génère un reçu numérique officiel, envoyé par email ou WhatsApp
+                  en quelques secondes. Toujours disponible dans le dossier client.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {['PDF généré auto', 'Email + WhatsApp', 'Archivage illimité'].map(t => (
+                    <span key={t} style={{ fontSize: '12px', fontWeight: 500, padding: '5px 12px',
+                      borderRadius: '20px', background: 'rgba(46,125,90,0.08)', color: '#2E7D5A' }}>
+                      {t}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Feature 3 — Rappels */}
+            <div className="feat-row grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+              <div>
+                <div style={{ width: 44, height: 44, borderRadius: '12px', background: 'rgba(196,99,24,0.08)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C46318" strokeWidth="1.8"
+                    strokeLinecap="round">
+                    <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                    <path d="M13.73 21a2 2 0 01-3.46 0" />
+                  </svg>
+                </div>
+                <h3 style={{ fontFamily: "'Fraunces', Georgia, serif", fontSize: '26px',
+                  color: '#1A140C', marginBottom: '14px', fontWeight: 600 }}>
+                  Rappels automatiques
+                </h3>
+                <p style={{ fontSize: '15px', color: '#5C4A36', lineHeight: 1.7, fontWeight: 300,
+                  maxWidth: '38ch', marginBottom: '20px' }}>
+                  SMS, WhatsApp, email — envoyés la veille d'une échéance et en cas de retard.
+                  Fini les relances manuelles et les tensions avec vos clients.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {['SMS', 'WhatsApp', 'Email', 'J-1 automatique'].map(t => (
+                    <span key={t} style={{ fontSize: '12px', fontWeight: 500, padding: '5px 12px',
+                      borderRadius: '20px', background: 'rgba(196,99,24,0.08)', color: '#C46318' }}>
+                      {t}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <div className="card-3d rounded-2xl overflow-hidden"
+                style={{ background: '#FBF8F4', border: '1px solid #E0D8CF', padding: '24px',
+                  boxShadow: '0 4px 24px rgba(123,74,30,0.07)', height: '280px',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ width: '160px', height: '240px' }}>
+                  <IlluNotifNew />
+                </div>
+              </div>
+            </div>
+
+            {/* Feature 4 — Mobile money */}
+            <div className="feat-row grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+              <div className="card-3d rounded-2xl overflow-hidden lg:order-1"
+                style={{ background: '#FBF8F4', border: '1px solid #E0D8CF', padding: '24px',
+                  boxShadow: '0 4px 24px rgba(123,74,30,0.07)', height: '280px',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ width: '260px', height: '200px' }}>
+                  <IlluMobileMoneyNew />
+                </div>
+              </div>
+              <div className="lg:order-2">
+                <div style={{ width: 44, height: 44, borderRadius: '12px', background: 'rgba(212,137,26,0.08)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D4891A" strokeWidth="1.8"
+                    strokeLinecap="round">
+                    <line x1="12" y1="1" x2="12" y2="23" />
+                    <path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
+                  </svg>
+                </div>
+                <h3 style={{ fontFamily: "'Fraunces', Georgia, serif", fontSize: '26px',
+                  color: '#1A140C', marginBottom: '14px', fontWeight: 600 }}>
+                  Paiement mobile money
+                </h3>
+                <p style={{ fontSize: '15px', color: '#5C4A36', lineHeight: 1.7, fontWeight: 300,
+                  maxWidth: '38ch', marginBottom: '20px' }}>
+                  Wave, Orange Money, Free Money. Le client paie directement depuis son téléphone,
+                  le solde se met à jour en temps réel dans votre registre.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {['Wave', 'Orange Money', 'Free Money', 'Solde en temps réel'].map(t => (
+                    <span key={t} style={{ fontSize: '12px', fontWeight: 500, padding: '5px 12px',
+                      borderRadius: '20px', background: 'rgba(212,137,26,0.08)', color: '#D4891A' }}>
+                      {t}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Feature 5 — Multi-boutiques */}
+            <div className="feat-row rounded-2xl p-8 lg:p-12 flex flex-col lg:flex-row gap-10 items-center"
+              style={{ background: '#7B4A1E', boxShadow: '0 8px 40px rgba(123,74,30,0.2)' }}>
+              <div className="flex-1">
+                <div style={{ width: 44, height: 44, borderRadius: '12px', background: 'rgba(212,137,26,0.15)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D4891A" strokeWidth="1.8"
+                    strokeLinecap="round">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                    <polyline points="9,22 9,12 15,12 15,22" />
+                  </svg>
+                </div>
+                <h3 style={{ fontFamily: "'Fraunces', Georgia, serif", fontSize: '28px',
+                  color: 'white', marginBottom: '14px', fontWeight: 600 }}>
+                  Multi-boutiques, multi-villes
+                </h3>
+                <p style={{ fontSize: '15px', color: 'rgba(255,255,255,0.6)', lineHeight: 1.7,
+                  fontWeight: 300, maxWidth: '40ch' }}>
+                  Gérez plusieurs points de vente depuis un seul compte. Chaque boutique a ses propres
+                  vendeurs, clients et données — strictement isolés.
+                </p>
+              </div>
+              <div className="flex-shrink-0" style={{ width: '220px', height: '190px' }}>
+                <IlluMultiShopNew />
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      {/* ── HOW IT WORKS ──────────────────────────────────────────────────── */}
+      <section id="how" style={{ background: '#1A140C', padding: '112px 24px', position: 'relative', overflow: 'hidden' }}>
+        <div className="absolute inset-0 pointer-events-none opacity-[0.02]"
+          style={{ backgroundImage: 'radial-gradient(circle, #F6F2EC 1px, transparent 1px)',
+            backgroundSize: '28px 28px' }} />
+        <div className="max-w-5xl mx-auto relative z-10">
+          <div className="flex items-center gap-3 mb-5">
+            <div style={{ width: 32, height: '1px', background: 'rgba(212,137,26,0.5)' }} />
+            <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.12em',
+              textTransform: 'uppercase', color: 'rgba(212,137,26,0.6)',
+              fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+              Comment ça marche
+            </span>
+          </div>
+          <h2 style={{ fontFamily: "'Fraunces', Georgia, serif",
+            fontSize: 'clamp(28px, 4vw, 50px)', color: 'white',
+            lineHeight: 1.1, marginBottom: '64px', maxWidth: '20ch' }}>
+            Du contrat à{' '}
+            <em style={{ fontStyle: 'italic', fontWeight: 300, color: 'rgba(255,255,255,0.35)' }}>
+              l'encaissement
+            </em>
+            ,<br />en 4 étapes.
+          </h2>
+
+          <div className="steps-wrap grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-8">
+            {[
+              { n: '01', title: 'Créez le dossier', desc: 'Client, article, montant total, acompte, nombre de tranches. L\'échéancier se calcule automatiquement.', color: '#D4891A' },
+              { n: '02', title: 'Générez le QR Code', desc: 'Un QR Code unique est créé pour ce dossier. Partagez-le par WhatsApp ou imprimez-le sur le contrat.', color: '#2E7D5A' },
+              { n: '03', title: 'Enregistrez les paiements', desc: 'À chaque versement, saisissez le montant en quelques secondes. Le reçu PDF part automatiquement.', color: '#C46318' },
+              { n: '04', title: 'Suivez et relancez', desc: 'Les rappels partent automatiquement. Le dashboard affiche en temps réel les retards et encaissements.', color: '#D4891A' },
+            ].map(({ n, title, desc, color }) => (
+              <div key={n} className="step-item">
+                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '48px',
+                  fontWeight: 600, lineHeight: 1, marginBottom: '20px', color, opacity: 0.7 }}>
+                  {n}
+                </div>
+                <h3 style={{ fontFamily: "'Fraunces', Georgia, serif", fontSize: '18px',
+                  color: 'white', marginBottom: '12px' }}>
+                  {title}
+                </h3>
+                <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.38)', lineHeight: 1.7, fontWeight: 300 }}>
+                  {desc}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── TARGETS ───────────────────────────────────────────────────────── */}
+      <section style={{ padding: '96px 24px' }}>
+        <div className="max-w-5xl mx-auto">
+          <div className="flex items-center gap-3 mb-5">
+            <div style={{ width: 32, height: '1px', background: '#D4891A' }} />
+            <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.12em',
+              textTransform: 'uppercase', color: '#D4891A' }}>
+              Pour qui
+            </span>
+          </div>
+          <h2 style={{ fontFamily: "'Fraunces', Georgia, serif",
+            fontSize: 'clamp(26px, 4vw, 44px)', color: '#1A140C', lineHeight: 1.1, marginBottom: '48px' }}>
+            Fait pour le{' '}
+            <em style={{ fontStyle: 'italic', fontWeight: 300, color: '#9B887A' }}>
+              commerce de terrain
+            </em>
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            {[
+              { icon: '📱', title: 'Téléphonie & électronique', desc: 'Vendez smartphones, laptops et accessoires à crédit. Chaque client a son dossier, chaque tranche est tracée.', border: '#7B4A1E' },
+              { icon: '🏫', title: 'Établissements scolaires', desc: 'Gérez les frais de scolarité par tranche. Rappels automatiques aux parents, bilans par classe.', border: '#2E7D5A' },
+              { icon: '🛋️', title: 'Meubles & équipement maison', desc: 'Proposez des facilités de paiement pour vos articles. Chaque vente sécurisée par un QR Code.', border: '#D4891A' },
+              { icon: '🏢', title: 'PME & services professionnels', desc: 'Agences, prestataires, grossistes — gérez vos créances clients avec rigueur et professionnalisme.', border: '#7B4A1E' },
+            ].map(({ icon, title, desc, border }) => (
+              <div key={title} className="rc flex gap-5 rounded-2xl p-7"
+                style={{ background: 'white', border: `1px solid #E0D8CF`,
+                  boxShadow: '0 2px 12px rgba(123,74,30,0.04)',
+                  borderLeft: `4px solid ${border}`, transition: 'all .2s' }}
+                onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 6px 24px rgba(123,74,30,0.10)'; e.currentTarget.style.transform = 'translateY(-2px)' }}
+                onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 2px 12px rgba(123,74,30,0.04)'; e.currentTarget.style.transform = 'none' }}>
+                <div style={{ width: 52, height: 52, borderRadius: '14px', background: '#FBF8F4',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '26px', flexShrink: 0, lineHeight: 1 }}>
+                  {icon}
+                </div>
+                <div>
+                  <h3 style={{ fontFamily: "'Fraunces', Georgia, serif", fontSize: '17px',
+                    color: '#1A140C', marginBottom: '8px', fontWeight: 600 }}>
+                    {title}
+                  </h3>
+                  <p style={{ fontSize: '14px', color: '#5C4A36', lineHeight: 1.65, fontWeight: 300 }}>
+                    {desc}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── TESTIMONIALS ──────────────────────────────────────────────────── */}
+      <section style={{ background: '#FBF8F4', padding: '80px 24px', borderTop: '1px solid #E0D8CF' }}>
+        <div className="max-w-5xl mx-auto">
+          <div className="flex items-center gap-3 mb-5">
+            <div style={{ width: 32, height: '1px', background: '#D4891A' }} />
+            <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.12em',
+              textTransform: 'uppercase', color: '#D4891A' }}>
+              Témoignages
+            </span>
+          </div>
+          <h2 style={{ fontFamily: "'Fraunces', Georgia, serif",
+            fontSize: 'clamp(24px, 3.5vw, 40px)', color: '#1A140C', marginBottom: '48px' }}>
+            Ce que disent{' '}
+            <em style={{ fontStyle: 'italic', fontWeight: 300, color: '#9B887A' }}>nos utilisateurs</em>
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {[
+              { stars: 5, text: 'Avant PayTrack, je notais tout dans un cahier. Maintenant mes clients reçoivent leurs reçus automatiquement.', name: 'Moussa Diallo', role: 'Gérant, Phone Shop Dakar', bg: '#7B4A1E', initials: 'MD' },
+              { stars: 5, text: 'Le QR Code ça change tout. Mes clients font plus confiance. L\'image de ma boutique a vraiment changé.', name: 'Fatou Aw', role: 'Meublés Élite, Thiès', bg: '#2E7D5A', initials: 'FA' },
+              { stars: 4, text: 'Les rappels WhatsApp automatiques ont divisé par trois les retards de paiement dans notre école.', name: 'Ibrahima Kouyaté', role: 'Directeur admin., École Sainte-Marie', bg: '#C46318', initials: 'IK' },
+            ].map(({ stars, text, name, role, bg, initials }) => (
+              <div key={name} className="rc rounded-2xl p-7"
+                style={{ background: 'white', border: '1px solid #E0D8CF',
+                  boxShadow: '0 2px 12px rgba(123,74,30,0.04)' }}>
+                <div className="flex gap-0.5 mb-4">
+                  {Array.from({ length: 5 }, (_, i) => (
+                    <Star key={i} size={13}
+                      style={{ fill: i < stars ? '#D4891A' : '#E0D8CF', color: i < stars ? '#D4891A' : '#E0D8CF' }} />
+                  ))}
+                </div>
+                <p style={{ fontSize: '15px', color: '#5C4A36', lineHeight: 1.7, marginBottom: '24px', fontWeight: 300 }}>
+                  &ldquo;{text}&rdquo;
+                </p>
+                <div className="flex items-center gap-3">
+                  <div style={{ width: 40, height: 40, borderRadius: '50%', background: bg,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: 'white', fontSize: '12px', fontWeight: 700, flexShrink: 0 }}>
+                    {initials}
+                  </div>
+                  <div>
+                    <p style={{ fontSize: '13px', fontWeight: 600, color: '#1A140C' }}>{name}</p>
+                    <p style={{ fontSize: '12px', color: '#9B887A' }}>{role}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── PRICING ───────────────────────────────────────────────────────── */}
+      <section id="pricing" style={{ padding: '112px 24px' }}>
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-16">
+            <div className="flex items-center justify-center gap-3 mb-5">
+              <div style={{ width: 32, height: '1px', background: '#D4891A' }} />
+              <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.12em',
+                textTransform: 'uppercase', color: '#D4891A' }}>
+                Tarifs
+              </span>
+              <div style={{ width: 32, height: '1px', background: '#D4891A' }} />
+            </div>
+            <h2 style={{ fontFamily: "'Fraunces', Georgia, serif",
+              fontSize: 'clamp(28px, 4vw, 46px)', color: '#1A140C', marginBottom: '12px' }}>
+              Simple et transparent
+            </h2>
+            <p style={{ fontSize: '15px', color: '#5C4A36', fontWeight: 300 }}>
+              Sans frais cachés. Changez de plan à tout moment.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {[
+              { plan: 'Démarrage', price: 'Gratuit', period: 'Pour toujours',
+                features: ['50 ventes par mois', '2 vendeurs', 'QR Code par dossier', 'Reçus PDF', 'Dashboard basique'],
+                cta: 'Commencer', ctaLink: '/login', featured: false },
+              { plan: 'Professionnel', price: '9 900 FCFA', period: 'par mois · par boutique',
+                features: ['Ventes illimitées', 'Vendeurs illimités', 'Rappels SMS & WhatsApp', 'Wave / Orange Money', 'Export PDF, Excel, CSV', 'Rapports avancés'],
+                cta: 'Essai gratuit 14 jours', ctaLink: '/login', featured: true, badge: 'Le plus populaire' },
+              { plan: 'Entreprise', price: 'Sur devis', period: 'Multi-boutiques',
+                features: ['Boutiques illimitées', 'Rôles & permissions avancés', 'Intégration sur mesure', 'Support prioritaire', 'Audit log complet', 'Hébergement dédié'],
+                cta: 'Nous contacter', ctaLink: 'mailto:contact@paytrack.sn', featured: false },
+            ].map(({ plan, price, period, features, cta, ctaLink, featured, badge }) => (
+              <div key={plan} className="rc relative rounded-2xl p-8"
+                style={{
+                  background: featured ? '#7B4A1E' : 'white',
+                  border: `1px solid ${featured ? '#7B4A1E' : '#E0D8CF'}`,
+                  boxShadow: featured ? '0 8px 40px rgba(123,74,30,0.22)' : '0 2px 12px rgba(123,74,30,0.04)',
+                  transition: 'all .2s'
+                }}>
+                {badge && (
+                  <span style={{ position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)',
+                    background: '#D4891A', color: 'white', fontSize: '11px', fontWeight: 700,
+                    padding: '4px 16px', borderRadius: '20px', whiteSpace: 'nowrap', letterSpacing: '0.04em' }}>
+                    {badge}
+                  </span>
+                )}
+                <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.1em',
+                  textTransform: 'uppercase', color: featured ? 'rgba(212,137,26,0.8)' : '#9B887A',
+                  marginBottom: '12px' }}>
+                  {plan}
+                </p>
+                <div style={{ fontFamily: "'JetBrains Mono', monospace",
+                  fontSize: '38px', fontWeight: 600, color: featured ? 'white' : '#1A140C',
+                  lineHeight: 1, marginBottom: '6px' }}>
+                  {price.includes('FCFA') ? (
+                    <>{price.replace(' FCFA', '')}<span style={{ fontSize: '15px', fontWeight: 400,
+                      color: featured ? 'rgba(255,255,255,0.5)' : '#9B887A', marginLeft: '6px', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>FCFA</span></>
+                  ) : price}
+                </div>
+                <p style={{ fontSize: '13px', color: featured ? 'rgba(255,255,255,0.45)' : '#9B887A',
+                  marginBottom: '28px' }}>
+                  {period}
+                </p>
+                <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 32px 0', display: 'flex',
+                  flexDirection: 'column', gap: '12px' }}>
+                  {features.map(f => (
+                    <li key={f} className="flex items-start gap-2.5"
+                      style={{ fontSize: '14px', color: featured ? 'rgba(255,255,255,0.7)' : '#5C4A36', fontWeight: 300 }}>
+                      <CheckCircle2 size={15} style={{ color: featured ? '#D4891A' : '#2E7D5A',
+                        flexShrink: 0, marginTop: '2px' }} />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                {ctaLink.startsWith('mailto') ? (
+                  <a href={ctaLink} style={{ display: 'block', textAlign: 'center', padding: '12px 0',
+                    borderRadius: '10px', fontSize: '14px', fontWeight: 600, textDecoration: 'none',
+                    border: `1px solid ${featured ? 'rgba(255,255,255,0.25)' : '#E0D8CF'}`,
+                    color: featured ? 'white' : '#7B4A1E', transition: 'all .2s' }}>
+                    {cta}
+                  </a>
+                ) : (
+                  <Link to={ctaLink} style={{ display: 'block', textAlign: 'center', padding: '12px 0',
+                    borderRadius: '10px', fontSize: '14px', fontWeight: 600, textDecoration: 'none',
+                    background: featured ? 'rgba(255,255,255,0.12)' : '#7B4A1E',
+                    border: featured ? '1px solid rgba(255,255,255,0.2)' : '1px solid #7B4A1E',
+                    color: featured ? 'white' : 'white', transition: 'all .2s' }}>
+                    {cta}
+                  </Link>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── CTA FINAL ─────────────────────────────────────────────────────── */}
+      <section style={{ padding: '96px 24px', position: 'relative', overflow: 'hidden',
+        background: 'linear-gradient(180deg, #F6F2EC 0%, #FBF8F4 100%)',
+        borderTop: '1px solid #E0D8CF' }}>
+        <div className="absolute pointer-events-none rounded-full"
+          style={{ width: 700, height: 700, top: '50%', left: '50%',
+            transform: 'translate(-50%, -50%)',
+            background: 'radial-gradient(circle, rgba(212,137,26,0.06) 0%, transparent 60%)' }} />
+        <div id="cta-block" className="relative z-10 text-center max-w-2xl mx-auto">
+          {/* Decorative register rule */}
+          <div style={{ width: 120, height: 1, background: '#E0D8CF', margin: '0 auto 32px' }} />
+          <h2 style={{ fontFamily: "'Fraunces', Georgia, serif",
+            fontSize: 'clamp(32px, 5.5vw, 64px)', color: '#1A140C',
+            lineHeight: 1.05, letterSpacing: '-0.02em', marginBottom: '24px' }}>
+            Prêt à ne plus perdre{' '}
+            <em style={{ fontStyle: 'italic', fontWeight: 300, color: '#7B4A1E' }}>
+              une seule tranche ?
+            </em>
+          </h2>
+          <p style={{ fontSize: '17px', color: '#5C4A36', fontWeight: 300, marginBottom: '40px',
+            maxWidth: '38ch', margin: '0 auto 40px', lineHeight: 1.7 }}>
+            Créez votre compte en 2 minutes. Aucune carte bancaire requise pour commencer.
+          </p>
+
+          {/* CTA styled as a ledger action */}
+          <div className="flex items-center justify-center gap-4 flex-wrap mb-6">
+            <Link to="/login" className="inline-flex items-center gap-2.5 no-underline"
+              style={{ padding: '16px 36px', borderRadius: '12px', fontSize: '16px', fontWeight: 600,
+                background: '#7B4A1E', color: 'white',
+                boxShadow: '0 4px 24px rgba(123,74,30,0.28)',
+                transition: 'all .2s', fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+              onMouseEnter={e => { e.currentTarget.style.background = '#6B3A14'; e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 36px rgba(123,74,30,0.35)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = '#7B4A1E'; e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 4px 24px rgba(123,74,30,0.28)' }}>
+              Commencer gratuitement <ArrowRight size={17} />
+            </Link>
+            <a href="mailto:contact@paytrack.sn" className="inline-flex items-center gap-2 no-underline"
+              style={{ padding: '16px 28px', borderRadius: '12px', fontSize: '16px', fontWeight: 500,
+                border: '1px solid #E0D8CF', color: '#7B4A1E', transition: 'all .2s',
+                fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = '#7B4A1E'; e.currentTarget.style.background = '#FBF8F4' }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = '#E0D8CF'; e.currentTarget.style.background = 'transparent' }}>
+              Demander une démo
+            </a>
+          </div>
+
+          <p style={{ fontSize: '13px', color: '#9B887A' }}>
+            14 jours gratuits · Sans engagement · Support en français
+          </p>
+          <div style={{ width: 120, height: 1, background: '#E0D8CF', margin: '32px auto 0' }} />
+        </div>
+      </section>
+
+      {/* ── FOOTER ────────────────────────────────────────────────────────── */}
+      <footer style={{ background: '#1A140C', padding: '56px 24px' }}>
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-10 pb-10"
+            style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+            <div className="col-span-2 md:col-span-1">
+              <div className="flex items-center gap-2.5 mb-4">
+                <div style={{ width: 32, height: 32, background: 'rgba(212,137,26,0.12)',
+                  borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D4891A" strokeWidth="2"
+                    strokeLinecap="round">
+                    <path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
+                  </svg>
+                </div>
+                <span style={{ fontFamily: "'Fraunces', Georgia, serif", fontSize: '19px',
+                  fontWeight: 600, color: 'white' }}>
+                  PayTrack
+                </span>
+              </div>
+              <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.32)', lineHeight: 1.65, fontWeight: 300 }}>
+                La solution de suivi de paiements par tranche pour les commerçants d'Afrique de l'Ouest.
+              </p>
+            </div>
+            {[
+              { h: 'Produit', links: [['#features', 'Fonctionnalités'], ['#pricing', 'Tarifs'], ['#how', 'Comment ça marche'], ['/login', 'Connexion', true]] },
+              { h: 'Ressources', links: [['#', 'Documentation'], ['#', 'Guide démarrage'], ['#', 'API'], ['#', 'Intégrations']] },
+              { h: 'Contact', links: [['mailto:contact@paytrack.sn', 'contact@paytrack.sn'], ['#', 'WhatsApp support'], ['#', 'Confidentialité'], ['#', 'Conditions']] },
+            ].map(({ h, links }) => (
+              <div key={h}>
+                <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.1em',
+                  textTransform: 'uppercase', color: 'rgba(255,255,255,0.28)', marginBottom: '20px' }}>
+                  {h}
+                </p>
+                <div className="flex flex-col gap-3">
+                  {links.map(([href, label, isRoute]) =>
+                    isRoute ? (
+                      <Link key={label} to={href} style={{ fontSize: '13px', color: 'rgba(255,255,255,0.45)',
+                        textDecoration: 'none', transition: 'color .2s', fontWeight: 300 }}>
+                        {label}
+                      </Link>
+                    ) : (
+                      <a key={label} href={href} style={{ fontSize: '13px', color: 'rgba(255,255,255,0.45)',
+                        textDecoration: 'none', transition: 'color .2s', fontWeight: 300 }}>
+                        {label}
+                      </a>
+                    )
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-2 pt-7"
+            style={{ fontSize: '12px', color: 'rgba(255,255,255,0.2)' }}>
+            <span>© 2026 PayTrack. Tous droits réservés.</span>
+            <span style={{ color: 'rgba(212,137,26,0.5)' }}>Fait pour l'Afrique de l'Ouest</span>
+          </div>
+        </div>
+      </footer>
+    </div>
+  )
+}

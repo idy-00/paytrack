@@ -1,0 +1,25 @@
+node_modules/
+dist/
+site/
+.env
+.env.*
+*.log
+.DS_Store
+Thumbs.db
+
+# Flutter
+mobile/build/
+mobile/.dart_tool/
+mobile/.packages
+mobile/android/.gradle/
+mobile/android/app/build/
+mobile/ios/Pods/
+
+# Backend
+backend/vendor/
+backend/.env
+
+# IDE
+.idea/
+.vscode/
+*.iml

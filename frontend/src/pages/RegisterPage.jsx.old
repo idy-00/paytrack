@@ -1,0 +1,1010 @@
+import { useState, useCallback } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { Eye, EyeOff, ArrowRight, CheckCircle2 } from 'lucide-react'
+
+/* ─────────────────────────────────────────────────────────────────────────
+   SHARED: Mosquée geometric pattern (reused from Login)
+───────────────────────────────────────────────────────────────────────── */
+function MosqueePattern({ opacity = 0.04 }) {
+  return (
+    <svg
+      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity }}
+      aria-hidden="true"
+    >
+      <defs>
+        <pattern id="mosque-geo-reg" x="0" y="0" width="72" height="72" patternUnits="userSpaceOnUse">
+          <polygon points="24,0 48,0 72,24 72,48 48,72 24,72 0,48 0,24"
+            fill="none" stroke="#1A2332" strokeWidth="1" />
+          <polygon points="36,12 60,36 36,60 12,36"
+            fill="none" stroke="#1A2332" strokeWidth="0.75" />
+          <polygon points="36,22 40,32 50,32 42,38 45,50 36,44 27,50 30,38 22,32 32,32"
+            fill="none" stroke="#1A2332" strokeWidth="0.6" />
+          <polygon points="0,0 6,12 0,24" fill="none" stroke="#1A2332" strokeWidth="0.5" />
+          <polygon points="72,0 66,12 72,24" fill="none" stroke="#1A2332" strokeWidth="0.5" />
+          <polygon points="0,72 6,60 0,48" fill="none" stroke="#1A2332" strokeWidth="0.5" />
+          <polygon points="72,72 66,60 72,48" fill="none" stroke="#1A2332" strokeWidth="0.5" />
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#mosque-geo-reg)" />
+    </svg>
+  )
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   TICKER (same as login)
+───────────────────────────────────────────────────────────────────────── */
+const TICKER_AMOUNTS = [
+  { amount: '850 000', label: 'Tranche encaissée', color: 'rgba(255,255,255,0.70)' },
+  { amount: '320 500', label: 'Règlement Wave',    color: 'rgba(255,255,255,0.35)' },
+  { amount: '1 200 000', label: 'Dossier soldé',   color: 'rgba(46,125,90,0.80)' },
+  { amount: '108 334', label: 'Rappel envoyé',     color: 'rgba(255,255,255,0.35)' },
+  { amount: '475 000', label: 'Orange Money',      color: 'rgba(255,255,255,0.70)' },
+  { amount: '660 000', label: 'QR scanné',         color: 'rgba(255,255,255,0.35)' },
+  { amount: '95 000',  label: 'Reçu PDF généré',   color: 'rgba(46,125,90,0.80)' },
+  { amount: '2 100 000', label: 'Compte soldé',    color: 'rgba(255,255,255,0.70)' },
+]
+
+function AmountTicker({ offset = 0, speed = 'animate-ticker' }) {
+  const items = [...TICKER_AMOUNTS, ...TICKER_AMOUNTS]
+  return (
+    <div style={{ overflow: 'hidden', height: '100%', position: 'relative' }}>
+      <div className={speed} style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginTop: offset }}>
+        {items.map((item, i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'baseline', gap: '8px', flexShrink: 0 }}>
+            <span style={{
+              fontFamily: '"JetBrains Mono", monospace',
+              fontWeight: 600, fontSize: '15px',
+              color: item.color,
+              fontVariantNumeric: 'tabular-nums',
+              letterSpacing: '-0.02em', lineHeight: 1,
+            }}>
+              {item.amount}
+            </span>
+            <span style={{
+              fontFamily: '"Plus Jakarta Sans", sans-serif',
+              fontSize: '10px',
+              color: 'rgba(246,242,236,0.25)',
+              letterSpacing: '0.04em', lineHeight: 1,
+            }}>
+              F CFA · {item.label}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   LEFT PANEL (register variant)
+───────────────────────────────────────────────────────────────────────── */
+function LeftPanel() {
+  const features = [
+    'Essai gratuit 14 jours · Sans carte bancaire',
+    'QR Code unique par dossier, en 1 clic',
+    'Reçus PDF envoyés automatiquement',
+    'Rappels SMS et WhatsApp automatiques',
+    'Wave · Orange Money · Free Money',
+  ]
+
+  return (
+    <div
+      className="hidden lg:flex flex-col h-dvh flex-shrink-0 overflow-hidden relative"
+      style={{ width: '48%', background: '#1A2332' }}
+    >
+      <MosqueePattern opacity={0.04} />
+      <div aria-hidden="true" style={{
+        position: 'absolute', inset: 0,
+        background: 'radial-gradient(ellipse at 20% 50%, rgba(0,0,0,0.07) 0%, transparent 70%)',
+        pointerEvents: 'none',
+      }} />
+
+      {/* Wordmark */}
+      <div style={{ position: 'relative', zIndex: 10, padding: '36px 48px 0' }}>
+        <Link to="/" style={{
+          display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none',
+        }}>
+          <div style={{
+            width: 36, height: 36,
+            border: '1.5px solid rgba(255,255,255,0.60)',
+            borderRadius: 8,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            flexShrink: 0,
+          }}>
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+              <rect x="3" y="2" width="12" height="14" rx="1.5" stroke="rgba(255,255,255,0.90)" strokeWidth="1.2"/>
+              <line x1="6" y1="6" x2="12" y2="6" stroke="rgba(255,255,255,0.60)" strokeWidth="1" strokeLinecap="round"/>
+              <line x1="6" y1="9" x2="12" y2="9" stroke="rgba(255,255,255,0.60)" strokeWidth="1" strokeLinecap="round"/>
+              <line x1="6" y1="12" x2="9" y2="12" stroke="rgba(255,255,255,0.40)" strokeWidth="1" strokeLinecap="round"/>
+              <rect x="3" y="2" width="2" height="14" rx="1" fill="rgba(255,255,255,0.25)"/>
+            </svg>
+          </div>
+          <span style={{
+            fontFamily: '"DM Serif Display", serif',
+            fontSize: '22px', fontWeight: 700,
+            color: 'rgba(255,255,255,0.7)', letterSpacing: '-0.01em',
+          }}>
+            PayTrack
+          </span>
+        </Link>
+      </div>
+
+      {/* Center content */}
+      <div style={{
+        position: 'relative', zIndex: 10,
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        padding: '0 48px',
+        gap: '40px',
+      }}>
+        {/* Headline */}
+        <div>
+          <p style={{
+            fontFamily: '"Plus Jakarta Sans", sans-serif',
+            fontSize: '11px', fontWeight: 600,
+            letterSpacing: '0.14em', textTransform: 'uppercase',
+            color: 'rgba(255,255,255,0.65)',
+            marginBottom: '14px',
+          }}>
+            Rejoignez la communauté
+          </p>
+          <h1 style={{
+            fontFamily: '"DM Serif Display", serif',
+            fontSize: 'clamp(28px, 2.8vw, 40px)',
+            fontWeight: 700,
+            color: '#FFFFFF',
+            lineHeight: 1.1,
+            letterSpacing: '-0.022em',
+            margin: 0,
+          }}>
+            Ouvrez votre<br />
+            <em style={{ fontStyle: 'italic', fontWeight: 300, color: 'rgba(255,255,255,0.42)' }}>
+              registre numérique
+            </em>
+            <br />
+            en 2 minutes.
+          </h1>
+        </div>
+
+        {/* Divider */}
+        <div style={{
+          width: '100%', height: '1px',
+          background: 'linear-gradient(to right, rgba(255,255,255,0.35) 0%, transparent 80%)',
+        }} />
+
+        {/* Feature list */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          {features.map((feat, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+              <div style={{
+                width: 18, height: 18,
+                borderRadius: '50%',
+                background: 'rgba(46,125,90,0.20)',
+                border: '1px solid rgba(46,125,90,0.45)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                flexShrink: 0, marginTop: '2px',
+              }}>
+                <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
+                  <path d="M1.5 4l2 2 3-3" stroke="rgba(46,125,90,0.90)" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              <span style={{
+                fontFamily: '"Plus Jakarta Sans", sans-serif',
+                fontSize: '13px',
+                color: 'rgba(246,242,236,0.52)',
+                lineHeight: 1.5,
+              }}>
+                {feat}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {/* Ticker */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', height: '120px' }}>
+          <AmountTicker offset={0} speed="animate-ticker" />
+          <AmountTicker offset={-60} speed="animate-ticker-alt" />
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div style={{
+        position: 'relative', zIndex: 10,
+        padding: '0 48px 28px',
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+      }}>
+        <span style={{
+          fontFamily: '"Plus Jakarta Sans", sans-serif',
+          fontSize: '10px', color: 'rgba(255,255,255,0.18)',
+          letterSpacing: '0.03em',
+        }}>
+          © 2026 PayTrack · Données sécurisées · HTTPS
+        </span>
+        <div style={{
+          width: 6, height: 6, borderRadius: '50%',
+          background: '#2E7D5A',
+          boxShadow: '0 0 8px rgba(46,125,90,0.7)',
+        }} />
+      </div>
+    </div>
+  )
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   RIPPLE HOOK
+───────────────────────────────────────────────────────────────────────── */
+function useRipple() {
+  const [ripples, setRipples] = useState([])
+  const addRipple = useCallback((e) => {
+    const rect = e.currentTarget.getBoundingClientRect()
+    const x = e.clientX - rect.left - 24
+    const y = e.clientY - rect.top - 24
+    const id = Date.now()
+    setRipples(r => [...r, { id, x, y }])
+    setTimeout(() => setRipples(r => r.filter(rr => rr.id !== id)), 620)
+  }, [])
+  return [ripples, addRipple]
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   REGISTER LINE INPUT — cream-background variant
+───────────────────────────────────────────────────────────────────────── */
+function RegInput({ id, label, type = 'text', value, onChange, autoComplete, required, extra }) {
+  return (
+    <div className="reg-input-wrap" style={extra || {}}>
+      <input
+        id={id}
+        type={type}
+        autoComplete={autoComplete}
+        required={required}
+        value={value}
+        onChange={onChange}
+        className="reg-input"
+        placeholder=" "
+      />
+      <label htmlFor={id}>{label}</label>
+    </div>
+  )
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   PASSWORD STRENGTH
+───────────────────────────────────────────────────────────────────────── */
+function PasswordStrength({ password }) {
+  if (!password) return null
+  const checks = [
+    { label: '8 caractères', ok: password.length >= 8 },
+    { label: 'Majuscule',    ok: /[A-Z]/.test(password) },
+    { label: 'Chiffre',      ok: /\d/.test(password) },
+    { label: 'Spécial',      ok: /[^A-Za-z0-9]/.test(password) },
+  ]
+  const score = checks.filter(c => c.ok).length
+  const barColors = ['#E0D8CF', '#B82929', '#C46318', 'rgba(255,255,255,0.7)', '#2E7D5A']
+  const scoreLabels = ['', 'Faible', 'Moyen', 'Bon', 'Fort']
+
+  return (
+    <div style={{ marginTop: '10px' }}>
+      <div style={{ display: 'flex', gap: '4px', alignItems: 'center', marginBottom: '8px' }}>
+        {[1,2,3,4].map(i => (
+          <div key={i} style={{
+            flex: 1, height: '3px', borderRadius: '2px',
+            background: i <= score ? barColors[score] : '#E0D8CF',
+            transition: 'background 300ms ease',
+          }} />
+        ))}
+        <span style={{
+          fontFamily: '"Plus Jakarta Sans", sans-serif',
+          fontSize: '10px', fontWeight: 600,
+          color: barColors[score] || '#9B887A',
+          marginLeft: '6px', minWidth: '32px',
+        }}>
+          {scoreLabels[score]}
+        </span>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px' }}>
+        {checks.map(({ label, ok }) => (
+          <div key={label} style={{
+            display: 'flex', alignItems: 'center', gap: '5px',
+            fontFamily: '"Plus Jakarta Sans", sans-serif',
+            fontSize: '10px',
+            color: ok ? '#2E7D5A' : '#9B887A',
+            transition: 'color 200ms',
+          }}>
+            <div style={{
+              width: 12, height: 12, borderRadius: '50%',
+              background: ok ? 'rgba(46,125,90,0.12)' : '#F6F2EC',
+              border: `1px solid ${ok ? 'rgba(46,125,90,0.50)' : '#E0D8CF'}`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              flexShrink: 0,
+              transition: 'all 200ms',
+            }}>
+              {ok && (
+                <svg width="7" height="7" viewBox="0 0 7 7" fill="none">
+                  <path d="M1.5 3.5l1.5 1.5 2.5-2.5" stroke="#2E7D5A" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              )}
+            </div>
+            {label}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   STEP INDICATOR — horizontal ruled lines like a register column header
+───────────────────────────────────────────────────────────────────────── */
+function StepIndicator({ step, total }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+      {Array.from({ length: total }, (_, i) => (
+        <div key={i} style={{
+          height: '3px',
+          borderRadius: '2px',
+          transition: 'all 300ms cubic-bezier(0.16, 1, 0.3, 1)',
+          background: i < step ? 'rgba(255,255,255,0.7)' : i === step ? '#1A2332' : '#E0D8CF',
+          width: i === step ? '28px' : i < step ? '16px' : '8px',
+        }} />
+      ))}
+      <span style={{
+        fontFamily: '"Plus Jakarta Sans", sans-serif',
+        fontSize: '11px',
+        color: '#9B887A',
+        marginLeft: '4px',
+        fontVariantNumeric: 'tabular-nums',
+      }}>
+        {step + 1}/{total}
+      </span>
+    </div>
+  )
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   ACTIVITY PILLS
+───────────────────────────────────────────────────────────────────────── */
+const ACTIVITIES = [
+  'Téléphonie & électronique',
+  'Meubles & équipement',
+  'Alimentation & épicerie',
+  'Mode & vêtements',
+  'École & formation',
+  'Services professionnels',
+  'Autres',
+]
+
+/* ─────────────────────────────────────────────────────────────────────────
+   REGISTER PAGE
+───────────────────────────────────────────────────────────────────────── */
+export default function RegisterPage() {
+  const navigate   = useNavigate()
+  const [step, setStep]       = useState(0)
+  const [showPass, setShowPass] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [ripples, addRipple]  = useRipple()
+  const [form, setForm]       = useState({
+    name: '', email: '', phone: '', password: '',
+    shop_name: '', city: '', activity: '', employees: '1-5',
+  })
+  const up = (k, v) => setForm(f => ({ ...f, [k]: v }))
+
+  const handleStep0 = (e) => {
+    e.preventDefault()
+    setStep(1)
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+    await new Promise(r => setTimeout(r, 1000))
+    setLoading(false)
+    setStep(2)
+  }
+
+  /* ── Success screen ── */
+  if (step === 2) {
+    return (
+      <div style={{ display: 'flex', height: '100dvh', overflow: 'hidden' }}>
+        <LeftPanel />
+        <div style={{
+          flex: 1,
+          height: '100dvh',
+          overflowY: 'auto',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 'clamp(24px, 5vw, 64px)',
+          background: '#F6F2EC',
+          position: 'relative',
+        }}>
+          <MosqueePattern opacity={0.025} />
+          <div
+            className="animate-scale-in"
+            style={{ width: '100%', maxWidth: '380px', textAlign: 'center', position: 'relative', zIndex: 1 }}
+          >
+            {/* Gold seal */}
+            <div style={{
+              width: 72, height: 72,
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 100%)',
+              border: '1.5px solid rgba(255,255,255,0.40)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              margin: '0 auto 24px',
+              boxShadow: '0 0 24px rgba(255,255,255,0.12)',
+            }}>
+              <CheckCircle2 size={32} style={{ color: 'rgba(255,255,255,0.7)' }} />
+            </div>
+
+            <h2 style={{
+              fontFamily: '"DM Serif Display", serif',
+              fontSize: '30px', fontWeight: 700,
+              color: '#1A140C',
+              letterSpacing: '-0.02em',
+              margin: '0 0 10px',
+            }}>
+              Registre ouvert
+            </h2>
+            <p style={{
+              fontFamily: '"DM Serif Display", Georgia, serif',
+              fontStyle: 'italic', fontWeight: 300,
+              fontSize: '15px',
+              color: '#9B887A',
+              margin: '0 0 28px',
+            }}>
+              Bienvenue, {form.name.split(' ')[0]}. Votre registre vous attend.
+            </p>
+
+            {/* Summary card */}
+            <div style={{
+              background: '#FFFFFF',
+              border: '1px solid #E0D8CF',
+              borderRadius: '12px',
+              padding: '20px 24px',
+              marginBottom: '28px',
+              textAlign: 'left',
+            }}>
+              {/* Gold left-border — the "status indicator" visual language */}
+              <div style={{
+                width: '3px', height: '100%',
+                background: 'rgba(255,255,255,0.7)',
+                borderRadius: '2px',
+                position: 'absolute',
+                left: 0, top: 0,
+              }} />
+              {[
+                { label: 'Compte',   value: form.name },
+                { label: 'Email',    value: form.email },
+                { label: 'Boutique', value: form.shop_name },
+                { label: 'Ville',    value: form.city },
+              ].map(({ label, value }, i) => (
+                <div key={label} style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  paddingBottom: i < 3 ? '12px' : 0,
+                  borderBottom: i < 3 ? '1px solid #F6F2EC' : 'none',
+                  marginBottom: i < 3 ? '12px' : 0,
+                }}>
+                  <span style={{
+                    fontFamily: '"Plus Jakarta Sans", sans-serif',
+                    fontSize: '12px', color: '#9B887A',
+                    letterSpacing: '0.05em', textTransform: 'uppercase',
+                  }}>
+                    {label}
+                  </span>
+                  <span style={{
+                    fontFamily: '"Plus Jakarta Sans", sans-serif',
+                    fontSize: '13px', fontWeight: 600,
+                    color: '#1A140C',
+                  }}>
+                    {value}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <button
+              onClick={() => navigate('/login')}
+              style={{
+                width: '100%', height: '48px',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                background: '#1A2332',
+                color: '#FFFFFF',
+                fontFamily: '"Plus Jakarta Sans", sans-serif',
+                fontSize: '14px', fontWeight: 600,
+                border: 'none', borderRadius: '8px', cursor: 'pointer',
+                boxShadow: '0 2px 12px rgba(123,74,30,0.25)',
+                transition: 'transform 180ms, box-shadow 180ms',
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.transform = 'translateY(-1px)'
+                e.currentTarget.style.boxShadow = '0 6px 20px rgba(123,74,30,0.30)'
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.transform = 'translateY(0)'
+                e.currentTarget.style.boxShadow = '0 2px 12px rgba(123,74,30,0.25)'
+              }}
+            >
+              Ouvrir mon registre <ArrowRight size={16} />
+            </button>
+
+            <p style={{
+              marginTop: '14px',
+              fontFamily: '"Plus Jakarta Sans", sans-serif',
+              fontSize: '11px', color: '#9B887A',
+              letterSpacing: '0.02em',
+            }}>
+              Essai gratuit 14 jours · Aucune carte bancaire requise
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  /* ── Form surface styles ── */
+  const formSurface = {
+    display: 'flex',
+    height: '100dvh',
+    overflow: 'hidden',
+  }
+
+  const rightPanel = {
+    flex: 1,
+    height: '100dvh',
+    overflowY: 'auto',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 'clamp(24px, 5vw, 64px)',
+    background: '#F6F2EC',
+    position: 'relative',
+  }
+
+  /* ── Submit button ── */
+  const submitBtn = {
+    width: '100%', height: '48px',
+    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+    background: '#1A2332',
+    color: '#FFFFFF',
+    fontFamily: '"Plus Jakarta Sans", sans-serif',
+    fontSize: '14px', fontWeight: 600,
+    border: 'none', borderRadius: '8px', cursor: 'pointer',
+    position: 'relative', overflow: 'hidden',
+    boxShadow: '0 2px 12px rgba(123,74,30,0.22)',
+    transition: 'transform 180ms ease, box-shadow 180ms ease',
+    marginTop: '8px',
+  }
+
+  return (
+    <div style={formSurface}>
+      <LeftPanel />
+
+      <div style={rightPanel}>
+        <MosqueePattern opacity={0.025} />
+
+        {/* Separator line */}
+        <div
+          aria-hidden="true"
+          className="hidden lg:block"
+          style={{
+            position: 'absolute',
+            left: 0, top: '15%', bottom: '15%',
+            width: '1px',
+            background: 'linear-gradient(to bottom, transparent, rgba(255,255,255,0.14) 30%, rgba(255,255,255,0.14) 70%, transparent)',
+          }}
+        />
+
+        <div style={{ width: '100%', maxWidth: '400px', position: 'relative', zIndex: 1 }}>
+
+          {/* Mobile wordmark */}
+          <Link to="/" className="flex lg:hidden" style={{
+            alignItems: 'center', gap: '10px',
+            textDecoration: 'none', marginBottom: '36px',
+          }}>
+            <div style={{
+              width: 32, height: 32,
+              border: '1.5px solid rgba(123,74,30,0.40)',
+              borderRadius: 7,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
+                <rect x="3" y="2" width="12" height="14" rx="1.5" stroke="#1A2332" strokeWidth="1.2"/>
+                <line x1="6" y1="6" x2="12" y2="6" stroke="rgba(123,74,30,0.60)" strokeWidth="1" strokeLinecap="round"/>
+                <line x1="6" y1="9" x2="12" y2="9" stroke="rgba(123,74,30,0.60)" strokeWidth="1" strokeLinecap="round"/>
+                <rect x="3" y="2" width="2" height="14" rx="1" fill="rgba(123,74,30,0.20)"/>
+              </svg>
+            </div>
+            <span style={{
+              fontFamily: '"DM Serif Display", serif',
+              fontSize: '20px', fontWeight: 700,
+              color: '#1A2332',
+            }}>
+              PayTrack
+            </span>
+          </Link>
+
+          {/* Header */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            marginBottom: '32px',
+          }}>
+            <div>
+              <h1 style={{
+                fontFamily: '"DM Serif Display", serif',
+                fontSize: '27px', fontWeight: 700,
+                color: '#1A140C',
+                letterSpacing: '-0.018em',
+                margin: '0 0 5px',
+                lineHeight: 1.1,
+              }}>
+                {step === 0 ? 'Ouvrir un registre' : 'Votre boutique'}
+              </h1>
+              <p style={{
+                fontFamily: '"DM Serif Display", Georgia, serif',
+                fontStyle: 'italic', fontWeight: 300,
+                fontSize: '14px',
+                color: '#9B887A',
+                margin: 0,
+              }}>
+                {step === 0 ? 'Essai gratuit 14 jours · Sans carte bancaire' : 'Quelques infos sur votre activité'}
+              </p>
+            </div>
+            <StepIndicator step={step} total={2} />
+          </div>
+
+          {/* Gold rule */}
+          <div style={{
+            width: '48px', height: '1px',
+            background: 'rgba(255,255,255,0.45)',
+            marginBottom: '32px',
+          }} />
+
+          {/* ── STEP 0: Personal info ── */}
+          {step === 0 && (
+            <form
+              onSubmit={handleStep0}
+              className="animate-slide-up"
+              style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}
+            >
+              {/* Name */}
+              <RegInput
+                id="reg-name"
+                label="Nom complet"
+                value={form.name}
+                onChange={e => up('name', e.target.value)}
+                autoComplete="name"
+                required
+              />
+
+              {/* Email */}
+              <RegInput
+                id="reg-email"
+                label="Email professionnel"
+                type="email"
+                value={form.email}
+                onChange={e => up('email', e.target.value)}
+                autoComplete="email"
+                required
+              />
+
+              {/* Phone */}
+              <RegInput
+                id="reg-phone"
+                label="Téléphone (optionnel)"
+                type="tel"
+                value={form.phone}
+                onChange={e => up('phone', e.target.value)}
+                autoComplete="tel"
+              />
+
+              {/* Password */}
+              <div className="reg-input-wrap" style={{ position: 'relative' }}>
+                <input
+                  id="reg-password"
+                  type={showPass ? 'text' : 'password'}
+                  autoComplete="new-password"
+                  required
+                  minLength={8}
+                  value={form.password}
+                  onChange={e => up('password', e.target.value)}
+                  className="reg-input"
+                  style={{ paddingRight: '28px' }}
+                  placeholder=" "
+                />
+                <label htmlFor="reg-password">Mot de passe</label>
+                <button
+                  type="button"
+                  className="reg-pass-toggle"
+                  onClick={() => setShowPass(v => !v)}
+                  aria-label={showPass ? 'Masquer' : 'Afficher'}
+                >
+                  {showPass ? <EyeOff size={14} /> : <Eye size={14} />}
+                </button>
+                <PasswordStrength password={form.password} />
+              </div>
+
+              {/* Submit */}
+              <button
+                type="submit"
+                disabled={!form.name || !form.email || form.password.length < 8}
+                style={{
+                  ...submitBtn,
+                  opacity: (!form.name || !form.email || form.password.length < 8) ? 0.5 : 1,
+                  cursor: (!form.name || !form.email || form.password.length < 8) ? 'not-allowed' : 'pointer',
+                }}
+                onClick={(!form.name || !form.email || form.password.length < 8) ? undefined : addRipple}
+              >
+                {ripples.map(r => (
+                  <span key={r.id} style={{
+                    position: 'absolute',
+                    borderRadius: '50%',
+                    width: '48px', height: '48px',
+                    background: 'rgba(255,255,255,0.18)',
+                    left: r.x, top: r.y,
+                    pointerEvents: 'none',
+                    transform: 'scale(0)',
+                    animation: 'ripple 600ms ease-out forwards',
+                  }} />
+                ))}
+                Continuer <ArrowRight size={15} />
+              </button>
+
+              <p style={{
+                textAlign: 'center',
+                fontFamily: '"Plus Jakarta Sans", sans-serif',
+                fontSize: '13px', color: '#9B887A',
+                margin: 0,
+              }}>
+                Déjà inscrit ?{' '}
+                <Link to="/login" style={{
+                  color: '#1A2332', fontWeight: 600,
+                  textDecoration: 'none',
+                  borderBottom: '1px solid rgba(123,74,30,0.30)',
+                  paddingBottom: '1px',
+                }}>
+                  Se connecter
+                </Link>
+              </p>
+            </form>
+          )}
+
+          {/* ── STEP 1: Boutique info ── */}
+          {step === 1 && (
+            <form
+              onSubmit={handleSubmit}
+              className="animate-slide-up"
+              style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}
+            >
+              {/* Shop name */}
+              <RegInput
+                id="reg-shop"
+                label="Nom de la boutique"
+                value={form.shop_name}
+                onChange={e => up('shop_name', e.target.value)}
+                autoComplete="organization"
+                required
+              />
+
+              {/* City */}
+              <RegInput
+                id="reg-city"
+                label="Ville"
+                value={form.city}
+                onChange={e => up('city', e.target.value)}
+                autoComplete="address-level2"
+                required
+              />
+
+              {/* Activity */}
+              <div>
+                <p style={{
+                  fontFamily: '"Plus Jakarta Sans", sans-serif',
+                  fontSize: '11px', fontWeight: 600,
+                  letterSpacing: '0.08em', textTransform: 'uppercase',
+                  color: '#9B887A',
+                  margin: '0 0 12px',
+                }}>
+                  Secteur d'activité
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  {ACTIVITIES.map(act => (
+                    <button
+                      key={act}
+                      type="button"
+                      onClick={() => up('activity', act)}
+                      style={{
+                        padding: '9px 12px',
+                        borderRadius: '8px',
+                        fontFamily: '"Plus Jakarta Sans", sans-serif',
+                        fontSize: '12px', fontWeight: 500,
+                        textAlign: 'left',
+                        cursor: 'pointer',
+                        transition: 'all 160ms ease',
+                        border: form.activity === act
+                          ? '1.5px solid #1A2332'
+                          : '1.5px solid #E0D8CF',
+                        background: form.activity === act
+                          ? 'rgba(123,74,30,0.08)'
+                          : '#FFFFFF',
+                        color: form.activity === act
+                          ? '#1A2332'
+                          : '#5C4A36',
+                        ...(form.activity === act ? {
+                          boxShadow: '0 0 0 3px rgba(255,255,255,0.12)',
+                        } : {}),
+                      }}
+                    >
+                      {act}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Team size */}
+              <div>
+                <p style={{
+                  fontFamily: '"Plus Jakarta Sans", sans-serif',
+                  fontSize: '11px', fontWeight: 600,
+                  letterSpacing: '0.08em', textTransform: 'uppercase',
+                  color: '#9B887A',
+                  margin: '0 0 12px',
+                }}>
+                  Taille de l'équipe
+                </p>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  {['1-5','6-20','21-50','50+'].map(size => (
+                    <button
+                      key={size}
+                      type="button"
+                      onClick={() => up('employees', size)}
+                      style={{
+                        flex: 1,
+                        padding: '10px 0',
+                        borderRadius: '8px',
+                        fontFamily: '"JetBrains Mono", monospace',
+                        fontSize: '12px', fontWeight: 600,
+                        cursor: 'pointer',
+                        transition: 'all 160ms ease',
+                        border: form.employees === size
+                          ? '1.5px solid rgba(255,255,255,0.7)'
+                          : '1.5px solid #E0D8CF',
+                        background: form.employees === size
+                          ? 'rgba(255,255,255,0.10)'
+                          : '#FFFFFF',
+                        color: form.employees === size
+                          ? 'rgba(255,255,255,0.7)'
+                          : '#9B887A',
+                      }}
+                    >
+                      {size}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Terms */}
+              <div style={{
+                background: '#FFFFFF',
+                border: '1px solid #E0D8CF',
+                borderRadius: '8px',
+                padding: '12px 14px',
+                fontFamily: '"Plus Jakarta Sans", sans-serif',
+                fontSize: '11px',
+                color: '#9B887A',
+                lineHeight: 1.6,
+              }}>
+                En créant un compte, vous acceptez nos{' '}
+                <a href="#" style={{ color: '#1A2332', textDecoration: 'none', borderBottom: '1px solid rgba(123,74,30,0.25)' }}>
+                  Conditions d'utilisation
+                </a>
+                {' '}et notre{' '}
+                <a href="#" style={{ color: '#1A2332', textDecoration: 'none', borderBottom: '1px solid rgba(123,74,30,0.25)' }}>
+                  Politique de confidentialité
+                </a>.
+              </div>
+
+              {/* Actions */}
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => setStep(0)}
+                  style={{
+                    height: '48px',
+                    padding: '0 18px',
+                    display: 'flex', alignItems: 'center', gap: '6px',
+                    background: '#FFFFFF',
+                    border: '1.5px solid #E0D8CF',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontFamily: '"Plus Jakarta Sans", sans-serif',
+                    fontSize: '13px', fontWeight: 500,
+                    color: '#5C4A36',
+                    flexShrink: 0,
+                    transition: 'border-color 160ms, background 160ms',
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.borderColor = '#C5B9AC'
+                    e.currentTarget.style.background = '#FBF8F4'
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.borderColor = '#E0D8CF'
+                    e.currentTarget.style.background = '#FFFFFF'
+                  }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <path d="M8.5 2.5L4 7l4.5 4.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  Retour
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={loading || !form.shop_name || !form.city}
+                  onClick={(loading || !form.shop_name || !form.city) ? undefined : addRipple}
+                  style={{
+                    ...submitBtn,
+                    flex: 1, marginTop: 0,
+                    opacity: (loading || !form.shop_name || !form.city) ? 0.55 : 1,
+                    cursor: (loading || !form.shop_name || !form.city) ? 'not-allowed' : 'pointer',
+                    background: '#2E7D5A',
+                    boxShadow: '0 2px 12px rgba(46,125,90,0.22)',
+                  }}
+                  onMouseEnter={e => {
+                    if (!loading && form.shop_name && form.city) {
+                      e.currentTarget.style.transform = 'translateY(-1px)'
+                      e.currentTarget.style.boxShadow = '0 6px 20px rgba(46,125,90,0.28)'
+                    }
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.transform = 'translateY(0)'
+                    e.currentTarget.style.boxShadow = '0 2px 12px rgba(46,125,90,0.22)'
+                  }}
+                >
+                  {ripples.map(r => (
+                    <span key={r.id} style={{
+                      position: 'absolute',
+                      borderRadius: '50%',
+                      width: '48px', height: '48px',
+                      background: 'rgba(255,255,255,0.20)',
+                      left: r.x, top: r.y,
+                      pointerEvents: 'none',
+                      transform: 'scale(0)',
+                      animation: 'ripple 600ms ease-out forwards',
+                    }} />
+                  ))}
+                  {loading ? (
+                    <span style={{
+                      width: 16, height: 16,
+                      border: '2px solid rgba(255,255,255,0.25)',
+                      borderTopColor: '#FFFFFF',
+                      borderRadius: '50%',
+                      animation: 'spin 700ms linear infinite',
+                      display: 'inline-block',
+                    }} />
+                  ) : (
+                    <>Créer mon registre <ArrowRight size={15} /></>
+                  )}
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+      </div>
+
+      <style>{`
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+        @keyframes ripple {
+          0%   { transform: scale(0); opacity: 0.35; }
+          100% { transform: scale(4); opacity: 0; }
+        }
+      `}</style>
+    </div>
+  )
+}
