@@ -1,11 +1,12 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { QrCode, Search, ArrowRight, CheckCircle2, AlertCircle, Hash } from 'lucide-react'
+import { QrCode, Search, ArrowRight, CheckCircle2, AlertCircle, Hash, Camera, CameraOff } from 'lucide-react'
+import { Html5Qrcode } from 'html5-qrcode'
 import { MOCK_SALES, formatAmount, formatDate, getProgressPercent } from '@/lib/mockData'
 import StatusBadge from '@/components/ui/StatusBadge'
 import ProgressBar from '@/components/ui/ProgressBar'
 
-const BLUE    = '#1A56DB'
+const BLUE = '#1D6FE8'
 const SUCCESS = '#16A34A'
 
 function initials(name = '') {
@@ -17,8 +18,61 @@ export default function QRScannerPage() {
   const [result, setResult] = useState(null)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [scanning, setScanning] = useState(false)
+  const [cameraError, setCameraError] = useState('')
   const navigate = useNavigate()
   const inputRef = useRef(null)
+  const scannerRef = useRef(null)
+
+  const lookup = (code) => {
+    const found = MOCK_SALES.find(
+      s => s.qr_uuid === code.trim() ||
+           s.reference.toLowerCase() === code.trim().toLowerCase()
+    )
+    if (found) {
+      setResult(found)
+      setError('')
+    } else {
+      setError('Aucun dossier trouvé pour ce QR Code ou cette référence.')
+      setResult(null)
+    }
+  }
+
+  const startScanner = async () => {
+    setCameraError('')
+    try {
+      const scanner = new Html5Qrcode('qr-reader')
+      scannerRef.current = scanner
+      await scanner.start(
+        { facingMode: 'environment' },
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        (decodedText) => {
+          lookup(decodedText)
+          stopScanner()
+        },
+        () => {}
+      )
+      setScanning(true)
+    } catch (err) {
+      setCameraError('Impossible d\'accéder à la caméra. Vérifiez les permissions.')
+      setScanning(false)
+    }
+  }
+
+  const stopScanner = async () => {
+    if (scannerRef.current) {
+      try {
+        await scannerRef.current.stop()
+        scannerRef.current.clear()
+      } catch {}
+      scannerRef.current = null
+    }
+    setScanning(false)
+  }
+
+  useEffect(() => {
+    return () => { stopScanner() }
+  }, [])
 
   const handleSearch = async e => {
     e?.preventDefault()
@@ -26,16 +80,8 @@ export default function QRScannerPage() {
     setLoading(true)
     setError('')
     setResult(null)
-    await new Promise(r => setTimeout(r, 500))
-    const found = MOCK_SALES.find(
-      s => s.qr_uuid === input.trim() ||
-           s.reference.toLowerCase() === input.trim().toLowerCase()
-    )
-    if (found) {
-      setResult(found)
-    } else {
-      setError('Aucun dossier trouvé pour ce QR Code ou cette référence.')
-    }
+    await new Promise(r => setTimeout(r, 300))
+    lookup(input)
     setLoading(false)
   }
 
@@ -44,7 +90,6 @@ export default function QRScannerPage() {
   return (
     <div className="max-w-6xl mx-auto space-y-5 pb-8">
 
-      {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Scanner un QR Code</h1>
         <p className="text-sm text-gray-500 mt-0.5">
@@ -52,40 +97,46 @@ export default function QRScannerPage() {
         </p>
       </div>
 
-      {/* Zone scan simulée */}
+      {/* Zone caméra */}
       <div className="card p-6 text-center">
-        <div className="relative w-52 h-52 mx-auto mb-5">
-          <div className="absolute inset-0 rounded-2xl bg-gray-50 border border-gray-200" />
+        <div id="qr-reader" style={{ width: '100%', maxWidth: 320, margin: '0 auto', borderRadius: 12, overflow: 'hidden' }} />
 
-          {/* Coins guides animés */}
-          {[
-            { className: 'top-0 left-0 border-t-2 border-l-2 rounded-tl-xl' },
-            { className: 'top-0 right-0 border-t-2 border-r-2 rounded-tr-xl' },
-            { className: 'bottom-0 left-0 border-b-2 border-l-2 rounded-bl-xl' },
-            { className: 'bottom-0 right-0 border-b-2 border-r-2 rounded-br-xl' },
-          ].map((c, i) => (
-            <div
-              key={i}
-              className={`absolute w-7 h-7 ${c.className}`}
-              style={{ borderColor: BLUE }}
-            />
-          ))}
-
-          {/* Ligne de scan animée */}
-          <div
-            className="absolute left-4 right-4 h-0.5 rounded-full opacity-60 animate-bounce"
-            style={{ top: '50%', background: BLUE }}
-          />
-
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-            <QrCode size={38} style={{ color: `${BLUE}60` }} />
-            <p className="text-xs text-gray-400 text-center px-4 leading-relaxed">
-              Caméra non disponible<br />en mode démo
-            </p>
+        {!scanning && (
+          <div className="relative w-52 h-52 mx-auto mb-5">
+            <div className="absolute inset-0 rounded-2xl bg-gray-50 border border-gray-200" />
+            {[
+              { className: 'top-0 left-0 border-t-2 border-l-2 rounded-tl-xl' },
+              { className: 'top-0 right-0 border-t-2 border-r-2 rounded-tr-xl' },
+              { className: 'bottom-0 left-0 border-b-2 border-l-2 rounded-bl-xl' },
+              { className: 'bottom-0 right-0 border-b-2 border-r-2 rounded-br-xl' },
+            ].map((c, i) => (
+              <div key={i} className={`absolute w-7 h-7 ${c.className}`} style={{ borderColor: BLUE }} />
+            ))}
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+              <QrCode size={38} style={{ color: `${BLUE}60` }} />
+              <p className="text-xs text-gray-400 text-center px-4 leading-relaxed">
+                Appuyez sur le bouton<br />pour activer la caméra
+              </p>
+            </div>
           </div>
-        </div>
-        <p className="text-sm text-gray-500">
-          Utilisez un lecteur QR externe ou saisissez la référence ci-dessous
+        )}
+
+        {cameraError && (
+          <div className="flex items-center justify-center gap-2 mt-3 text-sm text-red-600">
+            <AlertCircle size={14} />
+            {cameraError}
+          </div>
+        )}
+
+        <button
+          onClick={scanning ? stopScanner : startScanner}
+          className="btn btn-primary gap-2 mt-4"
+        >
+          {scanning ? <><CameraOff size={16} /> Arrêter la caméra</> : <><Camera size={16} /> Activer la caméra</>}
+        </button>
+
+        <p className="text-xs text-gray-400 mt-3">
+          Ou saisissez la référence manuellement ci-dessous
         </p>
       </div>
 
@@ -139,12 +190,12 @@ export default function QRScannerPage() {
 
           <div className="divide-y divide-gray-100 mb-5">
             {[
-              { label: 'Référence', value: result.reference,                  mono: true  },
-              { label: 'Client',    value: result.client.name                              },
-              { label: 'Article',   value: result.article.name                             },
-              { label: 'Total',     value: formatAmount(result.total_amount),  amount: true },
-              { label: 'Payé',      value: formatAmount(result.paid_amount),   amount: true },
-              { label: 'Restant',   value: formatAmount(result.remaining_amount), amount: true },
+              { label: 'Référence', value: result.reference, mono: true },
+              { label: 'Client', value: result.client.name },
+              { label: 'Article', value: result.article.name },
+              { label: 'Total', value: formatAmount(result.total_amount), amount: true },
+              { label: 'Payé', value: formatAmount(result.paid_amount), amount: true },
+              { label: 'Restant', value: formatAmount(result.remaining_amount), amount: true },
             ].map(({ label, value, mono, amount: isAmount }) => (
               <div key={label} className="flex items-center justify-between py-2.5">
                 <span className="text-sm text-gray-500">{label}</span>
@@ -166,10 +217,7 @@ export default function QRScannerPage() {
             <ProgressBar percent={pct} status={result.status} />
           </div>
 
-          <Link
-            to={`/ventes/${result.id}`}
-            className="btn btn-primary w-full justify-center gap-2"
-          >
+          <Link to={`/ventes/${result.id}`} className="btn btn-primary w-full justify-center gap-2">
             Ouvrir le dossier complet <ArrowRight size={15} />
           </Link>
         </div>
