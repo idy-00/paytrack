@@ -50,37 +50,27 @@ export default function ClientDashboard() {
         <h1 className="text-2xl font-bold text-ink">{user?.name}</h1>
       </div>
 
-      {/* Hero card — fond navy ──────────────────────────────────────── */}
-      <div className="rounded-2xl bg-navy text-white p-6 relative overflow-hidden">
-        {/* Decorative blobs */}
-        <div
-          className="absolute top-0 right-0 w-52 h-52 rounded-full -translate-y-1/3 translate-x-1/3 pointer-events-none"
-          style={{ background: 'rgba(26,86,219,0.22)' }}
-          aria-hidden="true"
-        />
-        <div
-          className="absolute bottom-0 left-0 w-36 h-36 rounded-full translate-y-1/2 -translate-x-1/4 pointer-events-none"
-          style={{ background: 'rgba(255,255,255,0.05)' }}
-          aria-hidden="true"
-        />
+      {/* Hero card — white + blue accent ──────────────────────────── */}
+      <div className="rounded-2xl bg-white p-6 relative overflow-hidden"
+        style={{ border: '1px solid #E8E4DD', borderTop: '3px solid #1D6FE8', boxShadow: '0 2px 12px rgba(29,111,232,0.08)' }}>
 
         <div className="relative z-10">
-          <p className="text-white/60 text-sm mb-2">Total restant à payer</p>
+          <p className="text-sm mb-2" style={{ color: '#6B7280' }}>Total restant à payer</p>
 
-          {/* Montant hero — JetBrains Mono via .amount */}
-          <div className="amount text-[40px] font-bold leading-none text-white mb-1">
+          {/* Montant hero — via .amount */}
+          <div className="amount text-[40px] font-bold leading-none mb-1" style={{ color: '#1A1A1A' }}>
             {formatAmount(totalDue)}
           </div>
 
-          <p className="text-sm font-mono text-white/50 mt-1.5">
+          <p className="text-sm font-mono mt-1.5" style={{ color: '#6B7280' }}>
             {formatAmount(totalPaid)} réglé sur {formatAmount(totalAmount)}
           </p>
 
-          {/* Progress bar blanc / transparent */}
+          {/* Progress bar */}
           <div className="mt-5">
             <div
               className="h-1.5 rounded-full overflow-hidden"
-              style={{ background: 'rgba(255,255,255,0.15)' }}
+              style={{ background: '#EEF4FE' }}
               role="progressbar"
               aria-valuenow={overallPct}
               aria-valuemin={0}
@@ -88,10 +78,10 @@ export default function ClientDashboard() {
             >
               <div
                 className="h-full rounded-full transition-all duration-700"
-                style={{ width: `${overallPct}%`, background: 'rgba(255,255,255,0.85)' }}
+                style={{ width: `${overallPct}%`, background: '#1D6FE8' }}
               />
             </div>
-            <p className="text-white/40 text-xs mt-1.5">{overallPct}% réglé</p>
+            <p className="text-xs mt-1.5" style={{ color: '#6B7280' }}>{overallPct}% réglé</p>
           </div>
         </div>
       </div>

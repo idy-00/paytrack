@@ -31,7 +31,7 @@ export default function AppLayout({ children }) {
 
       {/* Sidebar */}
       <aside
-        style={{ background: '#0F2744', width: 220 }}
+        style={{ background: '#FFFFFF', borderRight: '1px solid #E8E4DD', width: 220 }}
         className={`fixed inset-y-0 left-0 z-30 flex flex-col flex-shrink-0
           transition-transform duration-200
           ${open ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 lg:sticky lg:top-0 lg:h-screen`}
@@ -39,15 +39,15 @@ export default function AppLayout({ children }) {
       >
         {/* Logo */}
         <div className="flex items-center gap-2.5 px-5 py-5"
-          style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+          style={{ borderBottom: '1px solid #E8E4DD' }}>
           <Logo size={26} />
-          <span className="font-bold text-white text-lg leading-none">PayTrack</span>
+          <span className="font-bold text-lg leading-none" style={{ color: '#1A1A1A' }}>PayTrack</span>
         </div>
 
         {/* Shop name */}
         {user?.shop && (
-          <div className="px-5 py-2.5" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-            <p className="text-xs font-medium truncate" style={{ color: 'rgba(255,255,255,0.4)' }}>
+          <div className="px-5 py-2.5" style={{ borderBottom: '1px solid #E8E4DD' }}>
+            <p className="text-xs font-medium truncate" style={{ color: '#6B7280' }}>
               {user.shop}
             </p>
           </div>
@@ -65,18 +65,18 @@ export default function AppLayout({ children }) {
         </nav>
 
         {/* User */}
-        <div className="px-3 py-4" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+        <div className="px-3 py-4" style={{ borderTop: '1px solid #E8E4DD' }}>
           <div className="flex items-center gap-2.5 px-2 py-1.5 mb-1">
-            <div className="w-7 h-7 rounded-full bg-blue-600 text-white text-xs font-bold
-                            flex items-center justify-center flex-shrink-0">
+            <div className="w-7 h-7 rounded-full text-white text-xs font-bold
+                            flex items-center justify-center flex-shrink-0"
+              style={{ background: '#1D6FE8' }}>
               {initials(user?.name)}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-white truncate leading-none mb-0.5">
+              <p className="text-sm font-semibold truncate leading-none mb-0.5" style={{ color: '#1A1A1A' }}>
                 {user?.name}
               </p>
-              <p className="text-xs capitalize truncate"
-                style={{ color: 'rgba(255,255,255,0.38)' }}>
+              <p className="text-xs capitalize truncate" style={{ color: '#6B7280' }}>
                 {user?.role?.replace('_', ' ')}
               </p>
             </div>
@@ -91,10 +91,11 @@ export default function AppLayout({ children }) {
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Mobile topbar */}
-        <header className="lg:hidden bg-white border-b border-ash px-4 h-14 flex items-center justify-between sticky top-0 z-10">
+        <header className="lg:hidden bg-white px-4 h-14 flex items-center justify-between sticky top-0 z-10"
+          style={{ borderBottom: '1px solid #E8E4DD' }}>
           <div className="flex items-center gap-2">
             <Logo size={22} />
-            <span className="font-bold text-navy">PayTrack</span>
+            <span className="font-bold" style={{ color: '#1A1A1A' }}>PayTrack</span>
           </div>
           <div className="flex items-center gap-1">
             <button className="btn btn-ghost btn-icon" aria-label="Notifications">

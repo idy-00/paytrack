@@ -9,8 +9,7 @@
   html {
     font-family: 'Geist', system-ui, sans-serif;
     font-size: 14px;
-    /* #F4F6FA — légèrement bleuté, évite le blanc pur agressif */
-    background: #F4F6FA;
+    background: #F7F5F0;
     color: #111827;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -18,7 +17,7 @@
   }
 
   :focus-visible {
-    outline: 2px solid #1A56DB;
+    outline: 2px solid #1D6FE8;
     outline-offset: 2px;
     border-radius: 4px;
   }
@@ -47,10 +46,10 @@
   .btn:disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
 
   .btn-primary {
-    background: #1A56DB; color: white; border-color: #1A56DB;
-    box-shadow: 0 1px 2px rgba(26,86,219,0.2);
+    background: #1D6FE8; color: white; border-color: #1D6FE8;
+    box-shadow: 0 1px 2px rgba(29,111,232,0.2);
   }
-  .btn-primary:hover { background: #1447C0; border-color: #1447C0; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(26,86,219,0.3); }
+  .btn-primary:hover { background: #1560d0; border-color: #1560d0; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(29,111,232,0.3); }
   .btn-primary:active { transform: none; }
 
   .btn-secondary {
@@ -79,13 +78,13 @@
     transition: border-color 0.15s, box-shadow 0.15s;
   }
   .input::placeholder { color: #9CA3AF; }
-  .input:focus { outline: none; border-color: #1A56DB; box-shadow: 0 0 0 3px rgba(26,86,219,0.12); }
+  .input:focus { outline: none; border-color: #1D6FE8; box-shadow: 0 0 0 3px rgba(29,111,232,0.12); }
   .input:disabled { background: #F9FAFB; color: #9CA3AF; cursor: not-allowed; }
 
   /* Card */
   .card {
     background: white; border-radius: 12px;
-    border: 1px solid #E5E7EB;
+    border: 1px solid #E8E4DD;
     box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.03);
   }
 
@@ -125,14 +124,14 @@
   .nav-item {
     display: flex; align-items: center; gap: 9px;
     padding: 8px 10px; border-radius: 8px;
-    font-size: 14px; font-weight: 500; color: #9CA3AF;
+    font-size: 14px; font-weight: 500; color: #6B7280;
     cursor: pointer; transition: all 0.1s; text-decoration: none;
     border: none; background: none; width: 100%; text-align: left;
   }
-  .nav-item:hover { background: rgba(255,255,255,0.06); color: #E5E7EB; }
-  .nav-item.active { background: rgba(255,255,255,0.1); color: white; font-weight: 600; }
+  .nav-item:hover { background: #F7F5F0; color: #1A1A1A; }
+  .nav-item.active { background: #EEF4FE; color: #1D6FE8; font-weight: 600; }
   .nav-item.active svg { opacity: 1; }
-  .nav-item svg { opacity: 0.6; flex-shrink: 0; }
+  .nav-item svg { opacity: 0.7; flex-shrink: 0; }
 
   /* Progress */
   .progress-track {
@@ -156,7 +155,7 @@
   /* Section label */
   .section-eyebrow {
     font-size: 12px; font-weight: 700; text-transform: uppercase;
-    letter-spacing: 0.08em; color: #1A56DB;
+    letter-spacing: 0.08em; color: #1D6FE8;
   }
 
   /* Divider */
@@ -172,22 +171,22 @@
 /* Hero gradient de fond — donne de la profondeur sans surcharger */
 .hero-bg {
   background:
-    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(26,86,219,0.06) 0%, transparent 70%),
-    radial-gradient(ellipse 60% 50% at 80% 100%, rgba(15,39,68,0.04) 0%, transparent 60%),
-    #F4F6FA;
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(29,111,232,0.06) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 50% at 80% 100%, rgba(15,39,68,0.03) 0%, transparent 60%),
+    #F7F5F0;
 }
 
 /* Pill badge hero */
 .hero-pill {
   display: inline-flex; align-items: center; gap: 7px;
   padding: 5px 14px; border-radius: 99px;
-  background: rgba(26,86,219,0.08);
-  border: 1px solid rgba(26,86,219,0.18);
-  font-size: 13px; font-weight: 600; color: #1A56DB;
+  background: rgba(29,111,232,0.08);
+  border: 1px solid rgba(29,111,232,0.18);
+  font-size: 13px; font-weight: 600; color: #1D6FE8;
 }
 .hero-pill-dot {
   width: 7px; height: 7px; border-radius: 50%;
-  background: #1A56DB;
+  background: #1D6FE8;
   animation: pulse 2s ease-in-out infinite;
 }
 @keyframes pulse {

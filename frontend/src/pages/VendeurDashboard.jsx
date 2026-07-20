@@ -16,7 +16,7 @@ import StatusBadge from '@/components/ui/StatusBadge'
 import ProgressBar from '@/components/ui/ProgressBar'
 
 /* ── palette ── */
-const BLUE    = '#1A56DB'
+const BLUE    = '#1D6FE8'
 const INK     = '#111827'
 const SUCCESS = '#16A34A'
 const WARNING = '#D97706'
@@ -59,11 +59,12 @@ function Avatar({ name, size = 32 }) {
 function ChartTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null
   return (
-    <div className="rounded-xl px-3 py-2 text-xs bg-[#0F2744] border border-blue-900/40">
-      <p className="text-blue-300 mb-1">{label}</p>
-      <p className="amount font-bold text-blue-400">{formatAmount(payload[0]?.value)}</p>
+    <div className="rounded-xl px-3 py-2 text-xs bg-white border"
+      style={{ borderColor: '#E8E4DD', boxShadow: '0 4px 16px rgba(0,0,0,0.10)' }}>
+      <p className="mb-1" style={{ color: '#6B7280' }}>{label}</p>
+      <p className="amount font-bold" style={{ color: BLUE }}>{formatAmount(payload[0]?.value)}</p>
       {payload[1] && (
-        <p className="text-blue-300/70 mt-0.5">Obj. {formatAmount(payload[1]?.value)}</p>
+        <p className="mt-0.5" style={{ color: '#9CA3AF' }}>Obj. {formatAmount(payload[1]?.value)}</p>
       )}
     </div>
   )
@@ -127,7 +128,7 @@ function UpcomingSchedule() {
               to={`/ventes/${sc.sale.id}`}
               className="flex items-center gap-3 px-3 py-2.5 rounded-lg border hover:bg-gray-50 transition-colors"
               style={{
-                borderColor: late ? `${DANGER}30` : '#E5E7EB',
+                borderColor: late ? `${DANGER}30` : '#E8E4DD',
                 background: late ? `${DANGER}05` : 'white',
               }}
             >

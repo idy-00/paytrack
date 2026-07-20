@@ -5,9 +5,10 @@ export default {
     extend: {
       colors: {
         // ── Core palette ──────────────────────────────────────────
-        navy:    '#0F2744',   // titre foncé, sidebar
-        blue:    '#1A56DB',   // CTA principal, liens actifs
+        navy:    '#0F2744',   // kept for compat
+        blue:    '#1D6FE8',   // CTA principal, liens actifs
         sky:     '#EFF6FF',   // fond clair bleuté
+        blueL:   '#EEF4FE',   // nav-item active bg
         // ── Semantic ──────────────────────────────────────────────
         success: '#16A34A',
         warning: '#D97706',
@@ -19,7 +20,7 @@ export default {
         pale:    '#9CA3AF',
         ash:     '#E5E7EB',
         fog:     '#F3F4F6',
-        snow:    '#F9FAFB',
+        snow:    '#F7F5F0',
         white:   '#FFFFFF',
         // ── Status badges ─────────────────────────────────────────
         'status-active-bg':  '#DBEAFE',

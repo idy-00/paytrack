@@ -26,7 +26,7 @@ function PasswordStrength({ password }) {
       <div className="flex gap-1 flex-1">
         {[1, 2, 3, 4].map(i => (
           <div key={i} className="h-1 flex-1 rounded-full transition-colors duration-200"
-            style={{ background: i <= score ? color : '#E5E7EB' }} />
+            style={{ background: i <= score ? color : '#E8E4DD' }} />
         ))}
       </div>
       <span className="text-xs font-semibold w-8 text-right" style={{ color }}>{label}</span>
@@ -44,67 +44,23 @@ function Stepper({ step }) {
           {/* Circle */}
           <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all"
             style={{
-              background: i <= step ? '#0F2744' : '#E5E7EB',
+              background: i <= step ? '#1D6FE8' : '#E8E4DD',
               color:      i <= step ? 'white'   : '#9CA3AF',
             }}>
             {i < step ? <CheckCircle2 size={14} strokeWidth={2.5} /> : i + 1}
           </div>
           {/* Label */}
           <span className="text-sm font-medium mr-2 transition-colors"
-            style={{ color: i === step ? '#111827' : '#9CA3AF' }}>
+            style={{ color: i === step ? '#1A1A1A' : '#9CA3AF' }}>
             {label}
           </span>
           {/* Connector */}
           {i < steps.length - 1 && (
             <div className="w-10 h-px mr-2 transition-colors"
-              style={{ background: i < step ? '#0F2744' : '#E5E7EB' }} />
+              style={{ background: i < step ? '#1D6FE8' : '#E8E4DD' }} />
           )}
         </div>
       ))}
-    </div>
-  )
-}
-
-// ── Left panel ───────────────────────────────────────────────────────
-function LeftPanel() {
-  return (
-    <div className="hidden lg:flex w-[45%] flex-shrink-0 flex-col justify-between p-12 relative overflow-hidden"
-      style={{ background: '#0F2744' }}>
-      <div className="absolute inset-0 grid-dot-bg opacity-[0.04] pointer-events-none" />
-
-      {/* Logo */}
-      <div className="relative flex items-center gap-3">
-        <Logo size={28} />
-        <Link to="/" className="font-bold text-xl text-white">PayTrack</Link>
-      </div>
-
-      {/* Copy */}
-      <div className="relative">
-        <h1 className="text-4xl font-extrabold text-white leading-tight mb-5 tracking-tight">
-          Rejoignez +200
-          <br />
-          <span className="text-blue-200">commerçants actifs.</span>
-        </h1>
-        <p className="text-blue-200 text-base leading-relaxed mb-9 max-w-xs">
-          14 jours gratuits. Sans carte bancaire. Annulez à tout moment.
-        </p>
-        <ul className="space-y-3">
-          {[
-            'Essai gratuit 14 jours sans carte bancaire',
-            'QR Code unique par dossier en 1 clic',
-            'Reçus PDF envoyés automatiquement',
-            'Wave, Orange Money, Free Money',
-            'Rappels SMS et WhatsApp automatiques',
-          ].map(item => (
-            <li key={item} className="flex items-center gap-3">
-              <CheckCircle2 size={16} className="text-blue-400 flex-shrink-0" />
-              <span className="text-sm text-blue-100">{item}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      <p className="relative text-xs text-blue-300 opacity-60">© 2026 PayTrack · Sécurisé · HTTPS</p>
     </div>
   )
 }
@@ -130,15 +86,15 @@ function DoneScreen({ form }) {
       <div className="w-16 h-16 bg-green-50 rounded-2xl flex items-center justify-center mx-auto mb-5">
         <CheckCircle2 size={32} className="text-success" />
       </div>
-      <h2 className="text-2xl font-bold text-ink mb-2">Compte créé !</h2>
-      <p className="text-muted text-sm mb-1.5">
-        Bienvenue, <strong className="text-ink">{form.name.split(' ')[0]}</strong>.
+      <h2 className="text-2xl font-bold mb-2" style={{ color: '#1A1A1A' }}>Compte créé !</h2>
+      <p className="text-sm mb-1.5" style={{ color: '#6B7280' }}>
+        Bienvenue, <strong style={{ color: '#1A1A1A' }}>{form.name.split(' ')[0]}</strong>.
       </p>
-      <p className="text-muted text-sm mb-7">
-        Email de confirmation envoyé à <strong className="text-ink">{form.email}</strong>.
+      <p className="text-sm mb-7" style={{ color: '#6B7280' }}>
+        Email de confirmation envoyé à <strong style={{ color: '#1A1A1A' }}>{form.email}</strong>.
       </p>
 
-      <div className="bg-fog rounded-xl p-4 mb-7 text-left space-y-2.5">
+      <div className="rounded-xl p-4 mb-7 text-left space-y-2.5" style={{ background: '#F7F5F0' }}>
         {[
           ['Nom',      form.name],
           ['Email',    form.email],
@@ -147,8 +103,8 @@ function DoneScreen({ form }) {
           ['Secteur',  form.activity || '—'],
         ].map(([label, value]) => (
           <div key={label} className="flex justify-between text-sm">
-            <span className="text-muted">{label}</span>
-            <span className="font-semibold text-ink">{value}</span>
+            <span style={{ color: '#6B7280' }}>{label}</span>
+            <span className="font-semibold" style={{ color: '#1A1A1A' }}>{value}</span>
           </div>
         ))}
       </div>
@@ -197,10 +153,13 @@ export default function RegisterPage() {
 
   if (done) {
     return (
-      <div className="h-dvh flex overflow-hidden bg-white">
-        <LeftPanel />
-        <div className="flex-1 overflow-y-auto bg-snow flex items-center justify-center p-6 lg:p-12">
-          <div className="w-full max-w-[420px]">
+      <div className="min-h-dvh flex items-center justify-center p-6" style={{ background: '#F7F5F0' }}>
+        <div className="w-full max-w-[420px] animate-fade-in">
+          <Link to="/" className="flex items-center gap-2 justify-center mb-8">
+            <Logo size={30} />
+            <span className="font-bold text-xl" style={{ color: '#1A1A1A' }}>PayTrack</span>
+          </Link>
+          <div className="bg-white rounded-2xl p-10" style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.08)', border: '1px solid #E8E4DD' }}>
             <DoneScreen form={form} />
           </div>
         </div>
@@ -209,27 +168,25 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="h-dvh flex overflow-hidden bg-white">
-      <LeftPanel />
+    <div className="min-h-dvh flex items-center justify-center p-6" style={{ background: '#F7F5F0' }}>
+      <div className="w-full max-w-[420px] py-6 animate-fade-in">
 
-      {/* Right — scrollable */}
-      <div className="flex-1 overflow-y-auto bg-snow flex items-center justify-center p-6 lg:p-12">
-        <div className="w-full max-w-[420px] py-6 animate-fade-in">
+        {/* Logo */}
+        <Link to="/" className="flex items-center gap-2 justify-center mb-8">
+          <Logo size={30} />
+          <span className="font-bold text-xl" style={{ color: '#1A1A1A' }}>PayTrack</span>
+        </Link>
 
-          {/* Mobile logo */}
-          <Link to="/" className="flex items-center gap-2 mb-10 lg:hidden">
-            <Logo size={28} />
-            <span className="font-bold text-lg text-ink">PayTrack</span>
-          </Link>
-
+        {/* Card */}
+        <div className="bg-white rounded-2xl p-10" style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.08)', border: '1px solid #E8E4DD' }}>
           {/* Stepper */}
           <Stepper step={step} />
 
           {/* Heading */}
-          <h1 className="text-2xl font-bold text-ink mb-1">
+          <h1 className="text-2xl font-bold mb-1" style={{ color: '#1A1A1A' }}>
             {step === 0 ? 'Créer un compte' : 'Votre boutique'}
           </h1>
-          <p className="text-sm text-muted mb-7">
+          <p className="text-sm mb-7" style={{ color: '#6B7280' }}>
             {step === 0
               ? 'Essai gratuit 14 jours · Sans carte bancaire'
               : 'Quelques infos sur votre activité'
@@ -241,7 +198,7 @@ export default function RegisterPage() {
             <form onSubmit={handleStep0} className="space-y-4">
               {/* Nom */}
               <div>
-                <label className="block text-sm font-semibold text-ink mb-1.5">
+                <label className="block text-sm font-semibold mb-1.5" style={{ color: '#1A1A1A' }}>
                   Nom complet <span className="text-danger">*</span>
                 </label>
                 <input type="text" required autoComplete="name"
@@ -251,7 +208,7 @@ export default function RegisterPage() {
 
               {/* Email */}
               <div>
-                <label className="block text-sm font-semibold text-ink mb-1.5">
+                <label className="block text-sm font-semibold mb-1.5" style={{ color: '#1A1A1A' }}>
                   Email professionnel <span className="text-danger">*</span>
                 </label>
                 <input type="email" required autoComplete="email"
@@ -261,8 +218,8 @@ export default function RegisterPage() {
 
               {/* Phone */}
               <div>
-                <label className="block text-sm font-semibold text-ink mb-1.5">
-                  Téléphone <span className="text-muted font-normal">(optionnel)</span>
+                <label className="block text-sm font-semibold mb-1.5" style={{ color: '#1A1A1A' }}>
+                  Téléphone <span className="text-xs font-normal" style={{ color: '#6B7280' }}>(optionnel)</span>
                 </label>
                 <input type="tel" autoComplete="tel"
                   value={form.phone} onChange={e => up('phone', e.target.value)}
@@ -271,7 +228,7 @@ export default function RegisterPage() {
 
               {/* Password */}
               <div>
-                <label className="block text-sm font-semibold text-ink mb-1.5">
+                <label className="block text-sm font-semibold mb-1.5" style={{ color: '#1A1A1A' }}>
                   Mot de passe <span className="text-danger">*</span>
                 </label>
                 <div className="relative">
@@ -279,7 +236,8 @@ export default function RegisterPage() {
                     value={form.password} onChange={e => up('password', e.target.value)}
                     className="input pr-11" placeholder="8 caractères minimum" />
                   <button type="button" onClick={() => setShowPass(v => !v)}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted hover:text-dim bg-transparent border-0 cursor-pointer p-0"
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 hover:text-dim bg-transparent border-0 cursor-pointer p-0"
+                    style={{ color: '#6B7280' }}
                     tabIndex={-1}>
                     {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
@@ -293,9 +251,9 @@ export default function RegisterPage() {
                 Continuer <ArrowRight size={15} />
               </button>
 
-              <p className="text-sm text-muted text-center mt-4">
+              <p className="text-sm text-center mt-4" style={{ color: '#6B7280' }}>
                 Déjà inscrit ?{' '}
-                <Link to="/login" className="font-semibold text-blue hover:underline">Se connecter</Link>
+                <Link to="/login" className="font-semibold hover:underline" style={{ color: '#1D6FE8' }}>Se connecter</Link>
               </p>
             </form>
           )}
@@ -305,7 +263,7 @@ export default function RegisterPage() {
             <form onSubmit={handleStep1} className="space-y-5">
               {/* Shop name */}
               <div>
-                <label className="block text-sm font-semibold text-ink mb-1.5">
+                <label className="block text-sm font-semibold mb-1.5" style={{ color: '#1A1A1A' }}>
                   Nom de la boutique <span className="text-danger">*</span>
                 </label>
                 <input type="text" required
@@ -315,7 +273,7 @@ export default function RegisterPage() {
 
               {/* City */}
               <div>
-                <label className="block text-sm font-semibold text-ink mb-1.5">
+                <label className="block text-sm font-semibold mb-1.5" style={{ color: '#1A1A1A' }}>
                   Ville <span className="text-danger">*</span>
                 </label>
                 <input type="text" required
@@ -325,7 +283,7 @@ export default function RegisterPage() {
 
               {/* Activity sector */}
               <div>
-                <label className="block text-sm font-semibold text-ink mb-2">
+                <label className="block text-sm font-semibold mb-2" style={{ color: '#1A1A1A' }}>
                   Secteur d'activité
                 </label>
                 <div className="grid grid-cols-2 gap-2">
@@ -333,9 +291,9 @@ export default function RegisterPage() {
                     <button key={act} type="button" onClick={() => up('activity', act)}
                       className="px-3 py-2.5 rounded-xl text-xs font-medium text-left border transition-all"
                       style={{
-                        background:   form.activity === act ? '#EFF6FF' : 'white',
-                        borderColor:  form.activity === act ? '#0F2744' : '#E5E7EB',
-                        color:        form.activity === act ? '#0F2744' : '#6B7280',
+                        background:   form.activity === act ? '#EEF4FE' : 'white',
+                        borderColor:  form.activity === act ? '#1D6FE8' : '#E8E4DD',
+                        color:        form.activity === act ? '#1D6FE8' : '#6B7280',
                         cursor: 'pointer',
                       }}>
                       {act}
@@ -346,7 +304,7 @@ export default function RegisterPage() {
 
               {/* Team size */}
               <div>
-                <label className="block text-sm font-semibold text-ink mb-2">
+                <label className="block text-sm font-semibold mb-2" style={{ color: '#1A1A1A' }}>
                   Taille de l'équipe
                 </label>
                 <div className="flex gap-2">
@@ -354,8 +312,8 @@ export default function RegisterPage() {
                     <button key={size} type="button" onClick={() => up('employees', size)}
                       className="flex-1 py-2.5 rounded-xl text-sm font-semibold border transition-all"
                       style={{
-                        background:  form.employees === size ? '#0F2744' : 'white',
-                        borderColor: form.employees === size ? '#0F2744' : '#E5E7EB',
+                        background:  form.employees === size ? '#1D6FE8' : 'white',
+                        borderColor: form.employees === size ? '#1D6FE8' : '#E8E4DD',
                         color:       form.employees === size ? 'white'   : '#6B7280',
                         cursor: 'pointer',
                       }}>
@@ -369,11 +327,11 @@ export default function RegisterPage() {
               <label className="flex items-start gap-3 cursor-pointer">
                 <input type="checkbox" checked={cguAccepted} onChange={e => setCguAccepted(e.target.checked)}
                   className="mt-0.5 w-4 h-4 rounded border-ash accent-blue" />
-                <span className="text-xs text-muted leading-relaxed">
+                <span className="text-xs leading-relaxed" style={{ color: '#6B7280' }}>
                   En créant un compte, j'accepte les{' '}
-                  <a href="#" className="text-blue hover:underline">Conditions d'utilisation</a>
+                  <a href="#" className="hover:underline" style={{ color: '#1D6FE8' }}>Conditions d'utilisation</a>
                   {' '}et la{' '}
-                  <a href="#" className="text-blue hover:underline">Politique de confidentialité</a>
+                  <a href="#" className="hover:underline" style={{ color: '#1D6FE8' }}>Politique de confidentialité</a>
                   {' '}de PayTrack.
                 </span>
               </label>
