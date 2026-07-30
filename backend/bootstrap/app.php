@@ -13,8 +13,9 @@ return Application::configure(basePath: dirname(__DIR__))
         apiPrefix: 'api',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->api(prepend: [
-            \App\Http\Middleware\EnsureTenantAccess::class,
+        // EnsureTenantAccess is applied via route groups, not globally
+        $middleware->alias([
+            'tenant' => \App\Http\Middleware\EnsureTenantAccess::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

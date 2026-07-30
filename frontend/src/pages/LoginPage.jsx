@@ -3,7 +3,6 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { Eye, EyeOff, ArrowRight, AlertCircle, CheckCircle2, ArrowLeft } from 'lucide-react'
 import Logo from '@/components/ui/Logo'
 import { useAuthStore } from '@/store/authStore'
-import { MOCK_USERS } from '@/lib/mockData'
 
 // ── Login form ──────────────────────────────────────────────────────
 function LoginForm({ onForgot }) {
@@ -26,16 +25,16 @@ function LoginForm({ onForgot }) {
     }
     setError('')
     setLoading(true)
-    await new Promise(r => setTimeout(r, 700))
 
-    if (email === 'moussa@phoneshop-dakar.com' && password === 'demo1234') {
-      login(MOCK_USERS.vendeur, 'mock-token-vendeur')
-      navigate(from, { replace: true })
-    } else if (email === 'aminata@gmail.com' && password === 'demo1234') {
-      login(MOCK_USERS.client, 'mock-token-client')
-      navigate('/client/dashboard', { replace: true })
-    } else {
-      setError('Email ou mot de passe incorrect.')
+    try {
+      const user = await login(email, password)
+      if (user.role === 'client') {
+        navigate('/client/dashboard', { replace: true })
+      } else {
+        navigate(from, { replace: true })
+      }
+    } catch (err) {
+      setError(err.message || 'Email ou mot de passe incorrect.')
       setLoading(false)
     }
   }

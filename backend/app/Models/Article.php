@@ -12,11 +12,12 @@ class Article extends Model
 
     protected $fillable = [
         'shop_id', 'name', 'category', 'reference',
-        'price', 'description', 'is_active',
+        'price', 'stock', 'description', 'is_active',
     ];
 
     protected $casts = [
         'price'     => 'integer',
+        'stock'     => 'integer',
         'is_active' => 'boolean',
     ];
 

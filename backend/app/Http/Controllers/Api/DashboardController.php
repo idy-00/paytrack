@@ -16,12 +16,14 @@ class DashboardController extends Controller
     {
         $tenantId = $request->user()->tenant_id;
 
-        $stats = Sale::selectRaw('
-            SUM(paid_amount) as total_encaisse,
-            SUM(remaining_amount) as total_restant,
-            COUNT(CASE WHEN status = "retard" THEN 1 END) as ventes_en_retard,
-            COUNT(CASE WHEN status = "solde" AND MONTH(updated_at) = MONTH(NOW()) THEN 1 END) as ventes_soldees
-        ')->first();
+        $stats = Sale::where('tenant_id', $tenantId)
+            ->selectRaw('
+                SUM(paid_amount) as total_encaisse,
+                SUM(remaining_amount) as total_restant,
+                COUNT(CASE WHEN status IN ("en_cours", "retard") THEN 1 END) as ventes_actives,
+                COUNT(CASE WHEN status = "retard" THEN 1 END) as ventes_en_retard,
+                COUNT(CASE WHEN status = "solde" THEN 1 END) as ventes_soldees
+            ')->first();
 
         $monthly = DB::table('payments')
             ->join('sales', 'payments.sale_id', '=', 'sales.id')

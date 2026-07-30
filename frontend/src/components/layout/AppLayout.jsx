@@ -1,15 +1,21 @@
 import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Users, ShoppingBag, Receipt, QrCode, LogOut, Menu, X, Bell } from 'lucide-react'
+import { LayoutDashboard, Users, ShoppingBag, Receipt, QrCode, LogOut, Menu, X, Bell, FolderOpen, CreditCard } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import Logo from '@/components/ui/Logo'
 
-const NAV = [
+const VENDOR_NAV = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Tableau de bord' },
   { to: '/clients',   icon: Users,           label: 'Clients' },
   { to: '/ventes',    icon: ShoppingBag,     label: 'Ventes' },
   { to: '/paiements', icon: Receipt,         label: 'Paiements' },
-  { to: '/qr-scan',  icon: QrCode,          label: 'Scanner QR' },
+  { to: '/stock',     icon: FolderOpen,      label: 'Stock' },
+  { to: '/qr-scan',   icon: QrCode,          label: 'Scanner QR' },
+]
+
+const CLIENT_NAV = [
+  { to: '/client/dashboard', icon: FolderOpen,  label: 'Mon dossier' },
+  { to: '/client/paiements', icon: CreditCard,  label: 'Mes paiements' },
 ]
 
 function initials(name = '') {
@@ -20,6 +26,9 @@ export default function AppLayout({ children }) {
   const [open, setOpen] = useState(false)
   const { user, logout } = useAuthStore()
   const navigate = useNavigate()
+
+  const isClient = user?.role === 'client'
+  const NAV = isClient ? CLIENT_NAV : VENDOR_NAV
 
   return (
     <div className="flex min-h-dvh bg-snow">
@@ -44,8 +53,8 @@ export default function AppLayout({ children }) {
           <span className="font-bold text-lg leading-none" style={{ color: '#1A1A1A' }}>PayTrack</span>
         </div>
 
-        {/* Shop name */}
-        {user?.shop && (
+        {/* Shop name (vendor only) */}
+        {!isClient && user?.shop && (
           <div className="px-5 py-2.5" style={{ borderBottom: '1px solid #E8E4DD' }}>
             <p className="text-xs font-medium truncate" style={{ color: '#6B7280' }}>
               {user.shop}

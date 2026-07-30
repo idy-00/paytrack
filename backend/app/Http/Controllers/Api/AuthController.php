@@ -16,6 +16,69 @@ class AuthController extends Controller
     private const MAX_ATTEMPTS = 5;
     private const DECAY_SECONDS = 60;
 
+    public function register(Request $request): JsonResponse
+    {
+        $request->validate([
+            'name'      => ['required', 'string', 'max:255'],
+            'email'     => ['required', 'email', 'max:255', 'unique:users'],
+            'phone'     => ['required', 'string', 'max:20'],
+            'password'  => ['required', 'string', 'min:8', 'max:128', 'confirmed'],
+            'shop_name' => ['required', 'string', 'max:255'],
+        ]);
+
+        return \DB::transaction(function () use ($request) {
+            // Create tenant
+            $tenant = \App\Models\Tenant::create([
+                'name' => $request->shop_name,
+                'slug' => \Str::slug($request->shop_name) . '-' . \Str::random(4),
+                'email' => $request->email,
+                'phone' => $request->phone,
+                'is_active' => true,
+            ]);
+
+            // Create default shop
+            $shop = \App\Models\Shop::create([
+                'tenant_id' => $tenant->id,
+                'name' => $request->shop_name,
+                'phone' => $request->phone,
+                'is_active' => true,
+            ]);
+
+            // Create admin user
+            $user = User::create([
+                'tenant_id' => $tenant->id,
+                'shop_id' => $shop->id,
+                'name' => $request->name,
+                'email' => $request->email,
+                'phone' => $request->phone,
+                'password' => Hash::make($request->password),
+                'is_active' => true,
+            ]);
+            $user->assignRole('admin_entreprise');
+
+            $token = $user->createToken('api', ['*'], now()->addHours(8))->plainTextToken;
+
+            AuditLog::create([
+                'tenant_id'  => $tenant->id,
+                'user_id'    => $user->id,
+                'event'      => 'auth.register',
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ]);
+
+            return response()->json([
+                'token' => $token,
+                'user'  => [
+                    'id'    => $user->id,
+                    'name'  => $user->name,
+                    'email' => $user->email,
+                    'role'  => 'admin_entreprise',
+                    'shop'  => $shop->name,
+                ],
+            ], 201);
+        });
+    }
+
     public function login(Request $request): JsonResponse
     {
         $request->validate([

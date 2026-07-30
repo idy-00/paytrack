@@ -143,17 +143,17 @@ export default function LandingPage() {
   const plans = [
     {
       plan: 'Démarrage', price: 'Gratuit', period: 'Pour toujours', hi: false,
-      features: ['50 ventes / mois', '2 vendeurs', 'QR Code par dossier', 'Reçus PDF', 'Dashboard'],
+      features: ['50 ventes / mois', '2 vendeurs', 'QR Code par dossier', 'Reçus PDF', 'Dashboard', 'Gestion de stock'],
       cta: 'Commencer gratuitement',
     },
     {
-      plan: 'Professionnel', price: '9 900 FCFA', period: 'par mois · par boutique', hi: true, badge: 'Le plus populaire',
-      features: ['Ventes illimitées', 'Vendeurs illimités', 'Rappels SMS & WhatsApp', 'Wave · Orange Money', 'Export PDF / CSV', 'Rapports avancés'],
+      plan: 'Professionnel', price: '25 000 FCFA', period: 'par trimestre · par boutique', hi: true, badge: 'Le plus populaire',
+      features: ['Ventes illimitées', 'Vendeurs illimités', 'Rappels SMS & WhatsApp', 'Wave · Orange Money', 'Export PDF / CSV', 'Rapports avancés', 'Vente comptant & tranche', 'Gestion de stock avancée'],
       cta: 'Essai 14 jours gratuit',
     },
     {
-      plan: 'Entreprise', price: 'Sur devis', period: 'Multi-boutiques', hi: false,
-      features: ['Boutiques illimitées', 'Rôles & permissions', 'Intégration sur mesure', 'Support prioritaire', 'Audit log complet'],
+      plan: 'Entreprise', price: '45 000 FCFA', period: 'par semestre · multi-boutiques', hi: false,
+      features: ['Boutiques illimitées', 'Rôles & permissions', 'Intégration sur mesure', 'Support prioritaire', 'Audit log complet', 'Fréquences personnalisées'],
       cta: 'Nous contacter',
     },
   ]

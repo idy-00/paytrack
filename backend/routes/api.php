@@ -16,6 +16,8 @@ use Illuminate\Support\Facades\Route;
 // ── Public routes — no auth ───────────────────────────────────────────────────
 
 Route::prefix('auth')->group(function () {
+    Route::post('/register', [AuthController::class, 'register'])
+        ->middleware('throttle:5,1');
     Route::post('/login', [AuthController::class, 'login'])
         ->middleware('throttle:10,1');
 });
@@ -35,7 +37,7 @@ Route::prefix('webhooks')->middleware('throttle:60,1')->group(function () {
 
 // ── Authenticated routes ──────────────────────────────────────────────────────
 
-Route::middleware(['auth:sanctum', EnsureTenantAccess::class])->group(function () {
+Route::middleware(['auth:sanctum', 'tenant'])->group(function () {
     // Auth
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::get('/auth/me',      [AuthController::class, 'me']);

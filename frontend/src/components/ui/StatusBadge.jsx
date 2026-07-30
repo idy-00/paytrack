@@ -1,5 +1,6 @@
 const MAP = {
   actif:      { label: 'Actif',      cls: 'badge-active'  },
+  en_cours:   { label: 'En cours',   cls: 'badge-active'  },
   paye:       { label: 'Payé',       cls: 'badge-paid'    },
   retard:     { label: 'Retard',     cls: 'badge-late'    },
   litige:     { label: 'Litige',     cls: 'badge-dispute' },

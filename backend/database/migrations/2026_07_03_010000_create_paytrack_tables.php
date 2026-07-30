@@ -25,15 +25,6 @@ return new class extends Migration
             $table->softDeletes();
         });
 
-        // Add tenant_id to users table
-        Schema::table('users', function (Blueprint $table) {
-            $table->foreignId('tenant_id')->nullable()->constrained('tenants')->nullOnDelete()->after('id');
-            $table->string('phone')->nullable()->after('email');
-            $table->string('avatar')->nullable();
-            $table->boolean('is_active')->default(true);
-            $table->timestamp('last_active_at')->nullable();
-        });
-
         // Shops (boutiques) — one tenant can have multiple shops
         Schema::create('shops', function (Blueprint $table) {
             $table->id();
@@ -46,6 +37,11 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
             $table->index('tenant_id');
+        });
+
+        // Add shop_id FK to users table
+        Schema::table('users', function (Blueprint $table) {
+            $table->foreign('shop_id')->references('id')->on('shops')->nullOnDelete();
         });
 
         // Clients (customers)
@@ -76,6 +72,7 @@ return new class extends Migration
             $table->string('category')->nullable();
             $table->string('reference')->nullable();
             $table->unsignedBigInteger('price');
+            $table->unsignedInteger('stock')->default(0);
             $table->text('description')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
@@ -188,7 +185,7 @@ return new class extends Migration
         Schema::dropIfExists('clients');
         Schema::dropIfExists('shops');
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn(['tenant_id', 'phone', 'avatar', 'is_active', 'last_active_at']);
+            $table->dropForeign(['shop_id']);
         });
         Schema::dropIfExists('tenants');
     }
