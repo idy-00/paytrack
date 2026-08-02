@@ -96,4 +96,28 @@ export const api = {
 
   // QR (public, no auth)
   getQrInfo: (uuid) => fetch(`${API_URL}/qr/${uuid}`).then(r => r.json()),
+
+  // Shops
+  getShops: () => request('/shops'),
+  getShop: (id) => request(`/shops/${id}`),
+  createShop: (data) => request('/shops', { method: 'POST', body: JSON.stringify(data) }),
+  updateShop: (id, data) => request(`/shops/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+
+  // Users
+  getUsers: () => request('/users'),
+  getUser: (id) => request(`/users/${id}`),
+  createUser: (data) => request('/users', { method: 'POST', body: JSON.stringify(data) }),
+  updateUser: (id, data) => request(`/users/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  toggleUserActive: (id) => request(`/users/${id}/toggle-active`, { method: 'POST' }),
+  assignRole: (id, role) => request(`/users/${id}/assign-role`, { method: 'POST', body: JSON.stringify({ role }) }),
+  resetPassword: (id, password) => request(`/users/${id}/reset-password`, { method: 'POST', body: JSON.stringify({ password }) }),
+
+  // Receipts (returns blob for download)
+  getSaleReceipt: (id) => `${API_URL}/sales/${id}/receipt`,
+  getPaymentReceipt: (id) => `${API_URL}/payments/${id}/receipt`,
+
+  // Exports
+  exportSales: (params = '') => `${API_URL}/exports/sales${params}`,
+  exportPayments: (params = '') => `${API_URL}/exports/payments${params}`,
+  exportOverdue: () => `${API_URL}/exports/overdue`,
 }

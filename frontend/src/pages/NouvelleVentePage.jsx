@@ -125,7 +125,7 @@ export default function NouvelleVentePage() {
     setSavingClient(true)
     try {
       const newClient = await addClient({
-        name: clientForm.name.trim(),
+        full_name: clientForm.name.trim(),
         phone: clientForm.phone.trim(),
         email: clientForm.email.trim() || null,
         city: clientForm.city.trim() || 'Non renseigné',
@@ -157,8 +157,8 @@ export default function NouvelleVentePage() {
         article_id: Number(form.article_id),
         total_amount: totalNum,
         down_payment: isComptant ? totalNum : downNum,
-        installment_count: isComptant ? 0 : form.installment_count,
-        frequency: isComptant ? 'comptant' : (form.frequency === 'personnalise' ? `tous_les_${form.custom_days}_jours` : form.frequency),
+        installment_count: isComptant ? 1 : form.installment_count,
+        frequency: isComptant ? 'mensuel' : form.frequency,
         start_date: form.start_date,
         payment_mode: form.payment_mode,
       })

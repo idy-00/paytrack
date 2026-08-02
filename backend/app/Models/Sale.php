@@ -18,6 +18,7 @@ class Sale extends Model
         'shop_id', 'client_id', 'article_id', 'created_by',
         'reference', 'qr_uuid', 'article_name',
         'total_amount', 'down_payment', 'paid_amount', 'remaining_amount',
+        'payment_mode',
         'installment_count', 'installment_amount', 'frequency',
         'start_date', 'end_date', 'status', 'notes',
     ];

@@ -105,5 +105,6 @@ class DatabaseSeeder extends Seeder
             'is_active' => true,
         ]);
         $clientUser->assignRole('client');
+        Client::where('email', $clientUser->email)->update(['user_id' => $clientUser->id]);
     }
 }

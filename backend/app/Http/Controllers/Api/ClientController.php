@@ -12,6 +12,7 @@ class ClientController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
+        $this->authorize('viewAny', Client::class);
         $clients = Client::query()
             ->when($request->search, function ($q, $search) {
                 $q->where(function ($q) use ($search) {
@@ -29,6 +30,7 @@ class ClientController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        $this->authorize('create', Client::class);
         $validated = $request->validate([
             'full_name' => ['required', 'string', 'max:255'],
             'phone'     => ['required', 'string', 'max:20'],
@@ -40,7 +42,7 @@ class ClientController extends Controller
             'notes'     => ['nullable', 'string', 'max:2000'],
         ]);
 
-        $client = Client::create($validated);
+        $client = Client::create([...$validated, 'shop_id' => $request->user()->shop_id]);
 
         AuditLog::create([
             'tenant_id'      => $client->tenant_id,
@@ -57,12 +59,14 @@ class ClientController extends Controller
 
     public function show(Client $client): JsonResponse
     {
+        $this->authorize('view', $client);
         $client->load(['sales' => fn($q) => $q->latest()->limit(10)]);
         return response()->json($client);
     }
 
     public function update(Request $request, Client $client): JsonResponse
     {
+        $this->authorize('update', $client);
         $validated = $request->validate([
             'full_name' => ['sometimes', 'required', 'string', 'max:255'],
             'phone'     => ['sometimes', 'required', 'string', 'max:20'],
@@ -91,6 +95,7 @@ class ClientController extends Controller
 
     public function destroy(Client $client): JsonResponse
     {
+        $this->authorize('delete', $client);
         if ($client->sales()->whereIn('status', ['actif', 'retard'])->exists()) {
             return response()->json([
                 'message' => 'Impossible de supprimer un client avec des ventes actives ou en retard.'

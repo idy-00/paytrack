@@ -15,6 +15,12 @@ class SaleController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
+        if ($request->user()->hasRole('client')) {
+            $sales = Sale::with(['client', 'article', 'schedules', 'payments'])
+                ->whereHas('client', fn ($query) => $query->where('user_id', $request->user()->id))
+                ->orderByDesc('created_at')->paginate(20);
+            return response()->json($sales);
+        }
         $this->authorize('viewAny', Sale::class);
 
         $sales = Sale::with(['client', 'article', 'schedules'])
@@ -57,8 +63,8 @@ class SaleController extends Controller
             ],
             'article_name'      => ['required', 'string', 'max:255'],
             'total_amount'      => ['required', 'integer', 'min:1'],
-            // Fix #5: down_payment must be strictly less than total_amount
-            'down_payment'      => ['nullable', 'integer', 'min:0', 'max:' . max(0, $totalAmount - 1)],
+            'down_payment'      => ['nullable', 'integer', 'min:0', 'max:' . $totalAmount],
+            'payment_mode'      => ['nullable', 'in:tranche,comptant'],
             'installment_count' => ['required', 'integer', 'min:1', 'max:120'],
             'frequency'         => ['required', 'in:hebdomadaire,bimestriel,mensuel,trimestriel'],
             'start_date'        => ['required', 'date', 'after_or_equal:today'],
@@ -66,7 +72,11 @@ class SaleController extends Controller
         ]);
 
         return DB::transaction(function () use ($validated, $request) {
+            $isCash = ($validated['payment_mode'] ?? 'tranche') === 'comptant';
             $downPayment = $validated['down_payment'] ?? 0;
+            if (! $isCash && $downPayment >= $validated['total_amount']) {
+                abort(422, 'L’acompte doit être inférieur au montant total pour une vente par tranche.');
+            }
             $remaining   = $validated['total_amount'] - $downPayment;
             $installAmt  = (int) ceil($remaining / $validated['installment_count']);
 
@@ -81,18 +91,24 @@ class SaleController extends Controller
             $sale = Sale::create([
                 ...$validated,
                 'created_by'       => $request->user()->id,
+                'shop_id'          => $request->user()->shop_id,
                 // Fix #6: tenant-scoped sequence inside the transaction to avoid duplicate references
                 'reference'        => $this->generateReference(),
                 'qr_uuid'          => Str::uuid(),
                 'down_payment'     => $downPayment,
-                'paid_amount'      => $downPayment,
-                'remaining_amount' => $remaining,
+                'paid_amount'      => $isCash ? $validated['total_amount'] : $downPayment,
+                'remaining_amount' => $isCash ? 0 : $remaining,
                 'installment_amount' => $installAmt,
                 'end_date'         => $endDate,
-                'status'           => 'actif',
+                'status'           => $isCash ? 'solde' : 'actif',
             ]);
 
-            $sale->generateSchedule();
+            if (! $isCash) $sale->generateSchedule();
+
+            if ($sale->article_id) {
+                $updated = \App\Models\Article::whereKey($sale->article_id)->where('stock', '>', 0)->decrement('stock');
+                if (! $updated) abort(422, 'Article indisponible.');
+            }
 
             AuditLog::create([
                 'tenant_id'      => $sale->tenant_id,

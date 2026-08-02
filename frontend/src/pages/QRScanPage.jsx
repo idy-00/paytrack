@@ -41,7 +41,7 @@ export default function QRScanPage() {
   }
 
   const pct = getProgressPercent(sale.paid_amount, sale.total_amount)
-  const maskedClientName = maskName(sale.client?.name)
+  const maskedClientName = sale.client_name || maskName(sale.client?.name)
 
   return (
     <div className="min-h-dvh bg-snow">
@@ -60,12 +60,12 @@ export default function QRScanPage() {
         <div className="card p-5 space-y-3.5">
           <div className="flex items-center justify-between text-sm">
             <span className="text-dim">Client</span>
-            <span className="font-semibold text-ink">{isAuthenticated ? sale.client?.name : maskedClientName}</span>
+            <span className="font-semibold text-ink">{isAuthenticated ? (sale.client?.name || sale.client_name) : maskedClientName}</span>
           </div>
           {isAuthenticated && (
             <div className="flex items-center justify-between text-sm">
               <span className="text-dim">Article</span>
-              <span className="font-medium text-ink text-right max-w-[60%] truncate">{sale.article?.name || '—'}</span>
+              <span className="font-medium text-ink text-right max-w-[60%] truncate">{sale.article?.name || sale.article || '—'}</span>
             </div>
           )}
           <hr className="divider" />

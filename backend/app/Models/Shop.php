@@ -13,7 +13,6 @@ class Shop extends Model
     use BelongsToTenant, SoftDeletes;
 
     protected $fillable = [
-        'tenant_id',
         'name',
         'address',
         'city',

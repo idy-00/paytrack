@@ -78,7 +78,7 @@ class PaymentController extends Controller
                 'status'           => $newStatus,
             ]);
 
-            if ($validated['schedule_id']) {
+            if (!empty($validated['schedule_id'])) {
                 // Fix #3: query is already sale-scoped; this is a safe, direct find
                 SaleSchedule::find($validated['schedule_id'])?->update([
                     'status'      => 'paye',

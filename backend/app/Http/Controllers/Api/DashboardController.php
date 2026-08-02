@@ -20,10 +20,15 @@ class DashboardController extends Controller
             ->selectRaw('
                 SUM(paid_amount) as total_encaisse,
                 SUM(remaining_amount) as total_restant,
-                COUNT(CASE WHEN status IN ("en_cours", "retard") THEN 1 END) as ventes_actives,
+                COUNT(CASE WHEN status IN ("actif", "retard") THEN 1 END) as ventes_actives,
                 COUNT(CASE WHEN status = "retard" THEN 1 END) as ventes_en_retard,
                 COUNT(CASE WHEN status = "solde" THEN 1 END) as ventes_soldees
             ')->first();
+
+        $driver = DB::getDriverName();
+        $dateFormat = $driver === 'sqlite'
+            ? "strftime('%Y-%m', payments.payment_date)"
+            : "DATE_FORMAT(payments.payment_date, '%Y-%m')";
 
         $monthly = DB::table('payments')
             ->join('sales', 'payments.sale_id', '=', 'sales.id')
@@ -33,9 +38,9 @@ class DashboardController extends Controller
                 now()->subMonths(5)->startOfMonth(),
                 now()->endOfMonth(),
             ])
-            ->selectRaw("DATE_FORMAT(payments.payment_date, '%b') as month, SUM(payments.amount) as encaisse")
-            ->groupByRaw("MONTH(payments.payment_date), DATE_FORMAT(payments.payment_date, '%b')")
-            ->orderByRaw("MONTH(payments.payment_date)")
+            ->selectRaw("{$dateFormat} as month, SUM(payments.amount) as encaisse")
+            ->groupByRaw($dateFormat)
+            ->orderBy('month')
             ->get();
 
         return response()->json([

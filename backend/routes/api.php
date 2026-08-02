@@ -7,6 +7,10 @@ use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\MobilePaymentController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\SaleController;
+use App\Http\Controllers\Api\ShopController;
+use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\ReceiptController;
+use App\Http\Controllers\Api\ExportController;
 use App\Http\Controllers\Api\Webhook\FreeMoneyWebhookController;
 use App\Http\Controllers\Api\Webhook\OrangeMoneyWebhookController;
 use App\Http\Controllers\Api\Webhook\WaveWebhookController;
@@ -64,4 +68,22 @@ Route::middleware(['auth:sanctum', 'tenant'])->group(function () {
 
     // Articles
     Route::apiResource('articles', ArticleController::class);
+
+    // Shops (admin only)
+    Route::apiResource('shops', ShopController::class);
+
+    // Users (admin only)
+    Route::apiResource('users', UserController::class)->except(['destroy']);
+    Route::post('/users/{user}/toggle-active', [UserController::class, 'toggleActive']);
+    Route::post('/users/{user}/assign-role', [UserController::class, 'assignRole']);
+    Route::post('/users/{user}/reset-password', [UserController::class, 'resetPassword']);
+
+    // Receipts PDF
+    Route::get('/sales/{sale}/receipt', [ReceiptController::class, 'saleReceipt']);
+    Route::get('/payments/{payment}/receipt', [ReceiptController::class, 'paymentReceipt']);
+
+    // Exports CSV
+    Route::get('/exports/sales', [ExportController::class, 'sales']);
+    Route::get('/exports/payments', [ExportController::class, 'payments']);
+    Route::get('/exports/overdue', [ExportController::class, 'overdueSchedules']);
 });

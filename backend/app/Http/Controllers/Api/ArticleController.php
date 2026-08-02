@@ -12,6 +12,7 @@ class ArticleController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
+        $this->authorize('viewAny', Article::class);
         $articles = Article::query()
             ->when($request->search, function ($q, $search) {
                 $q->where(function ($q) use ($search) {
@@ -29,6 +30,7 @@ class ArticleController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        $this->authorize('create', Article::class);
         $validated = $request->validate([
             'name'        => ['required', 'string', 'max:255'],
             'category'    => ['nullable', 'string', 'max:100'],
@@ -39,7 +41,7 @@ class ArticleController extends Controller
             'is_active'   => ['nullable', 'boolean'],
         ]);
 
-        $article = Article::create($validated);
+        $article = Article::create([...$validated, 'shop_id' => $request->user()->shop_id]);
 
         AuditLog::create([
             'tenant_id'      => $article->tenant_id,
@@ -56,11 +58,13 @@ class ArticleController extends Controller
 
     public function show(Article $article): JsonResponse
     {
+        $this->authorize('view', $article);
         return response()->json($article);
     }
 
     public function update(Request $request, Article $article): JsonResponse
     {
+        $this->authorize('update', $article);
         $validated = $request->validate([
             'name'        => ['sometimes', 'required', 'string', 'max:255'],
             'category'    => ['nullable', 'string', 'max:100'],
@@ -90,6 +94,7 @@ class ArticleController extends Controller
 
     public function destroy(Article $article): JsonResponse
     {
+        $this->authorize('delete', $article);
         $article->update(['is_active' => false]);
         return response()->json(['message' => 'Article désactivé.']);
     }
