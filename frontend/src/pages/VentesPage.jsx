@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Plus, Search, ArrowRight, QrCode, ShoppingBag, Loader2 } from 'lucide-react'
+import { Plus, Search, ArrowRight, QrCode, ShoppingBag, Loader2, Download } from 'lucide-react'
+import { api, getToken } from '@/lib/api'
 import { formatAmount, formatDate, getProgressPercent } from '@/lib/utils'
 import { useSaleStore } from '@/store/saleStore'
 import StatusBadge from '@/components/ui/StatusBadge'
@@ -52,9 +53,18 @@ export default function VentesPage() {
           <h1 className="text-2xl font-bold text-gray-900">Ventes</h1>
           <p className="text-sm text-gray-500 mt-0.5">{sales.length} ventes au total</p>
         </div>
-        <Link to="/ventes/nouvelle" className="btn btn-primary gap-2">
-          <Plus size={16} /> Nouvelle vente
-        </Link>
+        <div className="flex gap-2">
+          <a
+            href={`${api.exportSales()}?token=${getToken()}`}
+            className="btn btn-secondary gap-2"
+            download
+          >
+            <Download size={16} /> CSV
+          </a>
+          <Link to="/ventes/nouvelle" className="btn btn-primary gap-2">
+            <Plus size={16} /> Nouvelle vente
+          </Link>
+        </div>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3">

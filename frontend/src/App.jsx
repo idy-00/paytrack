@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import ProtectedRoute from '@/components/layout/ProtectedRoute'
+import OfflineScreen from '@/components/ui/OfflineScreen'
 import LandingPage from '@/pages/LandingPage'
 import LoginPage from '@/pages/LoginPage'
 import VendeurDashboard from '@/pages/VendeurDashboard'
@@ -23,6 +24,7 @@ const ADMIN_ROLES = ['admin_entreprise', 'super_admin']
 export default function App() {
   return (
     <BrowserRouter>
+      <OfflineScreen />
       <Routes>
         {/* Vitrine publique */}
         <Route path="/" element={<LandingPage />} />

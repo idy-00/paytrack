@@ -19,8 +19,9 @@
 
 ## Phase C — Web production (EN COURS)
 - [x] Logo corrigé (import asset)
-- [ ] Créer page admin boutiques
-- [ ] Créer page admin utilisateurs
+- [x] Page admin boutiques (ShopsPage)
+- [x] Page admin utilisateurs (UsersPage)
+- [x] Navigation admin dans sidebar
 - [ ] Ajouter boutons téléchargement PDF/CSV
 - [ ] Tests E2E Playwright parcours vendeur
 - [ ] Tests E2E parcours client

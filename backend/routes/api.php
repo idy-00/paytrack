@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\ShopController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\ReceiptController;
 use App\Http\Controllers\Api\ExportController;
+use App\Http\Controllers\Api\SocialAuthController;
 use App\Http\Controllers\Api\Webhook\FreeMoneyWebhookController;
 use App\Http\Controllers\Api\Webhook\OrangeMoneyWebhookController;
 use App\Http\Controllers\Api\Webhook\WaveWebhookController;
@@ -24,6 +25,12 @@ Route::prefix('auth')->group(function () {
         ->middleware('throttle:5,1');
     Route::post('/login', [AuthController::class, 'login'])
         ->middleware('throttle:10,1');
+
+    // OAuth Social Login
+    Route::get('/google', [SocialAuthController::class, 'redirectGoogle']);
+    Route::get('/google/callback', [SocialAuthController::class, 'callbackGoogle']);
+    Route::get('/apple', [SocialAuthController::class, 'redirectApple']);
+    Route::post('/apple/callback', [SocialAuthController::class, 'callbackApple']);
 });
 
 // Public QR — masked name, status only, no amounts

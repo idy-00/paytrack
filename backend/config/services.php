@@ -16,6 +16,24 @@ return [
         ],
     ],
 
+    // ── Google OAuth ──────────────────────────────────────────────────────────
+    // Console: console.cloud.google.com → APIs & Services → Credentials
+    'google' => [
+        'client_id'     => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect'      => env('GOOGLE_REDIRECT_URI', '/api/auth/google/callback'),
+    ],
+
+    // ── Apple Sign In ───────────────────────────────────────────────────────────
+    // Console: developer.apple.com → Certificates, IDs & Profiles → Keys
+    'apple' => [
+        'client_id'     => env('APPLE_CLIENT_ID'),     // Service ID
+        'client_secret' => env('APPLE_CLIENT_SECRET'), // Generated JWT
+        'redirect'      => env('APPLE_REDIRECT_URI', '/api/auth/apple/callback'),
+        'team_id'       => env('APPLE_TEAM_ID'),
+        'key_id'        => env('APPLE_KEY_ID'),
+    ],
+
     // ── Wave Business (ACTIF — ATAABA, numéro 78 751 72 72) ──────────────────
     // Dashboard: business.wave.com → Settings → API Keys
     'wave' => [

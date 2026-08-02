@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Search, Download, Wallet, Calendar, Receipt, TrendingUp, CreditCard, Loader2 } from 'lucide-react'
 import { formatAmount, formatDate } from '@/lib/utils'
-import { api } from '@/lib/api'
+import { api, getToken } from '@/lib/api'
 
 const BLUE = '#1A56DB'
 const NAVY = '#0F2744'
@@ -73,7 +73,9 @@ export default function PaiementsPage() {
           <h1 className="text-2xl font-bold text-gray-900">Paiements</h1>
           <p className="text-sm text-gray-500 mt-0.5">{allPayments.length} paiements enregistrés</p>
         </div>
-        <button className="btn btn-secondary gap-2"><Download size={15} /> Exporter CSV</button>
+        <a href={`${api.exportPayments()}?token=${getToken()}`} className="btn btn-secondary gap-2" download>
+          <Download size={15} /> Exporter CSV
+        </a>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

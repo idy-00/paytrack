@@ -8,6 +8,7 @@ import { QRCodeSVG } from 'qrcode.react'
 import toast from 'react-hot-toast'
 import { formatAmount, formatDate, getProgressPercent } from '@/lib/utils'
 import { useSaleStore } from '@/store/saleStore'
+import { api, getToken } from '@/lib/api'
 import StatusBadge from '@/components/ui/StatusBadge'
 import ProgressBar from '@/components/ui/ProgressBar'
 import Modal from '@/components/ui/Modal'
@@ -95,6 +96,9 @@ export default function VenteDetailPage() {
           <ArrowLeft size={16} /> Retour
         </button>
         <div className="flex gap-2">
+          <a href={`${api.getSaleReceipt(sale.id)}?token=${getToken()}`} className="btn btn-ghost gap-2" download>
+            <Download size={15} /> PDF
+          </a>
           <button onClick={() => setShowQR(true)} className="btn btn-secondary gap-2"><QrCode size={15} /> QR</button>
           <button onClick={() => setShowPayModal(true)} className="btn btn-primary gap-2" disabled={sale.status === 'solde'}>
             <Plus size={15} /> Enregistrer paiement
