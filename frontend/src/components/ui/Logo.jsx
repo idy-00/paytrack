@@ -1,7 +1,9 @@
+import logoImg from '@/assets/logo.jpeg'
+
 export default function Logo({ size = 28, className = '' }) {
   return (
     <img
-      src="/logo.jpeg"
+      src={logoImg}
       alt="PayTrack"
       width={size}
       height={size}
