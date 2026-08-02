@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Users, ShoppingBag, Receipt, QrCode, LogOut, Menu, X, Bell, FolderOpen, CreditCard } from 'lucide-react'
+import { LayoutDashboard, Users, ShoppingBag, Receipt, QrCode, LogOut, Menu, X, Bell, FolderOpen, CreditCard, Store, UserCog } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import Logo from '@/components/ui/Logo'
 
@@ -11,6 +11,11 @@ const VENDOR_NAV = [
   { to: '/paiements', icon: Receipt,         label: 'Paiements' },
   { to: '/stock',     icon: FolderOpen,      label: 'Stock' },
   { to: '/qr-scan',   icon: QrCode,          label: 'Scanner QR' },
+]
+
+const ADMIN_NAV = [
+  { to: '/boutiques',    icon: Store,   label: 'Boutiques' },
+  { to: '/utilisateurs', icon: UserCog, label: 'Utilisateurs' },
 ]
 
 const CLIENT_NAV = [
@@ -28,6 +33,7 @@ export default function AppLayout({ children }) {
   const navigate = useNavigate()
 
   const isClient = user?.role === 'client'
+  const isAdmin = user?.role === 'admin_entreprise' || user?.role === 'super_admin'
   const NAV = isClient ? CLIENT_NAV : VENDOR_NAV
 
   return (
@@ -63,7 +69,7 @@ export default function AppLayout({ children }) {
         )}
 
         {/* Nav */}
-        <nav className="flex-1 px-3 py-3 space-y-0.5">
+        <nav className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto">
           {NAV.map(({ to, icon: Icon, label }) => (
             <NavLink key={to} to={to} onClick={() => setOpen(false)}
               className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
@@ -71,6 +77,22 @@ export default function AppLayout({ children }) {
               {label}
             </NavLink>
           ))}
+
+          {/* Admin section */}
+          {isAdmin && (
+            <>
+              <div className="pt-4 pb-2 px-2">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Administration</p>
+              </div>
+              {ADMIN_NAV.map(({ to, icon: Icon, label }) => (
+                <NavLink key={to} to={to} onClick={() => setOpen(false)}
+                  className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+                  <Icon size={16} />
+                  {label}
+                </NavLink>
+              ))}
+            </>
+          )}
         </nav>
 
         {/* User */}

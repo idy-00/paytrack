@@ -14,8 +14,11 @@ import PaiementsPage from '@/pages/PaiementsPage'
 import QRScannerPage from '@/pages/QRScannerPage'
 import RegisterPage from '@/pages/RegisterPage'
 import StockPage from '@/pages/StockPage'
+import ShopsPage from '@/pages/ShopsPage'
+import UsersPage from '@/pages/UsersPage'
 
 const VENDOR_ROLES = ['vendeur', 'responsable_boutique', 'admin_entreprise', 'super_admin']
+const ADMIN_ROLES = ['admin_entreprise', 'super_admin']
 
 export default function App() {
   return (
@@ -53,6 +56,14 @@ export default function App() {
         } />
         <Route path="/qr-scan" element={
           <ProtectedRoute roles={VENDOR_ROLES}><QRScannerPage /></ProtectedRoute>
+        } />
+
+        {/* Admin routes */}
+        <Route path="/boutiques" element={
+          <ProtectedRoute roles={ADMIN_ROLES}><ShopsPage /></ProtectedRoute>
+        } />
+        <Route path="/utilisateurs" element={
+          <ProtectedRoute roles={ADMIN_ROLES}><UsersPage /></ProtectedRoute>
         } />
 
         {/* Client routes */}
