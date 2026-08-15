@@ -60,6 +60,28 @@ return [
         'enabled' => false,  // Désactivé définitivement pour la V1
     ],
 
+    // ── PayTech (INTECH GROUP) — Agrégateur paiements (Cash In) ────────────────
+    // Dashboard: paytech.sn → Mes applications → Détails
+    // Tous les paiements arrivent sur le compte ATAABA (modèle portefeuille)
+    'paytech' => [
+        'api_key'    => env('PAYTECH_API_KEY'),
+        'api_secret' => env('PAYTECH_API_SECRET'),
+        'base_url'   => env('PAYTECH_BASE_URL', 'https://paytech.sn/api'),
+        'env'        => env('PAYTECH_ENV', 'test'), // test ou prod
+    ],
+
+    // ── INTECH API — Cash In / Cash Out direct (contrat ATAABA-INTECH) ────────
+    // Dashboard: dashboard Intech développeur
+    // Modèle prépayé : compte ATAABA alimenté par virement bancaire à l'avance
+    // Frais: CashOut Wave 2%, Orange/Free 1.5%, virement bancaire 2%+100 FCFA
+    'intech' => [
+        'api_key'     => env('INTECH_API_KEY'),
+        'api_secret'  => env('INTECH_API_SECRET'),
+        'hmac_secret' => env('INTECH_HMAC_SECRET'),
+        'base_url'    => env('INTECH_BASE_URL', 'https://api.intech.sn'),
+        'env'         => env('INTECH_ENV', 'test'), // test ou prod
+    ],
+
     // ── WhatsApp Business (ACTIF — ATAABA, numéro 78 751 72 72) ──────────────
     // Provider: meta (Cloud API directe) ou twilio (intermédiaire)
     'whatsapp' => [
