@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Users, ShoppingBag, Receipt, QrCode, LogOut, Menu, X, Bell, FolderOpen, CreditCard, Store, UserCog } from 'lucide-react'
+import { LayoutDashboard, Users, ShoppingBag, Receipt, QrCode, LogOut, Menu, X, Bell, FolderOpen, CreditCard, Package, Wallet, Crown, Truck, ClipboardList, ClipboardCheck, Building2 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import Logo from '@/components/ui/Logo'
 
@@ -8,15 +8,22 @@ const VENDOR_NAV = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Tableau de bord' },
   { to: '/clients',   icon: Users,           label: 'Clients' },
   { to: '/ventes',    icon: ShoppingBag,     label: 'Ventes' },
+  { to: '/commandes', icon: Package,         label: 'Commandes' },
   { to: '/paiements', icon: Receipt,         label: 'Paiements' },
   { to: '/stock',     icon: FolderOpen,      label: 'Stock' },
+  { to: '/inventaires', icon: ClipboardCheck, label: 'Inventaires' },
+  { to: '/fournisseurs', icon: Truck,        label: 'Fournisseurs' },
+  { to: '/commandes-fournisseurs', icon: ClipboardList, label: 'Cmd fournisseurs' },
+  { to: '/portefeuille', icon: Wallet,       label: 'Portefeuille' },
+  { to: '/abonnement', icon: Crown,          label: 'Abonnement' },
   { to: '/qr-scan',   icon: QrCode,          label: 'Scanner QR' },
 ]
 
 const ADMIN_NAV = [
-  { to: '/boutiques',    icon: Store,   label: 'Boutiques' },
-  { to: '/utilisateurs', icon: UserCog, label: 'Utilisateurs' },
+  { to: '/boutiques', icon: Building2,       label: 'Boutiques' },
+  { to: '/utilisateurs', icon: Users,        label: 'Utilisateurs' },
 ]
+
 
 const CLIENT_NAV = [
   { to: '/client/dashboard', icon: FolderOpen,  label: 'Mon dossier' },
@@ -33,7 +40,7 @@ export default function AppLayout({ children }) {
   const navigate = useNavigate()
 
   const isClient = user?.role === 'client'
-  const isAdmin = user?.role === 'admin_entreprise' || user?.role === 'super_admin'
+  const isAdmin = ['admin_entreprise', 'super_admin'].includes(user?.role)
   const NAV = isClient ? CLIENT_NAV : VENDOR_NAV
 
   return (
@@ -81,8 +88,8 @@ export default function AppLayout({ children }) {
           {/* Admin section */}
           {isAdmin && (
             <>
-              <div className="pt-4 pb-2 px-2">
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Administration</p>
+              <div className="pt-3 pb-1 px-2">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Administration</p>
               </div>
               {ADMIN_NAV.map(({ to, icon: Icon, label }) => (
                 <NavLink key={to} to={to} onClick={() => setOpen(false)}

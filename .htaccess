@@ -1,0 +1,17 @@
+DirectoryIndex index.html index.php
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+    
+    # API calls -> Laravel backend
+    RewriteRule ^api/(.*)$ backend/public/index.php [L,QSA]
+    
+    # Existing files/dirs -> serve directly
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+    
+    # SPA fallback -> index.html
+    RewriteRule ^(.*)$ index.html [L]
+</IfModule>

@@ -54,13 +54,12 @@ export default function VentesPage() {
           <p className="text-sm text-gray-500 mt-0.5">{sales.length} ventes au total</p>
         </div>
         <div className="flex gap-2">
-          <a
-            href={`${api.exportSales()}?token=${getToken()}`}
+          <button
+            onClick={() => api.exportSales()}
             className="btn btn-secondary gap-2"
-            download
           >
             <Download size={16} /> CSV
-          </a>
+          </button>
           <Link to="/ventes/nouvelle" className="btn btn-primary gap-2">
             <Plus size={16} /> Nouvelle vente
           </Link>

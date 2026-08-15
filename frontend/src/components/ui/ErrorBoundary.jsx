@@ -1,5 +1,5 @@
 import { Component } from 'react'
-import { RefreshCw, Home } from 'lucide-react'
+import { RefreshCw, Home, AlertTriangle } from 'lucide-react'
 import Logo from './Logo'
 
 export default class ErrorBoundary extends Component {
@@ -23,7 +23,7 @@ export default class ErrorBoundary extends Component {
       <div className="min-h-dvh bg-surface-base flex items-center justify-center p-6">
         <div className="text-center max-w-md">
           <div className="w-16 h-16 bg-brand-bord/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
-            <Receipt size={28} className="text-brand-bord" />
+            <AlertTriangle size={28} className="text-brand-bord" />
           </div>
           <h1 className="font-brand text-[24px] text-brand-ink mb-2">
             Une erreur est survenue

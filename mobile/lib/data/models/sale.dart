@@ -34,7 +34,7 @@ class SaleScheduleItem {
 
   factory SaleScheduleItem.fromJson(Map<String, dynamic> j) =>
       SaleScheduleItem(
-        num: j['num'] as int,
+        num: j['installment_number'] as int? ?? j['num'] as int? ?? 0,
         dueDate: j['due_date'] as String,
         amount: j['amount'] as int,
         status: saleStatusFromString(j['status'] as String),
@@ -121,7 +121,7 @@ class Sale {
         startDate: j['start_date'] as String,
         endDate: j['end_date'] as String,
         status: saleStatusFromString(j['status'] as String),
-        schedule: (j['schedule'] as List<dynamic>? ?? [])
+        schedule: (j['schedules'] as List<dynamic>? ?? j['schedule'] as List<dynamic>? ?? [])
             .map((s) =>
                 SaleScheduleItem.fromJson(s as Map<String, dynamic>))
             .toList(),

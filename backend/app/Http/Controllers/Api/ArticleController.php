@@ -41,7 +41,7 @@ class ArticleController extends Controller
             'is_active'   => ['nullable', 'boolean'],
         ]);
 
-        $article = Article::create([...$validated, 'shop_id' => $request->user()->shop_id]);
+        $article = Article::create($validated);
 
         AuditLog::create([
             'tenant_id'      => $article->tenant_id,

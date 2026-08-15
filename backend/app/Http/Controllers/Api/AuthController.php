@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
+use App\Models\SubscriptionPlan;
 use App\Models\User;
+use App\Services\SubscriptionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -24,6 +26,9 @@ class AuthController extends Controller
             'phone'     => ['required', 'string', 'max:20'],
             'password'  => ['required', 'string', 'min:8', 'max:128', 'confirmed'],
             'shop_name' => ['required', 'string', 'max:255'],
+            'plan_slug' => ['sometimes', 'string', 'exists:subscription_plans,slug'],
+            'wave_number' => ['nullable', 'string', 'max:20'],
+            'orange_money_number' => ['nullable', 'string', 'max:20'],
         ]);
 
         return \DB::transaction(function () use ($request) {
@@ -33,6 +38,8 @@ class AuthController extends Controller
                 'slug' => \Str::slug($request->shop_name) . '-' . \Str::random(4),
                 'email' => $request->email,
                 'phone' => $request->phone,
+                'wave_number' => $request->wave_number,
+                'orange_money_number' => $request->orange_money_number,
                 'is_active' => true,
             ]);
 
@@ -56,6 +63,17 @@ class AuthController extends Controller
             ]);
             $user->assignRole('admin_entreprise');
 
+            // Create trial subscription
+            $planSlug = $request->plan_slug ?? 'essentiel';
+            $plan = SubscriptionPlan::where('slug', $planSlug)->first();
+            if ($plan) {
+                $subscriptionService = app(SubscriptionService::class);
+                $subscriptionService->createTrialSubscription($tenant, $plan);
+            }
+
+            // Create wallet
+            $tenant->getOrCreateWallet();
+
             $token = $user->createToken('api', ['*'], now()->addHours(8))->plainTextToken;
 
             AuditLog::create([
@@ -74,6 +92,11 @@ class AuthController extends Controller
                     'email' => $user->email,
                     'role'  => 'admin_entreprise',
                     'shop'  => $shop->name,
+                ],
+                'subscription' => [
+                    'status' => 'trial',
+                    'plan' => $plan?->name,
+                    'trial_ends_at' => now()->addDays(14)->toISOString(),
                 ],
             ], 201);
         });

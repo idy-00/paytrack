@@ -23,3 +23,7 @@ backend/.env
 .idea/
 .vscode/
 *.iml
+*.apk
+*.tar
+*.hprof
+*.zip

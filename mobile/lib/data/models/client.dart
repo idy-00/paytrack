@@ -13,6 +13,16 @@ class Client {
     required this.city,
   });
 
+  factory Client.fromJson(Map<String, dynamic> json) {
+    return Client(
+      id: json['id'] ?? 0,
+      name: json['name'] ?? '',
+      email: json['email'] ?? '',
+      phone: json['phone'] ?? '',
+      city: json['city'] ?? json['address'] ?? '',
+    );
+  }
+
   String get initials => name
       .split(' ')
       .where((p) => p.isNotEmpty)

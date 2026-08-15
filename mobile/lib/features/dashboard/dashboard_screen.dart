@@ -5,9 +5,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/formatters.dart';
-import '../../data/mock/mock_data.dart';
 import '../../data/models/sale.dart';
 import '../../features/auth/auth_provider.dart';
+import '../../features/dashboard/dashboard_provider.dart';
+import '../../features/sales/sales_provider.dart';
 import '../../shared/widgets/status_badge.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -19,16 +20,191 @@ class DashboardScreen extends ConsumerStatefulWidget {
 
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   int _navIndex = 0;
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      ref.read(dashboardProvider.notifier).fetchDashboard();
+      ref.read(salesProvider.notifier).fetchSales();
+    });
+  }
 
   void _onNavTap(int index) {
+    if (index == 4) {
+      _showMoreDrawer();
+      return;
+    }
     setState(() => _navIndex = index);
     switch (index) {
       case 0: context.go('/dashboard'); break;
-      case 1: context.go('/clients'); break;
+      case 1: context.go('/commandes'); break;
       case 2: context.go('/ventes'); break;
-      case 3: context.go('/paiements'); break;
-      case 4: context.go('/qr-scan'); break;
+      case 3: context.go('/portefeuille'); break;
     }
+  }
+
+  void _showMoreDrawer() {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Menu',
+      barrierColor: Colors.black.withValues(alpha: 0.5),
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (_, __, ___) => const SizedBox(),
+      transitionBuilder: (ctx, anim, _, __) {
+        final slideAnim = Tween<Offset>(
+          begin: const Offset(1, 0),
+          end: Offset.zero,
+        ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOutCubic));
+
+        return Stack(
+          children: [
+            // Drawer
+            Positioned(
+              right: 0,
+              top: 0,
+              bottom: 0,
+              width: 280,
+              child: SlideTransition(
+                position: slideAnim,
+                child: Material(
+                  color: AppColors.surface,
+                  child: SafeArea(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Header
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 20, 12, 16),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  gradient: AppColors.heroGradient,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Icon(Icons.apps_rounded, color: Colors.white, size: 20),
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                'Menu',
+                                style: GoogleFonts.spaceGrotesk(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.ink,
+                                ),
+                              ),
+                              const Spacer(),
+                              IconButton(
+                                onPressed: () => Navigator.pop(ctx),
+                                icon: Icon(Icons.close, color: AppColors.sub),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Divider(color: AppColors.borderSoft, height: 1),
+
+                        // Menu items
+                        Expanded(
+                          child: ListView(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            children: [
+                              _buildDrawerSection('Gestion'),
+                              _buildDrawerItem(ctx, Icons.people_rounded, 'Clients', '/clients'),
+                              _buildDrawerItem(ctx, Icons.payments_rounded, 'Paiements', '/paiements'),
+                              _buildDrawerItem(ctx, Icons.qr_code_scanner_rounded, 'Scanner QR', '/qr-scan'),
+
+                              const SizedBox(height: 8),
+                              _buildDrawerSection('Stock'),
+                              _buildDrawerItem(ctx, Icons.inventory_2_rounded, 'Articles', '/stock'),
+                              _buildDrawerItem(ctx, Icons.checklist_rounded, 'Inventaires', '/inventaires'),
+                              _buildDrawerItem(ctx, Icons.local_shipping_rounded, 'Fournisseurs', '/fournisseurs'),
+                              _buildDrawerItem(ctx, Icons.receipt_long_rounded, 'Cmd fournisseurs', '/commandes-fournisseurs'),
+
+                              const SizedBox(height: 8),
+                              _buildDrawerSection('Compte'),
+                              _buildDrawerItem(ctx, Icons.person_rounded, 'Profil', '/profil'),
+                              _buildDrawerItem(ctx, Icons.star_rounded, 'Abonnement', '/abonnement'),
+                            ],
+                          ),
+                        ),
+
+                        // Footer
+                        Divider(color: AppColors.borderSoft, height: 1),
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Text(
+                            'PayTrack v1.0',
+                            style: GoogleFonts.inter(fontSize: 11, color: AppColors.muted),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildDrawerSection(String title) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+      child: Text(
+        title.toUpperCase(),
+        style: GoogleFonts.inter(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: AppColors.muted,
+          letterSpacing: 1,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDrawerItem(BuildContext ctx, IconData icon, String label, String route) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          Navigator.pop(ctx);
+          context.go(route);
+        },
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          child: Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: AppColors.blueLight,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, color: AppColors.blue, size: 18),
+              ),
+              const SizedBox(width: 14),
+              Text(
+                label,
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.ink,
+                ),
+              ),
+              const Spacer(),
+              Icon(Icons.chevron_right_rounded, color: AppColors.muted, size: 20),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -37,22 +213,23 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final user = auth.user;
     final firstName = user?.name.split(' ').first ?? 'vous';
 
-    final retardSales = mockSales
-        .where((s) => s.status == SaleStatus.retard)
-        .toList();
-    final recentSales = mockSales.take(4).toList();
-    final soldeCount = mockSales
-        .where((s) => s.status == SaleStatus.solde)
-        .length;
-    final actifCount = mockSales
-        .where((s) => s.status == SaleStatus.actif)
-        .length;
-    final totalRestant  = dashboardStats['total_restant'] as int;
-    final totalEncaisse = dashboardStats['total_encaisse'] as int;
-    final encaisseMois  = dashboardStats['encaisse_ce_mois'] as int;
+    final dashState = ref.watch(dashboardProvider);
+    final salesState = ref.watch(salesProvider);
+
+    final stats = dashState.stats;
+    final sales = salesState.sales;
+
+    final retardSales = sales.where((s) => s.status == SaleStatus.retard).toList();
+    final recentSales = sales.take(4).toList();
+    final soldeCount = stats?.ventesSoldees ?? 0;
+    final actifCount = stats?.ventesActives ?? 0;
+    final totalRestant = stats?.totalRestant ?? 0;
+    final totalEncaisse = stats?.totalEncaisse ?? 0;
+    final encaisseMois = 0; // API doesn't return this yet
     final today = DateFormat('EEEE d MMMM', 'fr_FR').format(DateTime.now());
 
     return Scaffold(
+      key: _scaffoldKey,
       backgroundColor: AppColors.background,
       bottomNavigationBar: _buildNavBar(),
       body: SafeArea(
@@ -90,41 +267,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         ],
                       ),
                     ),
-                    GestureDetector(
-                      onTap: () {
-                        ref.read(authProvider.notifier).logout();
-                        context.go('/login');
-                      },
-                      child: Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          gradient: AppColors.heroGradient,
-                          borderRadius: BorderRadius.circular(14),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.blue.withValues(alpha: 0.25),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Center(
-                          child: Text(
-                            user?.name
-                                .split(' ')
-                                .map((p) => p.isNotEmpty ? p[0] : '')
-                                .take(2)
-                                .join() ?? 'MD',
-                            style: GoogleFonts.spaceGrotesk(
-                              fontSize: 14,
-                              color: Colors.white,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
+                    _buildAvatarMenu(user),
                   ],
                 ),
               ),
@@ -370,7 +513,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 margin: const EdgeInsets.symmetric(horizontal: 20),
                 color: Colors.white.withValues(alpha: 0.15),
               ),
-              _buildHeroStat('Taux', '${((totalEncaisse / (totalEncaisse + totalRestant)) * 100).round()}%'),
+              _buildHeroStat('Taux', '${(totalEncaisse + totalRestant) > 0 ? ((totalEncaisse / (totalEncaisse + totalRestant)) * 100).round() : 0}%'),
             ],
           ),
         ],
@@ -645,6 +788,209 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
+  // ── Avatar Popup Menu ──────────────────────────────────────────────────────
+  OverlayEntry? _avatarOverlay;
+  final LayerLink _avatarLayerLink = LayerLink();
+
+  Widget _buildAvatarMenu(user) {
+    final initials = user?.name
+        .split(' ')
+        .map((p) => p.isNotEmpty ? p[0] : '')
+        .take(2)
+        .join() ?? 'MD';
+
+    return CompositedTransformTarget(
+      link: _avatarLayerLink,
+      child: GestureDetector(
+        onTap: () => _showAvatarMenu(user),
+        child: Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            gradient: AppColors.darkGradient,
+            borderRadius: BorderRadius.circular(22),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.ink.withValues(alpha: 0.2),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Center(
+            child: Text(
+              initials,
+              style: GoogleFonts.spaceGrotesk(
+                fontSize: 14,
+                color: Colors.white.withValues(alpha: 0.9),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showAvatarMenu(user) {
+    _avatarOverlay?.remove();
+    _avatarOverlay = OverlayEntry(
+      builder: (ctx) => Stack(
+        children: [
+          // Backdrop
+          Positioned.fill(
+            child: GestureDetector(
+              onTap: _hideAvatarMenu,
+              child: Container(color: Colors.transparent),
+            ),
+          ),
+          // Menu
+          Positioned(
+            right: 20,
+            top: 80,
+            child: TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0.0, end: 1.0),
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOutCubic,
+              builder: (_, value, child) => Transform.scale(
+                scale: 0.9 + (0.1 * value),
+                alignment: Alignment.topRight,
+                child: Opacity(opacity: value, child: child),
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: Container(
+                  width: 220,
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.08),
+                        blurRadius: 24,
+                        offset: const Offset(0, 8),
+                      ),
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.04),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Header
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                gradient: AppColors.heroGradient,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  user?.name?.split(' ').map((p) => p.isNotEmpty ? p[0] : '').take(2).join() ?? 'MD',
+                                  style: GoogleFonts.spaceGrotesk(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    user?.name ?? 'Utilisateur',
+                                    style: GoogleFonts.spaceGrotesk(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.ink,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  Text(
+                                    user?.email ?? '',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 11,
+                                      color: AppColors.sub,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Divider(height: 1, color: AppColors.borderSoft),
+                      // Menu items
+                      _buildAvatarMenuItem(Icons.person_outline_rounded, 'Profil', () {
+                        _hideAvatarMenu();
+                      }),
+                      _buildAvatarMenuItem(Icons.star_outline_rounded, 'Abonnement', () {
+                        _hideAvatarMenu();
+                        context.go('/abonnement');
+                      }),
+                      _buildAvatarMenuItem(Icons.notifications_none_rounded, 'Notifications', () {
+                        _hideAvatarMenu();
+                      }),
+                      Divider(height: 1, color: AppColors.borderSoft),
+                      _buildAvatarMenuItem(Icons.logout_rounded, 'Déconnexion', () {
+                        _hideAvatarMenu();
+                        ref.read(authProvider.notifier).logout();
+                        context.go('/login');
+                      }, isDestructive: true),
+                      const SizedBox(height: 8),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+    Overlay.of(context).insert(_avatarOverlay!);
+  }
+
+  void _hideAvatarMenu() {
+    _avatarOverlay?.remove();
+    _avatarOverlay = null;
+  }
+
+  Widget _buildAvatarMenuItem(IconData icon, String label, VoidCallback onTap, {bool isDestructive = false}) {
+    final color = isDestructive ? AppColors.danger : AppColors.ink;
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            Icon(icon, size: 20, color: color),
+            const SizedBox(width: 12),
+            Text(
+              label,
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: color,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   // ── Navigation Bar ────────────────────────────────────────────────────────
   Widget _buildNavBar() {
     return Container(
@@ -667,11 +1013,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildNavItem(0, Icons.grid_view_rounded, Icons.grid_view_rounded, 'Accueil'),
-              _buildNavItem(1, Icons.people_outline_rounded, Icons.people_rounded, 'Clients'),
+              _buildNavItem(0, Icons.home_outlined, Icons.home_rounded, 'Accueil'),
+              _buildNavItem(1, Icons.shopping_bag_outlined, Icons.shopping_bag_rounded, 'Commandes'),
               _buildNavItem(2, Icons.receipt_long_outlined, Icons.receipt_long_rounded, 'Ventes'),
-              _buildNavItem(3, Icons.account_balance_wallet_outlined, Icons.account_balance_wallet_rounded, 'Paiements'),
-              _buildNavItem(4, Icons.qr_code_scanner_rounded, Icons.qr_code_scanner_rounded, 'Scanner'),
+              _buildNavItem(3, Icons.account_balance_wallet_outlined, Icons.account_balance_wallet_rounded, 'Portefeuille'),
+              _buildNavItem(4, Icons.menu_rounded, Icons.menu_rounded, 'Plus'),
             ],
           ),
         ),

@@ -73,9 +73,9 @@ export default function PaiementsPage() {
           <h1 className="text-2xl font-bold text-gray-900">Paiements</h1>
           <p className="text-sm text-gray-500 mt-0.5">{allPayments.length} paiements enregistrés</p>
         </div>
-        <a href={`${api.exportPayments()}?token=${getToken()}`} className="btn btn-secondary gap-2" download>
+        <button onClick={() => api.exportPayments()} className="btn btn-secondary gap-2">
           <Download size={15} /> Exporter CSV
-        </a>
+        </button>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

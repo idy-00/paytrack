@@ -22,7 +22,11 @@
 - [x] Page admin boutiques (ShopsPage)
 - [x] Page admin utilisateurs (UsersPage)
 - [x] Navigation admin dans sidebar
-- [ ] Ajouter boutons téléchargement PDF/CSV
+- [x] Bouton export CSV sur VentesPage
+- [x] Bouton export CSV sur PaiementsPage
+- [x] Bouton PDF contrat sur VenteDetailPage
+- [x] Login Google + Apple (OAuth - routes prêtes, besoin clés)
+- [x] Écran offline (OfflineScreen)
 - [ ] Tests E2E Playwright parcours vendeur
 - [ ] Tests E2E parcours client
 - [ ] Tests E2E parcours admin

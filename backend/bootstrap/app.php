@@ -13,9 +13,12 @@ return Application::configure(basePath: dirname(__DIR__))
         apiPrefix: 'api',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // EnsureTenantAccess is applied via route groups, not globally
+        $middleware->prepend(\Illuminate\Http\Middleware\HandleCors::class);
+
         $middleware->alias([
             'tenant' => \App\Http\Middleware\EnsureTenantAccess::class,
+            'subscription' => \App\Http\Middleware\CheckSubscription::class,
+            'plan_feature' => \App\Http\Middleware\CheckPlanFeature::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

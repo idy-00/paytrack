@@ -30,6 +30,8 @@ function LoginForm({ onForgot }) {
       const user = await login(email, password)
       if (user.role === 'client') {
         navigate('/client/dashboard', { replace: true })
+      } else if (user.role === 'admin_entreprise' || user.role === 'super_admin') {
+        navigate('/admin', { replace: true })
       } else {
         navigate(from, { replace: true })
       }
@@ -48,7 +50,13 @@ function LoginForm({ onForgot }) {
       <div className="rounded-xl p-3.5 mb-6 space-y-1"
         style={{ background: '#EEF4FE', border: '1px solid #DBEAFE' }}>
         <p className="text-xs" style={{ color: '#1D6FE8' }}>
-          <strong>Démo vendeur :</strong> moussa@phoneshop-dakar.com &middot; demo1234
+          <strong>Admin :</strong> admin@paytrack.com &middot; admin2024
+        </p>
+        <p className="text-xs" style={{ color: '#1D6FE8' }}>
+          <strong>Démo admin :</strong> moussa@phoneshop-dakar.com &middot; demo1234
+        </p>
+        <p className="text-xs" style={{ color: '#1D6FE8' }}>
+          <strong>Démo vendeur :</strong> fatou@phoneshop-dakar.com &middot; demo1234
         </p>
         <p className="text-xs" style={{ color: '#1D6FE8' }}>
           <strong>Démo client :</strong> aminata@gmail.com &middot; demo1234

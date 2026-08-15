@@ -17,9 +17,23 @@ import RegisterPage from '@/pages/RegisterPage'
 import StockPage from '@/pages/StockPage'
 import ShopsPage from '@/pages/ShopsPage'
 import UsersPage from '@/pages/UsersPage'
+import AdminDashboardPage from '@/pages/AdminDashboardPage'
+import AdminRapportsPage from '@/pages/AdminRapportsPage'
+import AdminParametresPage from '@/pages/AdminParametresPage'
+// New pages
+import SubscriptionPage from '@/pages/SubscriptionPage'
+import WalletPage from '@/pages/WalletPage'
+import OrdersPage from '@/pages/OrdersPage'
+import OrderDetailPage from '@/pages/OrderDetailPage'
+import NewOrderPage from '@/pages/NewOrderPage'
+import SuppliersPage from '@/pages/SuppliersPage'
+import SupplierOrdersPage from '@/pages/SupplierOrdersPage'
+import InventoriesPage from '@/pages/InventoriesPage'
+import AtaabaAdminPage from '@/pages/AtaabaAdminPage'
 
 const VENDOR_ROLES = ['vendeur', 'responsable_boutique', 'admin_entreprise', 'super_admin']
 const ADMIN_ROLES = ['admin_entreprise', 'super_admin']
+const SUPER_ADMIN_ROLES = ['super_admin']
 
 export default function App() {
   return (
@@ -60,12 +74,58 @@ export default function App() {
           <ProtectedRoute roles={VENDOR_ROLES}><QRScannerPage /></ProtectedRoute>
         } />
 
+        {/* Orders (commandes clients) */}
+        <Route path="/commandes" element={
+          <ProtectedRoute roles={VENDOR_ROLES}><OrdersPage /></ProtectedRoute>
+        } />
+        <Route path="/commandes/nouvelle" element={
+          <ProtectedRoute roles={VENDOR_ROLES}><NewOrderPage /></ProtectedRoute>
+        } />
+        <Route path="/commandes/:id" element={
+          <ProtectedRoute roles={VENDOR_ROLES}><OrderDetailPage /></ProtectedRoute>
+        } />
+
+        {/* Inventories (Pro/Business plan) */}
+        <Route path="/inventaires" element={
+          <ProtectedRoute roles={VENDOR_ROLES}><InventoriesPage /></ProtectedRoute>
+        } />
+
+        {/* Suppliers (Business plan - backend enforces plan limit) */}
+        <Route path="/fournisseurs" element={
+          <ProtectedRoute roles={VENDOR_ROLES}><SuppliersPage /></ProtectedRoute>
+        } />
+        <Route path="/commandes-fournisseurs" element={
+          <ProtectedRoute roles={VENDOR_ROLES}><SupplierOrdersPage /></ProtectedRoute>
+        } />
+
+        {/* Wallet & Subscription */}
+        <Route path="/portefeuille" element={
+          <ProtectedRoute roles={VENDOR_ROLES}><WalletPage /></ProtectedRoute>
+        } />
+        <Route path="/abonnement" element={
+          <ProtectedRoute roles={VENDOR_ROLES}><SubscriptionPage /></ProtectedRoute>
+        } />
+
         {/* Admin routes */}
+        <Route path="/admin" element={
+          <ProtectedRoute roles={ADMIN_ROLES}><AdminDashboardPage /></ProtectedRoute>
+        } />
+        <Route path="/admin/rapports" element={
+          <ProtectedRoute roles={ADMIN_ROLES}><AdminRapportsPage /></ProtectedRoute>
+        } />
+        <Route path="/admin/parametres" element={
+          <ProtectedRoute roles={ADMIN_ROLES}><AdminParametresPage /></ProtectedRoute>
+        } />
         <Route path="/boutiques" element={
           <ProtectedRoute roles={ADMIN_ROLES}><ShopsPage /></ProtectedRoute>
         } />
         <Route path="/utilisateurs" element={
           <ProtectedRoute roles={ADMIN_ROLES}><UsersPage /></ProtectedRoute>
+        } />
+
+        {/* ATAABA Super Admin */}
+        <Route path="/ataaba-admin" element={
+          <ProtectedRoute roles={SUPER_ADMIN_ROLES}><AtaabaAdminPage /></ProtectedRoute>
         } />
 
         {/* Client routes */}

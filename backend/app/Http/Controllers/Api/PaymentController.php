@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Mail\PaymentReceiptMail;
 use App\Models\AuditLog;
 use App\Models\Payment;
 use App\Models\Sale;
@@ -10,12 +11,23 @@ use App\Models\SaleSchedule;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class PaymentController extends Controller
 {
+    public function index(Request $request): JsonResponse
+    {
+        $payments = Payment::with(['sale.client'])
+            ->where('tenant_id', $request->user()->tenant_id)
+            ->orderBy('payment_date', 'desc')
+            ->paginate(50);
+
+        return response()->json($payments);
+    }
+
     public function store(Request $request, Sale $sale): JsonResponse
     {
         $this->authorize('recordPayment', $sale);
@@ -96,6 +108,19 @@ class PaymentController extends Controller
                 'new_values'     => ['amount' => $validated['amount'], 'receipt' => $payment->receipt_number],
                 'ip_address'     => $request->ip(),
             ]);
+
+            // Send receipt email to client if they have an email
+            $client = $sale->client;
+            if ($client && $client->email) {
+                try {
+                    Mail::to($client->email)->send(new PaymentReceiptMail($sale->fresh(), $payment));
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning('PaymentController: failed to send receipt email', [
+                        'client_id' => $client->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
 
             return response()->json([
                 'payment' => $payment,

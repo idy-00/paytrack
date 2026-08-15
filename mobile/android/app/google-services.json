@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "672758421041",
+    "project_id": "paytrack-895fc",
+    "storage_bucket": "paytrack-895fc.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:672758421041:android:322709836b64965cb1e710",
+        "android_client_info": {
+          "package_name": "com.ataaba.paytrack"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBU6akLAgFrh3mPwT1LmZ6g-FIpya6hx_0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

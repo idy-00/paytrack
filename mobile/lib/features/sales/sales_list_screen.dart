@@ -1,26 +1,33 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/formatters.dart';
-import '../../data/mock/mock_data.dart';
 import '../../data/models/sale.dart';
 import '../../shared/widgets/progress_bar.dart';
 import '../../shared/widgets/status_badge.dart';
+import 'sales_provider.dart';
 
-class SalesListScreen extends StatefulWidget {
+class SalesListScreen extends ConsumerStatefulWidget {
   const SalesListScreen({super.key});
 
   @override
-  State<SalesListScreen> createState() => _SalesListScreenState();
+  ConsumerState<SalesListScreen> createState() => _SalesListScreenState();
 }
 
-class _SalesListScreenState extends State<SalesListScreen> {
+class _SalesListScreenState extends ConsumerState<SalesListScreen> {
   String _searchQuery = '';
   SaleStatus? _filterStatus;
 
-  List<Sale> get _filtered {
-    return mockSales.where((s) {
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() => ref.read(salesProvider.notifier).fetchSales());
+  }
+
+  List<Sale> _filter(List<Sale> sales) {
+    return sales.where((s) {
       final matchSearch = _searchQuery.isEmpty ||
           s.clientName.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           s.articleName.toLowerCase().contains(_searchQuery.toLowerCase()) ||
@@ -32,7 +39,8 @@ class _SalesListScreenState extends State<SalesListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final filtered = _filtered;
+    final state = ref.watch(salesProvider);
+    final filtered = _filter(state.sales);
     return Scaffold(
       backgroundColor: AppColors.background,
       floatingActionButton: Container(
@@ -51,7 +59,7 @@ class _SalesListScreenState extends State<SalesListScreen> {
           backgroundColor: Colors.transparent,
           foregroundColor: Colors.white,
           elevation: 0,
-          onPressed: () {},
+          onPressed: () => context.push('/ventes/nouvelle'),
           child: const Icon(Icons.add_rounded, size: 24),
         ),
       ),
@@ -98,7 +106,7 @@ class _SalesListScreenState extends State<SalesListScreen> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
-                      '${mockSales.length}',
+                      '${state.sales.length}',
                       style: GoogleFonts.spaceGrotesk(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,

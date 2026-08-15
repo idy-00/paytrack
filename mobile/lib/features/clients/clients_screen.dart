@@ -1,23 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_colors.dart';
-import '../../data/mock/mock_data.dart';
 import '../../data/models/client.dart';
+import 'clients_provider.dart';
 
-class ClientsScreen extends StatefulWidget {
+class ClientsScreen extends ConsumerStatefulWidget {
   const ClientsScreen({super.key});
 
   @override
-  State<ClientsScreen> createState() => _ClientsScreenState();
+  ConsumerState<ClientsScreen> createState() => _ClientsScreenState();
 }
 
-class _ClientsScreenState extends State<ClientsScreen> {
+class _ClientsScreenState extends ConsumerState<ClientsScreen> {
   String _searchQuery = '';
 
-  List<Client> get _filtered {
-    if (_searchQuery.isEmpty) return mockClients;
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() => ref.read(clientsProvider.notifier).load());
+  }
+
+  List<Client> _filter(List<Client> clients) {
+    if (_searchQuery.isEmpty) return clients;
     final q = _searchQuery.toLowerCase();
-    return mockClients
+    return clients
         .where((c) =>
             c.name.toLowerCase().contains(q) ||
             c.phone.contains(q) ||
@@ -28,7 +35,37 @@ class _ClientsScreenState extends State<ClientsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final filtered = _filtered;
+    final clientsAsync = ref.watch(clientsProvider);
+
+    return clientsAsync.when(
+      loading: () => const Scaffold(
+        backgroundColor: AppColors.background,
+        body: Center(child: CircularProgressIndicator()),
+      ),
+      error: (err, _) => Scaffold(
+        backgroundColor: AppColors.background,
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.error_outline, size: 48, color: Colors.red.shade400),
+              const SizedBox(height: 16),
+              Text('Erreur: $err', style: const TextStyle(color: AppColors.sub)),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () => ref.read(clientsProvider.notifier).refresh(),
+                child: const Text('Réessayer'),
+              ),
+            ],
+          ),
+        ),
+      ),
+      data: (clients) => _buildContent(clients),
+    );
+  }
+
+  Widget _buildContent(List<Client> clients) {
+    final filtered = _filter(clients);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -56,7 +93,6 @@ class _ClientsScreenState extends State<ClientsScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // ── Header ─────────────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
               child: Row(
@@ -78,7 +114,7 @@ class _ClientsScreenState extends State<ClientsScreen> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
-                      '${mockClients.length}',
+                      '${clients.length}',
                       style: GoogleFonts.spaceGrotesk(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
@@ -89,8 +125,6 @@ class _ClientsScreenState extends State<ClientsScreen> {
                 ],
               ),
             ),
-
-            // ── Search ─────────────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
               child: Container(
@@ -138,8 +172,6 @@ class _ClientsScreenState extends State<ClientsScreen> {
                 ),
               ),
             ),
-
-            // ── Count ──────────────────────────────────────────────────
             if (_searchQuery.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
@@ -154,10 +186,7 @@ class _ClientsScreenState extends State<ClientsScreen> {
                   ),
                 ),
               ),
-
             const SizedBox(height: 16),
-
-            // ── List ───────────────────────────────────────────────────
             Expanded(
               child: filtered.isEmpty
                   ? _buildEmpty()
@@ -232,8 +261,7 @@ class _ClientsScreenState extends State<ClientsScreen> {
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    Icon(Icons.phone_outlined,
-                        size: 12, color: AppColors.muted),
+                    const Icon(Icons.phone_outlined, size: 12, color: AppColors.muted),
                     const SizedBox(width: 4),
                     Text(
                       client.phone,
@@ -256,8 +284,7 @@ class _ClientsScreenState extends State<ClientsScreen> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.location_on_outlined,
-                    size: 12, color: AppColors.sub),
+                const Icon(Icons.location_on_outlined, size: 12, color: AppColors.sub),
                 const SizedBox(width: 3),
                 Text(
                   client.city,
@@ -282,7 +309,7 @@ class _ClientsScreenState extends State<ClientsScreen> {
         children: [
           Container(
             padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: AppColors.surfaceDim,
               shape: BoxShape.circle,
             ),

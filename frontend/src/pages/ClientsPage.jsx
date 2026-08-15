@@ -11,10 +11,10 @@ function initials(name = '') {
   return name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()
 }
 
-const EMPTY_FORM = { name: '', phone: '', email: '', city: '', address: '' }
+const EMPTY_FORM = { full_name: '', phone: '', email: '', city: '', address: '' }
 
 const FORM_FIELDS = [
-  { id: 'f-name',    label: 'Nom complet',  field: 'name',    required: true,  type: 'text',  placeholder: 'Aminata Ndiaye'        },
+  { id: 'f-name',    label: 'Nom complet',  field: 'full_name',    required: true,  type: 'text',  placeholder: 'Aminata Ndiaye'        },
   { id: 'f-phone',   label: 'Téléphone',    field: 'phone',   required: true,  type: 'tel',   placeholder: '+221 77 000 00 00'     },
   { id: 'f-email',   label: 'Email',        field: 'email',   required: false, type: 'email', placeholder: 'aminata@gmail.com'     },
   { id: 'f-city',    label: 'Ville',        field: 'city',    required: false, type: 'text',  placeholder: 'Dakar'                 },
@@ -43,14 +43,14 @@ export default function ClientsPage() {
   })
 
   const handleSave = async () => {
-    if (!form.name.trim() || !form.phone.trim()) {
+    if (!form.full_name.trim() || !form.phone.trim()) {
       toast.error('Nom et téléphone requis.')
       return
     }
     setSaving(true)
     try {
       await addClient({
-        name: form.name.trim(),
+        full_name: form.full_name.trim(),
         phone: form.phone.trim(),
         email: form.email.trim() || null,
         city: form.city.trim() || 'Non renseigné',
@@ -58,7 +58,7 @@ export default function ClientsPage() {
       })
       setShowModal(false)
       setForm(EMPTY_FORM)
-      toast.success(`Client "${form.name}" créé !`)
+      toast.success(`Client "${form.full_name}" créé !`)
     } catch (err) {
       toast.error(err.message || 'Erreur lors de la création')
     } finally {

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/theme/app_theme.dart';
+import 'core/services/notification_service.dart';
 import 'shared/navigation/app_router.dart';
 
 void main() {
@@ -18,11 +19,34 @@ void main() {
   runApp(const ProviderScope(child: PayTrackApp()));
 }
 
-class PayTrackApp extends ConsumerWidget {
+/// Initialize services after app is running (safer)
+Future<void> _initializeServices() async {
+  try {
+    await NotificationService.initialize();
+  } catch (e) {
+    debugPrint('Notification init failed: $e');
+  }
+}
+
+class PayTrackApp extends ConsumerStatefulWidget {
   const PayTrackApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PayTrackApp> createState() => _PayTrackAppState();
+}
+
+class _PayTrackAppState extends ConsumerState<PayTrackApp> {
+  @override
+  void initState() {
+    super.initState();
+    // Initialize notifications after first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeServices();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final router = ref.watch(appRouterProvider);
     return MaterialApp.router(
       title: 'PayTrack',

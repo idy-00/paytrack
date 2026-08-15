@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Package, AlertTriangle, XCircle, Plus, Minus, Search, Loader2 } from 'lucide-react'
+import { Package, AlertTriangle, XCircle, Plus, Minus, Search, Loader2, X } from 'lucide-react'
 import { formatAmount } from '@/lib/utils'
 import { useStockStore } from '@/store/stockStore'
 import toast from 'react-hot-toast'
@@ -8,8 +8,11 @@ export default function StockPage() {
   const [search, setSearch] = useState('')
   const [editingId, setEditingId] = useState(null)
   const [editQty, setEditQty] = useState(0)
+  const [showAddModal, setShowAddModal] = useState(false)
+  const [newArticle, setNewArticle] = useState({ name: '', category: '', price: '', stock: '' })
+  const [saving, setSaving] = useState(false)
 
-  const { articles, loading, fetchArticles, updateStock, lowStockThreshold } = useStockStore()
+  const { articles, loading, fetchArticles, updateStock, addArticle, lowStockThreshold } = useStockStore()
 
   useEffect(() => { fetchArticles() }, [fetchArticles])
 
@@ -43,6 +46,30 @@ export default function StockPage() {
     }
   }
 
+  const handleAddArticle = async (e) => {
+    e.preventDefault()
+    if (!newArticle.name || !newArticle.price) {
+      toast.error('Nom et prix requis')
+      return
+    }
+    setSaving(true)
+    try {
+      await addArticle({
+        name: newArticle.name,
+        category: newArticle.category || null,
+        price: parseInt(newArticle.price, 10),
+        stock: parseInt(newArticle.stock, 10) || 0,
+      })
+      toast.success('Article ajouté !')
+      setShowAddModal(false)
+      setNewArticle({ name: '', category: '', price: '', stock: '' })
+    } catch (err) {
+      toast.error(err.message || 'Erreur')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   if (loading && articles.length === 0) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -53,9 +80,15 @@ export default function StockPage() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-5 pb-8">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Gestion du stock</h1>
-        <p className="text-sm text-gray-500 mt-0.5">Suivez les quantités et gérez vos approvisionnements.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Gestion du stock</h1>
+          <p className="text-sm text-gray-500 mt-0.5">Suivez les quantités et gérez vos approvisionnements.</p>
+        </div>
+        <button onClick={() => setShowAddModal(true)} className="btn btn-primary flex items-center gap-2">
+          <Plus size={16} />
+          Nouvel article
+        </button>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -165,6 +198,85 @@ export default function StockPage() {
           </tbody>
         </table>
       </div>
+
+      {/* Modal Ajout Article */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-lg font-bold text-gray-900">Nouvel article</h2>
+              <button onClick={() => setShowAddModal(false)} className="btn btn-ghost btn-icon">
+                <X size={18} />
+              </button>
+            </div>
+            <form onSubmit={handleAddArticle} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nom de l'article *</label>
+                <input
+                  type="text"
+                  className="input"
+                  placeholder="iPhone 15 Pro Max"
+                  value={newArticle.name}
+                  onChange={e => setNewArticle({ ...newArticle, name: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Catégorie</label>
+                <select
+                  className="input"
+                  value={newArticle.category}
+                  onChange={e => setNewArticle({ ...newArticle, category: e.target.value })}
+                >
+                  <option value="">-- Sélectionner --</option>
+                  <option value="Smartphones">Smartphones</option>
+                  <option value="Tablettes">Tablettes</option>
+                  <option value="Ordinateurs">Ordinateurs</option>
+                  <option value="Accessoires">Accessoires</option>
+                  <option value="TV & Audio">TV & Audio</option>
+                  <option value="Électroménager">Électroménager</option>
+                  <option value="Montres">Montres</option>
+                  <option value="Autres">Autres</option>
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Prix de vente (FCFA) *</label>
+                  <input
+                    type="number"
+                    className="input"
+                    placeholder="750000"
+                    min="0"
+                    value={newArticle.price}
+                    onChange={e => setNewArticle({ ...newArticle, price: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Quantité initiale</label>
+                  <input
+                    type="number"
+                    className="input"
+                    placeholder="10"
+                    min="0"
+                    value={newArticle.stock}
+                    onChange={e => setNewArticle({ ...newArticle, stock: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button type="button" onClick={() => setShowAddModal(false)} className="btn btn-secondary flex-1">
+                  Annuler
+                </button>
+                <button type="submit" disabled={saving} className="btn btn-primary flex-1 flex items-center justify-center gap-2">
+                  {saving ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
+                  {saving ? 'Ajout...' : 'Ajouter'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

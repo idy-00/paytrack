@@ -84,7 +84,7 @@ export default function RegisterPage() {
 
   const up = (key, val) => setForm(f => ({ ...f, [key]: val }))
 
-  const step0Valid = form.name.trim() && form.email.trim() && form.password.length >= 8
+  const step0Valid = form.name.trim() && form.email.trim() && form.phone.trim() && form.password.length >= 8
   const step1Valid = form.shop_name.trim() && form.city.trim() && cguAccepted
 
   const handleStep0 = e => { e.preventDefault(); if (step0Valid) setStep(1) }
@@ -98,7 +98,7 @@ export default function RegisterPage() {
       await register({
         name: form.name.trim(),
         email: form.email.trim(),
-        phone: form.phone.trim() || null,
+        phone: form.phone.trim(),
         password: form.password,
         password_confirmation: form.password,
         shop_name: form.shop_name.trim(),
@@ -166,8 +166,8 @@ export default function RegisterPage() {
                   className="input" placeholder="vous@email.com" />
               </div>
               <div>
-                <label className="block text-sm font-semibold mb-1.5" style={{ color: '#1A1A1A' }}>Téléphone</label>
-                <input type="tel" autoComplete="tel" value={form.phone} onChange={e => up('phone', e.target.value)}
+                <label className="block text-sm font-semibold mb-1.5" style={{ color: '#1A1A1A' }}>Téléphone *</label>
+                <input type="tel" required autoComplete="tel" value={form.phone} onChange={e => up('phone', e.target.value)}
                   className="input" placeholder="+221 77 000 00 00" />
               </div>
               <div>

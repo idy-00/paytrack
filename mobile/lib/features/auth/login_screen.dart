@@ -236,17 +236,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                                 ),
                                 children: const [
                                   TextSpan(
-                                    text: 'Vendeur : ',
+                                    text: 'Admin : ',
+                                    style: TextStyle(fontWeight: FontWeight.w600),
+                                  ),
+                                  TextSpan(text: 'admin@paytrack.com (admin2024)\n'),
+                                  TextSpan(
+                                    text: 'Démo : ',
                                     style: TextStyle(fontWeight: FontWeight.w600),
                                   ),
                                   TextSpan(text: 'moussa@phoneshop-dakar.com\n'),
                                   TextSpan(
-                                    text: 'Client : ',
+                                    text: 'Vendeur : ',
                                     style: TextStyle(fontWeight: FontWeight.w600),
                                   ),
-                                  TextSpan(text: 'aminata@gmail.com\n'),
+                                  TextSpan(text: 'fatou@phoneshop-dakar.com\n'),
                                   TextSpan(
-                                    text: 'Mot de passe : ',
+                                    text: 'Mot de passe démo : ',
                                     style: TextStyle(fontWeight: FontWeight.w600),
                                   ),
                                   TextSpan(text: 'demo1234'),
@@ -468,7 +473,116 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                       ),
                     ),
 
-                    const SizedBox(height: 48),
+                    const SizedBox(height: 24),
+
+                    // ── Divider ──────────────────────────────────────────────
+                    Row(
+                      children: [
+                        Expanded(child: Divider(color: AppColors.border)),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Text(
+                            'ou continuer avec',
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              color: AppColors.sub,
+                            ),
+                          ),
+                        ),
+                        Expanded(child: Divider(color: AppColors.border)),
+                      ],
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    // ── OAuth Buttons ────────────────────────────────────────
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () {
+                              // TODO: Google Sign-In
+                            },
+                            icon: Image.network(
+                              'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg',
+                              width: 20,
+                              height: 20,
+                              errorBuilder: (_, __, ___) => const Icon(Icons.g_mobiledata, size: 24),
+                            ),
+                            label: Text(
+                              'Google',
+                              style: GoogleFonts.inter(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.ink,
+                              ),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              side: const BorderSide(color: AppColors.border),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () {
+                              // TODO: Apple Sign-In
+                            },
+                            icon: const Icon(Icons.apple, size: 22, color: Colors.black),
+                            label: Text(
+                              'Apple',
+                              style: GoogleFonts.inter(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.ink,
+                              ),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              side: const BorderSide(color: AppColors.border),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // ── Lien inscription ─────────────────────────────────────
+                    Center(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Pas encore de compte ? ',
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              color: AppColors.sub,
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: () => context.go('/register'),
+                            child: Text(
+                              "S'inscrire",
+                              style: GoogleFonts.inter(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.blue,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 32),
                   ],
                 ),
               ),

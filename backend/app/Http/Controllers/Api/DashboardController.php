@@ -44,7 +44,11 @@ class DashboardController extends Controller
             ->get();
 
         return response()->json([
-            ...(array) $stats,
+            'total_encaisse' => (int) ($stats->total_encaisse ?? 0),
+            'total_restant' => (int) ($stats->total_restant ?? 0),
+            'ventes_actives' => (int) ($stats->ventes_actives ?? 0),
+            'ventes_en_retard' => (int) ($stats->ventes_en_retard ?? 0),
+            'ventes_soldees' => (int) ($stats->ventes_soldees ?? 0),
             'monthly_data' => $monthly,
         ]);
     }

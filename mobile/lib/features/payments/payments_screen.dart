@@ -1,66 +1,59 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/formatters.dart';
-import '../../data/mock/mock_data.dart';
-import '../../data/models/sale.dart';
+import 'payments_provider.dart';
 
-class _PaymentEntry {
-  final String receipt;
-  final String clientName;
-  final int amount;
-  final String paidDate;
-  final String mode;
-
-  const _PaymentEntry({
-    required this.receipt,
-    required this.clientName,
-    required this.amount,
-    required this.paidDate,
-    required this.mode,
-  });
-}
-
-List<_PaymentEntry> _buildPayments() {
-  final entries = <_PaymentEntry>[];
-  const modes = ['Wave', 'Orange Money', 'Wave', 'Orange Money', 'Wave',
-      'Orange Money', 'Wave', 'Wave', 'Orange Money'];
-  int idx = 0;
-
-  for (final sale in mockSales) {
-    for (final item in sale.schedule) {
-      if (item.status == SaleStatus.solde && item.paidDate != null) {
-        entries.add(_PaymentEntry(
-          receipt: '${sale.reference} · T${item.num}',
-          clientName: sale.clientName,
-          amount: item.amount,
-          paidDate: item.paidDate!,
-          mode: modes[idx % modes.length],
-        ));
-        idx++;
-      }
-    }
-  }
-
-  entries.sort((a, b) => b.paidDate.compareTo(a.paidDate));
-  return entries;
-}
-
-class PaymentsScreen extends StatelessWidget {
+class PaymentsScreen extends ConsumerStatefulWidget {
   const PaymentsScreen({super.key});
 
   @override
+  ConsumerState<PaymentsScreen> createState() => _PaymentsScreenState();
+}
+
+class _PaymentsScreenState extends ConsumerState<PaymentsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() => ref.read(paymentsProvider.notifier).load());
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final payments = _buildPayments();
-    final totalEncaisse = payments.fold(0, (sum, p) => sum + p.amount);
-    final now = DateTime.now();
-    final thisMois = payments
-        .where((p) {
-          final d = DateTime.tryParse(p.paidDate);
-          if (d == null) return false;
-          return d.year == now.year && d.month == now.month;
-        })
-        .fold(0, (sum, p) => sum + p.amount);
+    final state = ref.watch(paymentsProvider);
+
+    if (state.isLoading) {
+      return const Scaffold(
+        backgroundColor: AppColors.background,
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (state.error != null) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.error_outline, size: 48, color: Colors.red.shade400),
+              const SizedBox(height: 16),
+              Text('Erreur: ${state.error}', style: const TextStyle(color: AppColors.sub)),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () => ref.read(paymentsProvider.notifier).refresh(),
+                child: const Text('Réessayer'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final payments = state.payments;
+    final totalEncaisse = state.totalAmount;
+    final thisMois = state.thisMonthAmount;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -221,7 +214,7 @@ class PaymentsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPaymentCard(_PaymentEntry payment) {
+  Widget _buildPaymentCard(PaymentEntry payment) {
     final isWave = payment.mode == 'Wave';
     final modeColor = isWave ? const Color(0xFF0094E1) : const Color(0xFFE85D04);
     final modeBg = isWave
