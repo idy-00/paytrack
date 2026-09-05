@@ -11,8 +11,8 @@ import { useStockStore } from '@/store/stockStore'
 import { useSaleStore } from '@/store/saleStore'
 import Modal from '@/components/ui/Modal'
 
-const BLUE = '#1A56DB'
-const SUCCESS = '#16A34A'
+const BLUE = '#3768AF'
+const SUCCESS = '#44AC45'
 
 const STEPS = [
   { id: 1, label: 'Client',        icon: User        },
@@ -22,6 +22,7 @@ const STEPS = [
 ]
 
 const FREQUENCIES = [
+  { value: 'quotidien',     label: 'Chaque jour' },
   { value: 'hebdomadaire', label: 'Hebdomadaire' },
   { value: 'mensuel',      label: 'Mensuel' },
   { value: 'bimestriel',   label: 'Toutes les 2 semaines' },
@@ -75,9 +76,12 @@ export default function NouvelleVentePage() {
   const [showNewClient, setShowNewClient] = useState(false)
   const [clientForm, setClientForm] = useState({ name: '', phone: '', email: '', city: '', address: '' })
   const [savingClient, setSavingClient] = useState(false)
+  const [showNewArticle, setShowNewArticle] = useState(false)
+  const [articleForm, setArticleForm] = useState({ name: '', price: '', stock: '0' })
+  const [savingArticle, setSavingArticle] = useState(false)
 
   const { clients, fetchClients, addClient } = useClientStore()
-  const { articles, fetchArticles, getArticleStock } = useStockStore()
+  const { articles, fetchArticles, getArticleStock, addArticle } = useStockStore()
   const { addSale } = useSaleStore()
 
   useEffect(() => {
@@ -99,7 +103,12 @@ export default function NouvelleVentePage() {
   const totalNum = Number(form.total_amount) || 0
   const downNum = Number(form.down_payment) || 0
   const remainingAfterDown = totalNum - downNum
-  const installmentAmount = form.installment_count > 0 ? Math.ceil(remainingAfterDown / form.installment_count) : 0
+  const baseInstallment = form.installment_count > 0 ? Math.floor(remainingAfterDown / form.installment_count) : 0
+  const installmentRemainder = form.installment_count > 0 ? remainingAfterDown % form.installment_count : 0
+  const schedulePreview = !isNaN(remainingAfterDown) && form.installment_count > 0
+    ? Array.from({ length: form.installment_count }, (_, index) => baseInstallment + (index < installmentRemainder ? 1 : 0))
+    : []
+  const installmentAmount = schedulePreview[0] || 0
   const isComptant = form.payment_mode === 'comptant'
 
   const canNext = () => {
@@ -142,6 +151,20 @@ export default function NouvelleVentePage() {
     }
   }
 
+  const handleSaveArticle = async () => {
+    const price = Number(articleForm.price)
+    if (!articleForm.name.trim() || !Number.isFinite(price) || price < 0) return toast.error('Saisissez un article et un prix valide.')
+    setSavingArticle(true)
+    try {
+      const article = await addArticle({ name: articleForm.name.trim(), price, stock: Number(articleForm.stock) || 0 })
+      update('article_id', String(article.id))
+      update('total_amount', String(article.price))
+      setShowNewArticle(false)
+      setArticleForm({ name: '', price: '', stock: '0' })
+      toast.success('Article créé et sélectionné !')
+    } catch (err) { toast.error(err.message || 'Erreur création article') } finally { setSavingArticle(false) }
+  }
+
   const handleSubmit = async () => {
     if (!isComptant) {
       const stock = getArticleStock(Number(form.article_id))
@@ -159,6 +182,7 @@ export default function NouvelleVentePage() {
         down_payment: isComptant ? totalNum : downNum,
         installment_count: isComptant ? 1 : form.installment_count,
         frequency: isComptant ? 'mensuel' : form.frequency,
+        custom_interval_days: !isComptant && form.frequency === 'personnalise' ? Number(form.custom_days) : null,
         start_date: form.start_date,
         payment_mode: form.payment_mode,
       })
@@ -211,7 +235,7 @@ export default function NouvelleVentePage() {
       {step === 2 && (
         <div className="card p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-1">Choisir l'article</h2>
-          <p className="text-sm text-gray-500 mb-5">Sélectionnez l'article vendu.</p>
+          <div className="flex items-start justify-between gap-3 mb-5"><p className="text-sm text-gray-500">Sélectionnez l'article vendu.</p><button type="button" onClick={() => setShowNewArticle(true)} className="btn btn-secondary btn-sm gap-1"><Plus size={15} /> Ajouter</button></div>
           <div className="space-y-2">
             {(articles || []).map(article => {
               const stock = article.stock ?? null
@@ -320,7 +344,7 @@ export default function NouvelleVentePage() {
           <h2 className="text-lg font-semibold text-gray-900 mb-5">Récapitulatif</h2>
           <div className="mb-4">
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold"
-              style={{ background: isComptant ? '#F0FDF4' : '#EFF6FF', color: isComptant ? '#15803D' : BLUE, border: `1px solid ${isComptant ? '#BBF7D0' : '#DBEAFE'}` }}>
+              style={{ background: isComptant ? '#F0FDF4' : '#EFF6FF', color: isComptant ? '#44AC45' : BLUE, border: `1px solid ${isComptant ? '#BBF7D0' : '#DBEAFE'}` }}>
               {isComptant ? 'Paiement comptant' : 'Paiement par tranche'}
             </span>
           </div>
@@ -335,6 +359,7 @@ export default function NouvelleVentePage() {
                 { label: 'Reste à payer', value: formatAmount(remainingAfterDown), amount: true },
                 { label: 'Nombre de tranches', value: `${form.installment_count} tranches` },
                 { label: 'Montant / tranche', value: formatAmount(installmentAmount), amount: true },
+                { label: 'Dernière tranche', value: formatAmount(schedulePreview.at(-1) || 0), amount: true },
                 { label: 'Fréquence', value: form.frequency === 'personnalise' ? `Tous les ${form.custom_days} jours` : FREQUENCIES.find(f => f.value === form.frequency)?.label },
               ] : []),
               { label: isComptant ? 'Date de vente' : 'Date de début', value: form.start_date },
@@ -345,6 +370,15 @@ export default function NouvelleVentePage() {
               </div>
             ))}
           </div>
+          {!isComptant && schedulePreview.length > 0 && (
+            <div className="mt-5 rounded-xl border p-4" style={{ borderColor: '#DCE3EC', background: '#F8FAFC' }}>
+              <p className="text-sm font-semibold text-gray-900">Aperçu des échéances</p>
+              <p className="text-xs text-gray-500 mt-1">La somme est exactement égale au reste à payer. Les premières tranches absorbent les éventuels arrondis.</p>
+              <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {schedulePreview.map((amount, index) => <div key={index} className="rounded-lg bg-white border border-gray-200 px-3 py-2"><span className="text-xs text-gray-500">Tranche {index + 1}</span><p className="amount text-sm font-semibold text-gray-900">{formatAmount(amount)}</p></div>)}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -382,6 +416,9 @@ export default function NouvelleVentePage() {
             </button>
           </div>
         </div>
+      </Modal>
+      <Modal open={showNewArticle} onClose={() => setShowNewArticle(false)} title="Nouvel article">
+        <div className="space-y-4"><div><label htmlFor="nv-article-name" className="block text-sm font-medium text-gray-900 mb-1.5">Nom de l’article *</label><input id="nv-article-name" className="input" value={articleForm.name} onChange={e => setArticleForm(v => ({ ...v, name: e.target.value }))} /></div><div><label htmlFor="nv-article-price" className="block text-sm font-medium text-gray-900 mb-1.5">Prix (FCFA) *</label><input id="nv-article-price" type="number" min="0" className="input" value={articleForm.price} onChange={e => setArticleForm(v => ({ ...v, price: e.target.value }))} /></div><div className="flex gap-3 pt-2"><button type="button" onClick={() => setShowNewArticle(false)} className="btn btn-secondary flex-1">Annuler</button><button type="button" onClick={handleSaveArticle} disabled={savingArticle} className="btn btn-primary flex-1">{savingArticle ? 'Création…' : 'Créer et sélectionner'}</button></div></div>
       </Modal>
     </div>
   )

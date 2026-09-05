@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Subscription;
 use App\Models\SubscriptionInvoice;
 use App\Models\SubscriptionPlan;
-use App\Services\PaytechService;
+use App\Services\DexpayService;
 use App\Services\SubscriptionService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class SubscriptionController extends Controller
 {
@@ -21,9 +23,9 @@ class SubscriptionController extends Controller
         return app(SubscriptionService::class);
     }
 
-    private function getPaytechService(): PaytechService
+    private function getDexpayService(): DexpayService
     {
-        return app(PaytechService::class);
+        return app(DexpayService::class);
     }
 
     public function current(Request $request)
@@ -58,7 +60,7 @@ class SubscriptionController extends Controller
     {
         $validated = $request->validate([
             'plan_id' => 'required|exists:subscription_plans,id',
-            'billing_cycle' => 'sometimes|in:monthly,yearly',
+            'billing_cycle' => ['sometimes', Rule::in(Subscription::BILLING_CYCLES)],
         ]);
 
         $tenant = $request->user()->tenant;
@@ -120,28 +122,53 @@ class SubscriptionController extends Controller
             return response()->json(['message' => 'Facture déjà payée'], 400);
         }
 
-        if (!$this->getPaytechService()->isConfigured()) {
+        $dexpay = $this->getDexpayService();
+
+        if (!$dexpay->isConfigured()) {
             return response()->json([
                 'message' => 'Paiement en ligne non disponible. Contactez ATAABA.',
-                'code' => 'paytech_not_configured',
+                'code' => 'dexpay_not_configured',
             ], 503);
         }
 
-        $payment = $this->getPaytechService()->initiatePayment([
+        $subscription = $invoice->subscription;
+        $frontendUrl = rtrim((string) config('app.frontend_url', config('app.url')), '/');
+        $apiUrl = rtrim((string) config('app.url'), '/');
+
+        $checkout = $dexpay->createCheckoutSession([
+            'reference' => "SUB-{$subscription->id}-" . time(),
             'item_name' => "Abonnement PayTrack - {$invoice->invoice_number}",
             'amount' => $invoice->amount,
-            'reference' => $invoice->invoice_number,
-            'description' => "Paiement abonnement PayTrack",
+            'currency' => 'XOF',
+            'success_url' => "{$frontendUrl}/subscription/payment-success?invoice={$invoice->invoice_number}",
+            'failure_url' => "{$frontendUrl}/subscription/payment-failed?invoice={$invoice->invoice_number}",
+            'webhook_url' => "{$apiUrl}/api/webhooks/dexpay",
             'metadata' => [
                 'type' => 'subscription_invoice',
                 'invoice_id' => $invoice->id,
+                'invoice_number' => $invoice->invoice_number,
                 'tenant_id' => $invoice->tenant_id,
             ],
         ]);
 
+        $paymentUrl = $checkout['payment_url']
+            ?? $checkout['checkout_url']
+            ?? $checkout['url']
+            ?? $checkout['data']['payment_url']
+            ?? $checkout['data']['url']
+            ?? null;
+
+        if (!$paymentUrl) {
+            \Log::error('DexPay checkout response missing payment_url', ['response' => $checkout]);
+            return response()->json([
+                'message' => 'Erreur création paiement. Réessayez.',
+                'code' => 'dexpay_no_url',
+            ], 500);
+        }
+
         return response()->json([
-            'payment_url' => $payment['redirect_url'] ?? $payment['payment_url'],
-            'token' => $payment['token'] ?? null,
+            'payment_url' => $paymentUrl,
+            'checkout_id' => $checkout['id'] ?? $checkout['data']['id'] ?? null,
         ]);
     }
 

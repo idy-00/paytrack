@@ -5,7 +5,7 @@ import { useClientStore } from '@/store/clientStore'
 import Modal from '@/components/ui/Modal'
 import toast from 'react-hot-toast'
 
-const BLUE = '#1A56DB'
+const BLUE = '#3768AF'
 
 function initials(name = '') {
   return name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()

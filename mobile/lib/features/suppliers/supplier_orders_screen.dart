@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/services/api_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/formatters.dart';
+import '../../core/utils/json_parsers.dart';
 
 class SupplierOrdersScreen extends ConsumerStatefulWidget {
   const SupplierOrdersScreen({super.key});
 
   @override
-  ConsumerState<SupplierOrdersScreen> createState() => _SupplierOrdersScreenState();
+  ConsumerState<SupplierOrdersScreen> createState() =>
+      _SupplierOrdersScreenState();
 }
 
 class _SupplierOrdersScreenState extends ConsumerState<SupplierOrdersScreen> {
@@ -33,6 +36,7 @@ class _SupplierOrdersScreenState extends ConsumerState<SupplierOrdersScreen> {
         ApiService.getSuppliers(),
         ApiService.getArticles(),
       ]);
+      if (!mounted) return;
       setState(() {
         _orders = results[0]['data'] ?? [];
         _suppliers = results[1]['data'] ?? [];
@@ -41,11 +45,15 @@ class _SupplierOrdersScreenState extends ConsumerState<SupplierOrdersScreen> {
         _error = null;
       });
     } on ApiException catch (e) {
+      if (!mounted) return;
       setState(() {
         _loading = false;
-        _error = e.statusCode == 403 ? 'Cette fonctionnalité nécessite le plan Business' : e.message;
+        _error = e.statusCode == 403
+            ? 'Cette fonctionnalité nécessite le plan Business'
+            : e.message;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _loading = false;
         _error = e.toString();
@@ -71,7 +79,11 @@ class _SupplierOrdersScreenState extends ConsumerState<SupplierOrdersScreen> {
       backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setModalState) {
-          int total = items.fold(0, (sum, item) => sum + ((item['quantity'] as int) * (item['unit_cost'] as int)));
+          final total = items.fold<int>(
+            0,
+            (sum, item) =>
+                sum + jsonInt(item['quantity']) * jsonInt(item['unit_cost']),
+          );
 
           return Container(
             height: MediaQuery.of(ctx).size.height * 0.85,
@@ -85,17 +97,20 @@ class _SupplierOrdersScreenState extends ConsumerState<SupplierOrdersScreen> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+                    border:
+                        Border(bottom: BorderSide(color: Colors.grey.shade200)),
                   ),
                   child: Row(
                     children: [
                       Expanded(
                         child: Text(
                           'Nouvelle commande fournisseur',
-                          style: GoogleFonts.spaceGrotesk(fontSize: 18, fontWeight: FontWeight.w700),
+                          style: GoogleFonts.sourceSans3(
+                              fontSize: 18, fontWeight: FontWeight.w700),
                         ),
                       ),
                       IconButton(
+                        tooltip: 'Fermer',
                         icon: const Icon(Icons.close),
                         onPressed: () => Navigator.pop(ctx),
                       ),
@@ -111,19 +126,25 @@ class _SupplierOrdersScreenState extends ConsumerState<SupplierOrdersScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Supplier
-                        Text('Fournisseur *', style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13)),
+                        Text('Fournisseur *',
+                            style: GoogleFonts.sourceSans3(
+                                fontWeight: FontWeight.w600, fontSize: 13)),
                         const SizedBox(height: 8),
                         DropdownButtonFormField<int>(
-                          value: selectedSupplierId,
+                          initialValue: selectedSupplierId,
                           decoration: InputDecoration(
                             hintText: 'Sélectionner',
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12)),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 14),
                           ),
                           items: _suppliers.map<DropdownMenuItem<int>>((s) {
-                            return DropdownMenuItem(value: s['id'], child: Text(s['name']));
+                            return DropdownMenuItem(
+                                value: s['id'], child: Text(s['name']));
                           }).toList(),
-                          onChanged: (v) => setModalState(() => selectedSupplierId = v),
+                          onChanged: (v) =>
+                              setModalState(() => selectedSupplierId = v),
                         ),
 
                         const SizedBox(height: 20),
@@ -132,12 +153,20 @@ class _SupplierOrdersScreenState extends ConsumerState<SupplierOrdersScreen> {
                         Row(
                           children: [
                             Expanded(
-                              child: Text('Articles *', style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13)),
+                              child: Text('Articles *',
+                                  style: GoogleFonts.sourceSans3(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 13)),
                             ),
                             TextButton.icon(
                               onPressed: () {
                                 setModalState(() {
-                                  items.add({'article_id': null, 'name': '', 'quantity': 1, 'unit_cost': 0});
+                                  items.add({
+                                    'article_id': null,
+                                    'name': '',
+                                    'quantity': 1,
+                                    'unit_cost': 0
+                                  });
                                 });
                               },
                               icon: const Icon(Icons.add, size: 18),
@@ -152,19 +181,29 @@ class _SupplierOrdersScreenState extends ConsumerState<SupplierOrdersScreen> {
                           Container(
                             padding: const EdgeInsets.all(24),
                             decoration: BoxDecoration(
-                              border: Border.all(color: Colors.grey.shade300, style: BorderStyle.solid),
+                              border: Border.all(
+                                  color: Colors.grey.shade300,
+                                  style: BorderStyle.solid),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Center(
                               child: Column(
                                 children: [
-                                  Icon(Icons.inventory_2_outlined, size: 40, color: Colors.grey.shade400),
+                                  Icon(Icons.inventory_2_outlined,
+                                      size: 40, color: Colors.grey.shade400),
                                   const SizedBox(height: 8),
-                                  Text('Aucun article', style: GoogleFonts.inter(color: Colors.grey)),
+                                  Text('Aucun article',
+                                      style: GoogleFonts.sourceSans3(
+                                          color: Colors.grey)),
                                   TextButton(
                                     onPressed: () {
                                       setModalState(() {
-                                        items.add({'article_id': null, 'name': '', 'quantity': 1, 'unit_cost': 0});
+                                        items.add({
+                                          'article_id': null,
+                                          'name': '',
+                                          'quantity': 1,
+                                          'unit_cost': 0
+                                        });
                                       });
                                     },
                                     child: const Text('+ Ajouter un article'),
@@ -190,30 +229,49 @@ class _SupplierOrdersScreenState extends ConsumerState<SupplierOrdersScreen> {
                                     children: [
                                       Expanded(
                                         child: DropdownButtonFormField<int>(
-                                          value: item['article_id'],
+                                          initialValue: item['article_id'],
                                           decoration: InputDecoration(
                                             hintText: 'Article',
-                                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                                            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                                            border: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(8)),
+                                            contentPadding:
+                                                const EdgeInsets.symmetric(
+                                                    horizontal: 10,
+                                                    vertical: 10),
                                             isDense: true,
                                           ),
-                                          items: _products.map<DropdownMenuItem<int>>((p) {
-                                            return DropdownMenuItem(value: p['id'], child: Text(p['name'], overflow: TextOverflow.ellipsis));
+                                          items: _products
+                                              .map<DropdownMenuItem<int>>((p) {
+                                            return DropdownMenuItem(
+                                                value: p['id'],
+                                                child: Text(p['name'],
+                                                    overflow:
+                                                        TextOverflow.ellipsis));
                                           }).toList(),
                                           onChanged: (v) {
-                                            final product = _products.firstWhere((p) => p['id'] == v, orElse: () => null);
+                                            final product = _products
+                                                .firstWhere((p) => p['id'] == v,
+                                                    orElse: () => null);
                                             setModalState(() {
                                               items[idx]['article_id'] = v;
-                                              items[idx]['name'] = product?['name'] ?? '';
-                                              items[idx]['unit_cost'] = product?['purchase_price'] ?? product?['price'] ?? 0;
+                                              items[idx]['name'] =
+                                                  product?['name'] ?? '';
+                                              items[idx]['unit_cost'] =
+                                                  product?['purchase_price'] ??
+                                                      product?['price'] ??
+                                                      0;
                                             });
                                           },
                                         ),
                                       ),
                                       const SizedBox(width: 8),
                                       IconButton(
-                                        icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20),
-                                        onPressed: () => setModalState(() => items.removeAt(idx)),
+                                        tooltip: 'Supprimer',
+                                        icon: const Icon(Icons.delete_outline,
+                                            color: Colors.red, size: 20),
+                                        onPressed: () => setModalState(
+                                            () => items.removeAt(idx)),
                                       ),
                                     ],
                                   ),
@@ -221,31 +279,51 @@ class _SupplierOrdersScreenState extends ConsumerState<SupplierOrdersScreen> {
                                   Row(
                                     children: [
                                       Expanded(
-                                        child: TextField(
+                                        child: TextFormField(
+                                          key: ValueKey(
+                                            'supplier-quantity-${item['article_id']}-$idx',
+                                          ),
+                                          initialValue: '${item['quantity']}',
                                           keyboardType: TextInputType.number,
                                           decoration: InputDecoration(
                                             labelText: 'Qté',
-                                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                                            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                                            border: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(8)),
+                                            contentPadding:
+                                                const EdgeInsets.symmetric(
+                                                    horizontal: 10,
+                                                    vertical: 10),
                                             isDense: true,
                                           ),
-                                          controller: TextEditingController(text: '${item['quantity']}'),
-                                          onChanged: (v) => setModalState(() => items[idx]['quantity'] = int.tryParse(v) ?? 1),
+                                          onChanged: (v) => setModalState(() =>
+                                              items[idx]['quantity'] =
+                                                  int.tryParse(v) ?? 1),
                                         ),
                                       ),
                                       const SizedBox(width: 8),
                                       Expanded(
                                         flex: 2,
-                                        child: TextField(
+                                        child: TextFormField(
+                                          key: ValueKey(
+                                            'supplier-cost-${item['article_id']}-$idx',
+                                          ),
+                                          initialValue: '${item['unit_cost']}',
                                           keyboardType: TextInputType.number,
                                           decoration: InputDecoration(
                                             labelText: 'Prix achat',
-                                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                                            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                                            border: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(8)),
+                                            contentPadding:
+                                                const EdgeInsets.symmetric(
+                                                    horizontal: 10,
+                                                    vertical: 10),
                                             isDense: true,
                                           ),
-                                          controller: TextEditingController(text: '${item['unit_cost']}'),
-                                          onChanged: (v) => setModalState(() => items[idx]['unit_cost'] = int.tryParse(v) ?? 0),
+                                          onChanged: (v) => setModalState(() =>
+                                              items[idx]['unit_cost'] =
+                                                  int.tryParse(v) ?? 0),
                                         ),
                                       ),
                                     ],
@@ -267,8 +345,14 @@ class _SupplierOrdersScreenState extends ConsumerState<SupplierOrdersScreen> {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text('Total', style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
-                                Text(formatAmount(total), style: GoogleFonts.spaceGrotesk(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.blue)),
+                                Text('Total',
+                                    style: GoogleFonts.sourceSans3(
+                                        fontWeight: FontWeight.w600)),
+                                Text(formatAmount(total),
+                                    style: GoogleFonts.sourceSans3(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.blue)),
                               ],
                             ),
                           ),
@@ -277,14 +361,17 @@ class _SupplierOrdersScreenState extends ConsumerState<SupplierOrdersScreen> {
                         const SizedBox(height: 16),
 
                         // Notes
-                        Text('Notes', style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13)),
+                        Text('Notes',
+                            style: GoogleFonts.sourceSans3(
+                                fontWeight: FontWeight.w600, fontSize: 13)),
                         const SizedBox(height: 8),
                         TextField(
                           controller: notesController,
                           maxLines: 2,
                           decoration: InputDecoration(
                             hintText: 'Optionnel',
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12)),
                           ),
                         ),
                       ],
@@ -297,7 +384,8 @@ class _SupplierOrdersScreenState extends ConsumerState<SupplierOrdersScreen> {
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: Colors.grey.shade50,
-                    border: Border(top: BorderSide(color: Colors.grey.shade200)),
+                    border:
+                        Border(top: BorderSide(color: Colors.grey.shade200)),
                   ),
                   child: Row(
                     children: [
@@ -306,7 +394,8 @@ class _SupplierOrdersScreenState extends ConsumerState<SupplierOrdersScreen> {
                           onPressed: () => Navigator.pop(ctx),
                           style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
                           ),
                           child: const Text('Annuler'),
                         ),
@@ -321,26 +410,34 @@ class _SupplierOrdersScreenState extends ConsumerState<SupplierOrdersScreen> {
                                     await ApiService.createSupplierOrder({
                                       'supplier_id': selectedSupplierId,
                                       'notes': notesController.text,
-                                      'items': items.where((i) => i['article_id'] != null).map((i) => {
-                                        'article_id': i['article_id'],
-                                        'quantity': i['quantity'],
-                                        'unit_cost': i['unit_cost'],
-                                      }).toList(),
+                                      'items': items
+                                          .where((i) => i['article_id'] != null)
+                                          .map((i) => {
+                                                'article_id': i['article_id'],
+                                                'quantity': i['quantity'],
+                                                'unit_cost': i['unit_cost'],
+                                              })
+                                          .toList(),
                                       'status': 'ordered',
                                     });
                                     if (ctx.mounted) Navigator.pop(ctx, true);
                                   } catch (e) {
                                     if (ctx.mounted) {
-                                      ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text('$e')));
+                                      ScaffoldMessenger.of(ctx).showSnackBar(
+                                          SnackBar(content: Text('$e')));
                                     }
                                   }
                                 },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.blue,
+                            backgroundColor: AppColors.green,
                             padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
                           ),
-                          child: Text('Créer', style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600)),
+                          child: Text('Créer',
+                              style: GoogleFonts.sourceSans3(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600)),
                         ),
                       ),
                     ],
@@ -353,8 +450,10 @@ class _SupplierOrdersScreenState extends ConsumerState<SupplierOrdersScreen> {
       ),
     );
 
+    if (!mounted) return;
     if (result == true) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Commande créée')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Commande créée')));
       _loadData();
     }
   }
@@ -364,21 +463,31 @@ class _SupplierOrdersScreenState extends ConsumerState<SupplierOrdersScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Réceptionner'),
-        content: const Text('Confirmer la réception ? Le stock sera mis à jour.'),
+        content:
+            const Text('Confirmer la réception ? Le stock sera mis à jour.'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Confirmer')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Annuler')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Confirmer')),
         ],
       ),
     );
 
+    if (!mounted) return;
     if (confirm == true) {
       try {
         await ApiService.updateSupplierOrderStatus(orderId, 'received');
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Commande réceptionnée, stock mis à jour')));
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Commande réceptionnée, stock mis à jour')));
         _loadData();
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+        if (!mounted) return;
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('$e')));
       }
     }
   }
@@ -388,11 +497,23 @@ class _SupplierOrdersScreenState extends ConsumerState<SupplierOrdersScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text('Commandes fournisseurs', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700)),
+        leading: IconButton(
+          tooltip: 'Retour',
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/dashboard');
+            }
+          },
+        ),
+        title: Text('Commandes fournisseurs',
+            style: GoogleFonts.sourceSans3(fontWeight: FontWeight.w700)),
         backgroundColor: AppColors.surface,
         elevation: 0,
         actions: [
-          IconButton(icon: const Icon(Icons.add), onPressed: _createOrder),
+          IconButton(tooltip: 'Créer une commande fournisseur', icon: const Icon(Icons.add), onPressed: _createOrder),
         ],
       ),
       body: _loading
@@ -404,12 +525,17 @@ class _SupplierOrdersScreenState extends ConsumerState<SupplierOrdersScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.lock, size: 48, color: AppColors.muted),
+                        const Icon(Icons.lock,
+                            size: 48, color: AppColors.muted),
                         const SizedBox(height: 16),
-                        Text(_error!, textAlign: TextAlign.center, style: GoogleFonts.inter(color: AppColors.sub)),
+                        Text(_error!,
+                            textAlign: TextAlign.center,
+                            style:
+                                GoogleFonts.sourceSans3(color: AppColors.sub)),
                         const SizedBox(height: 16),
                         ElevatedButton(
-                          onPressed: () => Navigator.pushNamed(context, '/subscription'),
+                          onPressed: () =>
+                              Navigator.pushNamed(context, '/subscription'),
                           child: const Text('Voir les plans'),
                         ),
                       ],
@@ -427,9 +553,12 @@ class _SupplierOrdersScreenState extends ConsumerState<SupplierOrdersScreen> {
                                 child: Column(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(Icons.receipt_long_outlined, size: 64, color: AppColors.muted),
+                                    const Icon(Icons.receipt_long_outlined,
+                                        size: 64, color: AppColors.muted),
                                     const SizedBox(height: 16),
-                                    Text('Aucune commande', style: GoogleFonts.inter(color: AppColors.sub)),
+                                    Text('Aucune commande',
+                                        style: GoogleFonts.sourceSans3(
+                                            color: AppColors.sub)),
                                     const SizedBox(height: 16),
                                     ElevatedButton.icon(
                                       onPressed: _createOrder,
@@ -461,7 +590,8 @@ class _SupplierOrdersScreenState extends ConsumerState<SupplierOrdersScreen> {
       'cancelled': {'label': 'Annulée', 'color': Colors.red},
     };
     final config = statusConfig[status] ?? statusConfig['draft']!;
-    final remaining = (order['total_amount'] ?? 0) - (order['paid_amount'] ?? 0);
+    final remaining =
+        (order['total_amount'] ?? 0) - (order['paid_amount'] ?? 0);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -480,21 +610,29 @@ class _SupplierOrdersScreenState extends ConsumerState<SupplierOrdersScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(order['reference'] ?? '', style: GoogleFonts.spaceMono(fontWeight: FontWeight.w600, fontSize: 13)),
+                    Text(order['reference'] ?? '',
+                        style: GoogleFonts.sourceSans3(
+                            fontWeight: FontWeight.w600, fontSize: 13)),
                     const SizedBox(height: 4),
-                    Text(order['supplier']?['name'] ?? '', style: GoogleFonts.inter(color: AppColors.sub, fontSize: 13)),
+                    Text(order['supplier']?['name'] ?? '',
+                        style: GoogleFonts.sourceSans3(
+                            color: AppColors.sub, fontSize: 13)),
                   ],
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: (config['color'] as Color).withAlpha(25),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
                   config['label'] as String,
-                  style: GoogleFonts.inter(color: config['color'] as Color, fontSize: 11, fontWeight: FontWeight.w600),
+                  style: GoogleFonts.sourceSans3(
+                      color: config['color'] as Color,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600),
                 ),
               ),
             ],
@@ -506,8 +644,12 @@ class _SupplierOrdersScreenState extends ConsumerState<SupplierOrdersScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Total', style: GoogleFonts.inter(color: AppColors.sub, fontSize: 11)),
-                    Text(formatAmount(order['total_amount'] ?? 0), style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700)),
+                    Text('Total',
+                        style: GoogleFonts.sourceSans3(
+                            color: AppColors.sub, fontSize: 11)),
+                    Text(formatAmount(order['total_amount'] ?? 0),
+                        style: GoogleFonts.sourceSans3(
+                            fontWeight: FontWeight.w700)),
                   ],
                 ),
               ),
@@ -515,12 +657,16 @@ class _SupplierOrdersScreenState extends ConsumerState<SupplierOrdersScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Reste', style: GoogleFonts.inter(color: AppColors.sub, fontSize: 11)),
+                    Text('Reste',
+                        style: GoogleFonts.sourceSans3(
+                            color: AppColors.sub, fontSize: 11)),
                     Text(
                       remaining > 0 ? formatAmount(remaining) : 'Soldé',
-                      style: GoogleFonts.spaceGrotesk(
+                      style: GoogleFonts.sourceSans3(
                         fontWeight: FontWeight.w700,
-                        color: remaining > 0 ? Colors.amber.shade700 : Colors.green,
+                        color: remaining > 0
+                            ? Colors.amber.shade700
+                            : Colors.green,
                       ),
                     ),
                   ],
@@ -530,11 +676,15 @@ class _SupplierOrdersScreenState extends ConsumerState<SupplierOrdersScreen> {
                 ElevatedButton(
                   onPressed: () => _receiveOrder(order['id']),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.blue,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    backgroundColor: AppColors.green,
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
                   ),
-                  child: Text('Réceptionner', style: GoogleFonts.inter(color: Colors.white, fontSize: 12)),
+                  child: Text('Réceptionner',
+                      style: GoogleFonts.sourceSans3(
+                          color: Colors.white, fontSize: 12)),
                 ),
             ],
           ),

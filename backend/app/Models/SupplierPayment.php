@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class SupplierPayment extends Model
 {
@@ -24,12 +25,7 @@ class SupplierPayment extends Model
 
     public static function generateReference(?int $tenantId = null): string
     {
-        $t = $tenantId ? str_pad($tenantId, 3, '0', STR_PAD_LEFT) : '000';
-        $prefix = "SP-{$t}-" . date('Ym') . '-';
-        $last = static::withoutGlobalScopes()->where('reference', 'like', $prefix . '%')
-            ->orderByDesc('id')->first();
-        $num = $last ? (int) substr($last->reference, -4) + 1 : 1;
-        return $prefix . str_pad($num, 4, '0', STR_PAD_LEFT);
+        return 'SP-' . now()->format('Ym') . '-' . Str::ulid();
     }
 
     protected static function booted(): void

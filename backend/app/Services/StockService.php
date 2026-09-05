@@ -18,8 +18,12 @@ class StockService
         if (!$item->article) return;
 
         DB::transaction(function () use ($item, $quantity, $userId) {
+            $item = SupplierOrderItem::lockForUpdate()->findOrFail($item->id);
+            $article = Article::lockForUpdate()->findOrFail($item->article_id);
+            $quantity = min($quantity, max(0, $item->quantity_ordered - $item->quantity_received));
+            if ($quantity <= 0) return;
             StockMovement::record(
-                $item->article,
+                $article,
                 'in',
                 $quantity,
                 'supplier_receipt',

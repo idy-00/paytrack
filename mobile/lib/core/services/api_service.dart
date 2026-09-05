@@ -1,13 +1,13 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 bool _isNetworkError(dynamic e) {
   return e.toString().contains('SocketException') ||
-         e.toString().contains('ClientException') ||
-         e.toString().contains('Connection refused');
+      e.toString().contains('ClientException') ||
+      e.toString().contains('Connection refused');
 }
 
 class ApiException implements Exception {
@@ -20,13 +20,29 @@ class ApiException implements Exception {
   String toString() => message;
 }
 
+/// Callback appelé quand la session expire (401)
+typedef SessionExpiredCallback = void Function();
+
+/// Callback global pour la déconnexion automatique
+SessionExpiredCallback? onSessionExpired;
+
 class ApiService {
-  static const _storage = FlutterSecureStorage();
+  static const _storage = FlutterSecureStorage(
+    aOptions: AndroidOptions(
+      encryptedSharedPreferences: true,
+      resetOnError: true,
+    ),
+  );
   static const _tokenKey = 'auth_token';
+  static const _tokenKeyFallback = 'auth_token_fallback';
 
   static String get baseUrl {
-    // Production API on Hostinger
-    return 'https://lightsalmon-eel-638395.hostingersite.com/backend/public/api';
+    // Public production API.  Do not point a distributed app at the
+    // temporary Hostinger site hostname: it is not the PayTrack API domain.
+    return const String.fromEnvironment(
+      'PAYTRACK_API_BASE_URL',
+      defaultValue: 'https://paytrack.sn/api',
+    );
   }
 
   static Future<String?> getToken() async {
@@ -34,16 +50,28 @@ class ApiService {
       final prefs = await SharedPreferences.getInstance();
       return prefs.getString(_tokenKey);
     }
-    return await _storage.read(key: _tokenKey);
+
+    // Native session tokens stay in the platform-protected keystore only.
+    try {
+      return await _storage.read(key: _tokenKey);
+    } catch (_) {
+      return null;
+    }
   }
 
   static Future<void> setToken(String token) async {
-    debugPrint('ApiService: Saving token');
     if (kIsWeb) {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_tokenKey, token);
-    } else {
+      return;
+    }
+
+    try {
       await _storage.write(key: _tokenKey, value: token);
+    } catch (_) {
+      throw ApiException(
+        'Impossible de sécuriser la session sur cet appareil.',
+      );
     }
   }
 
@@ -51,9 +79,16 @@ class ApiService {
     if (kIsWeb) {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_tokenKey);
-    } else {
-      await _storage.delete(key: _tokenKey);
+      return;
     }
+
+    // Remove the legacy plaintext fallback as part of the security migration.
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_tokenKeyFallback);
+
+    try {
+      await _storage.delete(key: _tokenKey);
+    } catch (_) {}
   }
 
   static Future<Map<String, String>> _headers() async {
@@ -73,28 +108,28 @@ class ApiService {
       );
       return _handleResponse(response);
     } catch (e) {
-      if (_isNetworkError(e)) throw ApiException('Serveur inaccessible. Vérifiez votre connexion.');
+      if (_isNetworkError(e)) {
+        throw ApiException('Serveur inaccessible. Vérifiez votre connexion.');
+      }
       rethrow;
     }
   }
 
-  static Future<dynamic> post(String endpoint, Map<String, dynamic> data) async {
+  static Future<dynamic> post(
+      String endpoint, Map<String, dynamic> data) async {
     final url = '$baseUrl$endpoint';
-    debugPrint('API POST: $url');
-    debugPrint('API DATA: ${jsonEncode(data)}');
     try {
       final headers = await _headers();
-      debugPrint('API HEADERS: $headers');
       final response = await http.post(
         Uri.parse(url),
         headers: headers,
         body: jsonEncode(data),
       );
-      debugPrint('API RESPONSE: ${response.statusCode}');
       return _handleResponse(response);
     } catch (e) {
-      debugPrint('API ERROR: $e');
-      if (_isNetworkError(e)) throw ApiException('Serveur inaccessible. Vérifiez votre connexion.');
+      if (_isNetworkError(e)) {
+        throw ApiException('Serveur inaccessible. Vérifiez votre connexion.');
+      }
       rethrow;
     }
   }
@@ -108,7 +143,9 @@ class ApiService {
       );
       return _handleResponse(response);
     } catch (e) {
-      if (_isNetworkError(e)) throw ApiException('Serveur inaccessible. Vérifiez votre connexion.');
+      if (_isNetworkError(e)) {
+        throw ApiException('Serveur inaccessible. Vérifiez votre connexion.');
+      }
       rethrow;
     }
   }
@@ -121,17 +158,18 @@ class ApiService {
       );
       return _handleResponse(response);
     } catch (e) {
-      if (_isNetworkError(e)) throw ApiException('Serveur inaccessible. Vérifiez votre connexion.');
+      if (_isNetworkError(e)) {
+        throw ApiException('Serveur inaccessible. Vérifiez votre connexion.');
+      }
       rethrow;
     }
   }
 
   static dynamic _handleResponse(http.Response response) {
-    debugPrint('API Response [${response.statusCode}]: ${response.body.substring(0, response.body.length > 200 ? 200 : response.body.length)}');
-
     if (response.statusCode == 401) {
       clearToken();
-      throw ApiException('Session expirée', 401);
+      onSessionExpired?.call();
+      throw ApiException('Votre session a expiré. Reconnectez-vous.', 401);
     }
 
     if (response.statusCode == 204) {
@@ -139,8 +177,10 @@ class ApiService {
     }
 
     // Check if response is HTML (error page) instead of JSON
-    if (response.body.trim().startsWith('<!DOCTYPE') || response.body.trim().startsWith('<html')) {
-      throw ApiException('Erreur serveur (${response.statusCode})', response.statusCode);
+    if (response.body.trim().startsWith('<!DOCTYPE') ||
+        response.body.trim().startsWith('<html')) {
+      throw ApiException(
+          'Erreur serveur (${response.statusCode})', response.statusCode);
     }
 
     dynamic body;
@@ -154,15 +194,18 @@ class ApiService {
       return body;
     }
 
-    final message = body?['message'] ?? 'Erreur serveur (${response.statusCode})';
+    final message =
+        body?['message'] ?? 'Erreur serveur (${response.statusCode})';
     throw ApiException(message, response.statusCode);
   }
 
   // Auth endpoints
-  static Future<Map<String, dynamic>> login(String email, String password) async {
+  static Future<Map<String, dynamic>> login(
+      String email, String password) async {
     final response = await post('/auth/login', {
       'email': email,
       'password': password,
+      'device_name': kIsWeb ? 'PayTrack Web' : 'PayTrack Mobile',
     });
     if (response['token'] != null) {
       await setToken(response['token']);
@@ -193,7 +236,8 @@ class ApiService {
   }
 
   // Sales
-  static Future<Map<String, dynamic>> getSales({String? status, String? search}) async {
+  static Future<Map<String, dynamic>> getSales(
+      {String? status, String? search}) async {
     String query = '';
     if (status != null || search != null) {
       final params = <String>[];
@@ -208,14 +252,20 @@ class ApiService {
     return await get('/sales/$id');
   }
 
-  static Future<Map<String, dynamic>> createSale(Map<String, dynamic> data) async {
+  static Future<Map<String, dynamic>> createSale(
+      Map<String, dynamic> data) async {
     return await post('/sales', data);
   }
 
   // Payments
-  static Future<Map<String, dynamic>> createPayment(int saleId, Map<String, dynamic> data) async {
+  static Future<Map<String, dynamic>> createPayment(
+      int saleId, Map<String, dynamic> data) async {
     return await post('/sales/$saleId/payments', data);
   }
+
+  static Future<Map<String, dynamic>> initiateMobilePayment(
+          int saleId, Map<String, dynamic> data) async =>
+      await post('/sales/$saleId/mobile-payment', data);
 
   // Clients
   static Future<Map<String, dynamic>> getClients({String? search}) async {
@@ -227,12 +277,60 @@ class ApiService {
     return await get('/clients/$id');
   }
 
-  static Future<Map<String, dynamic>> createClient(Map<String, dynamic> data) async {
+  static Future<Map<String, dynamic>> createClient(
+      Map<String, dynamic> data) async {
     return await post('/clients', data);
   }
 
+  static Future<Map<String, dynamic>> createArticle(
+      Map<String, dynamic> data) async {
+    return await post('/articles', data);
+  }
+
+  // Password recovery uses the server-side OTP flow. The reset token is never
+  // placed in a URL or persisted on the device.
+  static Future<Map<String, dynamic>> sendPasswordResetCode(
+      String email) async {
+    return await post('/otp/send', {'email': email, 'type': 'password_reset'});
+  }
+
+  static Future<Map<String, dynamic>> verifyPasswordResetCode(
+      String email, String code) async {
+    return await post('/otp/verify', {
+      'email': email,
+      'code': code,
+      'type': 'password_reset',
+    });
+  }
+
+  static Future<Map<String, dynamic>> resetPassword({
+    required String resetToken,
+    required String password,
+    required String confirmation,
+  }) async {
+    return await post('/otp/reset-password', {
+      'reset_token': resetToken,
+      'password': password,
+      'password_confirmation': confirmation,
+    });
+  }
+
+  // Notifications de l'utilisateur connecté
+  static Future<Map<String, dynamic>> getNotifications() async {
+    return await get('/notifications');
+  }
+
+  static Future<void> markNotificationRead(String id) async {
+    await post('/notifications/$id/read', {});
+  }
+
+  static Future<void> markAllNotificationsRead() async {
+    await post('/notifications/read-all', {});
+  }
+
   // Articles
-  static Future<Map<String, dynamic>> getArticles({bool activeOnly = true}) async {
+  static Future<Map<String, dynamic>> getArticles(
+      {bool activeOnly = true}) async {
     final query = activeOnly ? '?active_only=1' : '';
     return await get('/articles$query');
   }
@@ -251,7 +349,8 @@ class ApiService {
     return await get('/subscription/current');
   }
 
-  static Future<Map<String, dynamic>> changePlan(int planId, String billingCycle) async {
+  static Future<Map<String, dynamic>> changePlan(
+      int planId, String billingCycle) async {
     return await post('/subscription/change-plan', {
       'plan_id': planId,
       'billing_cycle': billingCycle,
@@ -291,6 +390,16 @@ class ApiService {
     });
   }
 
+  static Future<Map<String, dynamic>> getWithdrawalQuote({
+    required int amount,
+    required String payoutMethod,
+  }) async {
+    return await post('/wallet/withdraw/quote', {
+      'amount': amount,
+      'payout_method': payoutMethod,
+    });
+  }
+
   static Future<Map<String, dynamic>> getWithdrawals() async {
     return await get('/wallet/withdrawals');
   }
@@ -304,6 +413,7 @@ class ApiService {
     required String documentType,
     required String filePath,
     required String fileName,
+    List<int>? fileBytes,
   }) async {
     final token = await getToken();
     final uri = Uri.parse('$baseUrl/kyc/upload');
@@ -312,7 +422,18 @@ class ApiService {
     request.headers['Authorization'] = 'Bearer $token';
     request.headers['Accept'] = 'application/json';
     request.fields['document_type'] = documentType;
-    request.files.add(await http.MultipartFile.fromPath('file', filePath, filename: fileName));
+
+    // Support both web (bytes) and mobile (path)
+    if (fileBytes != null) {
+      request.files.add(http.MultipartFile.fromBytes(
+        'file',
+        fileBytes,
+        filename: fileName,
+      ));
+    } else {
+      request.files.add(await http.MultipartFile.fromPath('file', filePath,
+          filename: fileName));
+    }
 
     final streamedResponse = await request.send();
     final response = await http.Response.fromStream(streamedResponse);
@@ -320,7 +441,8 @@ class ApiService {
   }
 
   // ── Orders ───────────────────────────────────────────────────────────────
-  static Future<Map<String, dynamic>> getOrders({String? status, String? search}) async {
+  static Future<Map<String, dynamic>> getOrders(
+      {String? status, String? search}) async {
     String query = '';
     final params = <String>[];
     if (status != null) params.add('status=$status');
@@ -333,19 +455,23 @@ class ApiService {
     return await get('/orders/$id');
   }
 
-  static Future<Map<String, dynamic>> createOrder(Map<String, dynamic> data) async {
+  static Future<Map<String, dynamic>> createOrder(
+      Map<String, dynamic> data) async {
     return await post('/orders', data);
   }
 
-  static Future<Map<String, dynamic>> updateOrderStatus(int orderId, String status) async {
+  static Future<Map<String, dynamic>> updateOrderStatus(
+      int orderId, String status) async {
     return await put('/orders/$orderId/status', {'status': status});
   }
 
-  static Future<Map<String, dynamic>> recordOrderPayment(int orderId, Map<String, dynamic> data) async {
+  static Future<Map<String, dynamic>> recordOrderPayment(
+      int orderId, Map<String, dynamic> data) async {
     return await post('/orders/$orderId/payments', data);
   }
 
-  static Future<Map<String, dynamic>> initiateOrderPayment(int orderId, Map<String, dynamic> data) async {
+  static Future<Map<String, dynamic>> initiateOrderPayment(
+      int orderId, Map<String, dynamic> data) async {
     return await post('/orders/$orderId/pay-online', data);
   }
 
@@ -358,7 +484,8 @@ class ApiService {
     return await get('/stock/movements');
   }
 
-  static Future<Map<String, dynamic>> adjustStock(Map<String, dynamic> data) async {
+  static Future<Map<String, dynamic>> adjustStock(
+      Map<String, dynamic> data) async {
     return await post('/stock/adjust', data);
   }
 
@@ -375,11 +502,13 @@ class ApiService {
     return await get('/inventories/$id');
   }
 
-  static Future<Map<String, dynamic>> createInventory(Map<String, dynamic> data) async {
+  static Future<Map<String, dynamic>> createInventory(
+      Map<String, dynamic> data) async {
     return await post('/inventories', data);
   }
 
-  static Future<Map<String, dynamic>> updateInventoryItem(int invId, int itemId, Map<String, dynamic> data) async {
+  static Future<Map<String, dynamic>> updateInventoryItem(
+      int invId, int itemId, Map<String, dynamic> data) async {
     return await put('/inventories/$invId/items/$itemId', data);
   }
 
@@ -401,11 +530,13 @@ class ApiService {
     return await get('/suppliers/$id');
   }
 
-  static Future<Map<String, dynamic>> createSupplier(Map<String, dynamic> data) async {
+  static Future<Map<String, dynamic>> createSupplier(
+      Map<String, dynamic> data) async {
     return await post('/suppliers', data);
   }
 
-  static Future<Map<String, dynamic>> updateSupplier(int id, Map<String, dynamic> data) async {
+  static Future<Map<String, dynamic>> updateSupplier(
+      int id, Map<String, dynamic> data) async {
     return await put('/suppliers/$id', data);
   }
 
@@ -418,7 +549,8 @@ class ApiService {
   }
 
   // ── Supplier Orders ──────────────────────────────────────────────────────
-  static Future<Map<String, dynamic>> getSupplierOrders({String? status}) async {
+  static Future<Map<String, dynamic>> getSupplierOrders(
+      {String? status}) async {
     final query = status != null ? '?status=$status' : '';
     return await get('/supplier-orders$query');
   }
@@ -427,19 +559,23 @@ class ApiService {
     return await get('/supplier-orders/$id');
   }
 
-  static Future<Map<String, dynamic>> createSupplierOrder(Map<String, dynamic> data) async {
+  static Future<Map<String, dynamic>> createSupplierOrder(
+      Map<String, dynamic> data) async {
     return await post('/supplier-orders', data);
   }
 
-  static Future<Map<String, dynamic>> updateSupplierOrderStatus(int id, String status) async {
+  static Future<Map<String, dynamic>> updateSupplierOrderStatus(
+      int id, String status) async {
     return await put('/supplier-orders/$id/status', {'status': status});
   }
 
-  static Future<Map<String, dynamic>> receiveSupplierItems(int orderId, List<Map<String, dynamic>> items) async {
+  static Future<Map<String, dynamic>> receiveSupplierItems(
+      int orderId, List<Map<String, dynamic>> items) async {
     return await post('/supplier-orders/$orderId/receive', {'items': items});
   }
 
-  static Future<Map<String, dynamic>> recordSupplierPayment(int orderId, Map<String, dynamic> data) async {
+  static Future<Map<String, dynamic>> recordSupplierPayment(
+      int orderId, Map<String, dynamic> data) async {
     return await post('/supplier-orders/$orderId/payments', data);
   }
 }

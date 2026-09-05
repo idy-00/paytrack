@@ -81,7 +81,11 @@ return new class extends Migration
             $table->string('description');
             $table->string('reference')->nullable();
             $table->string('paytech_transaction_id')->nullable()->unique();
-            $table->morphs('transactionable'); // order, withdrawal, subscription_invoice
+            // Same polymorphic relation as morphs('transactionable'), but MySQL
+            // rejects Laravel's generated index name because it exceeds 64 chars.
+            $table->string('transactionable_type');
+            $table->unsignedBigInteger('transactionable_id');
+            $table->index(['transactionable_type', 'transactionable_id'], 'wallet_tx_transactionable_idx');
             $table->timestamps();
             $table->index(['tenant_id', 'type']);
             $table->index('paytech_transaction_id');

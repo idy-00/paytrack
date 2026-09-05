@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/services/api_service.dart';
 import '../../data/models/sale.dart';
+import '../../core/utils/json_parsers.dart';
 
 class SalesState {
   final List<Sale> sales;
@@ -21,14 +22,17 @@ class SalesNotifier extends StateNotifier<SalesState> {
     state = SalesState(sales: state.sales, isLoading: true);
 
     try {
-      final response = await ApiService.getSales(status: status, search: search);
-      final data = response['data'] as List<dynamic>? ?? response as List<dynamic>? ?? [];
-      final sales = data.map((json) => Sale.fromJson(json)).toList();
+      final response =
+          await ApiService.getSales(status: status, search: search);
+      final data = jsonList(response['data']);
+      final sales = data.map((json) => Sale.fromJson(jsonMap(json))).toList();
       state = SalesState(sales: sales, isLoading: false);
     } on ApiException catch (e) {
-      state = SalesState(sales: state.sales, isLoading: false, error: e.message);
+      state =
+          SalesState(sales: state.sales, isLoading: false, error: e.message);
     } catch (e) {
-      state = SalesState(sales: state.sales, isLoading: false, error: 'Erreur: $e');
+      state =
+          SalesState(sales: state.sales, isLoading: false, error: 'Erreur: $e');
     }
   }
 

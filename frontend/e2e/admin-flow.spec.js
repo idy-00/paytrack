@@ -7,7 +7,7 @@ test.describe('Admin Flow', () => {
     await page.getByLabel(/email/i).fill('moussa@phoneshop-dakar.com')
     await page.getByLabel(/mot de passe/i).fill('demo1234')
     await page.getByRole('button', { name: /se connecter/i }).click()
-    await expect(page).toHaveURL('/dashboard', { timeout: 10000 })
+    await expect(page).toHaveURL('/admin', { timeout: 10000 })
   })
 
   test('admin section is visible in navigation', async ({ page }) => {
@@ -39,7 +39,7 @@ test.describe('Admin Flow', () => {
     await page.goto('/utilisateurs')
     await page.getByRole('button', { name: /nouvel utilisateur/i }).click()
     await expect(page.getByText(/nom complet/i)).toBeVisible()
-    await expect(page.getByText(/rôle/i)).toBeVisible()
+    await expect(page.getByText('Rôle *', { exact: true })).toBeVisible()
     await expect(page.getByRole('button', { name: /créer/i })).toBeVisible()
   })
 })

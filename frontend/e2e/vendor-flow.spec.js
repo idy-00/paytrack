@@ -4,14 +4,14 @@ test.describe('Vendor Flow', () => {
   test.beforeEach(async ({ page }) => {
     // Login as vendor
     await page.goto('/login')
-    await page.getByLabel(/email/i).fill('moussa@phoneshop-dakar.com')
+    await page.getByLabel(/email/i).fill('fatou@phoneshop-dakar.com')
     await page.getByLabel(/mot de passe/i).fill('demo1234')
     await page.getByRole('button', { name: /se connecter/i }).click()
     await expect(page).toHaveURL('/dashboard', { timeout: 10000 })
   })
 
   test('dashboard shows KPIs', async ({ page }) => {
-    await expect(page.getByText(/total encaissé/i)).toBeVisible()
+    await expect(page.getByText(/déjà encaissé/i)).toBeVisible()
     await expect(page.getByText(/ventes actives/i)).toBeVisible()
     await expect(page.getByText(/en retard/i)).toBeVisible()
     await expect(page.getByText(/soldées/i)).toBeVisible()
@@ -43,11 +43,11 @@ test.describe('Vendor Flow', () => {
 
   test('export CSV button is visible on sales page', async ({ page }) => {
     await page.goto('/ventes')
-    await expect(page.getByRole('link', { name: /csv/i })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'CSV' })).toBeVisible()
   })
 
   test('export CSV button is visible on payments page', async ({ page }) => {
     await page.goto('/paiements')
-    await expect(page.getByRole('link', { name: /exporter csv/i })).toBeVisible()
+    await expect(page.getByRole('button', { name: /exporter csv/i })).toBeVisible()
   })
 })

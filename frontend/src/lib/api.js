@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL || 'https://lightsalmon-eel-638395.hostingersite.com/backend/public/api'
+const API_URL = import.meta.env.VITE_API_URL || 'https://paytrack.sn/backend/public/api'
 
 let authToken = null
 
@@ -55,16 +55,51 @@ async function request(endpoint, options = {}) {
 export const api = {
   // Auth
   login: (email, password) =>
-    request('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
+    request('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password, device_name: 'PayTrack Web' }),
+    }),
 
   register: (data) =>
-    request('/auth/register', { method: 'POST', body: JSON.stringify(data) }),
+    request('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ ...data, device_name: 'PayTrack Web' }),
+    }),
+
+  sendOtp: (email, type) =>
+    request('/otp/send', {
+      method: 'POST',
+      body: JSON.stringify({ email, type }),
+    }),
+
+  verifyOtp: (email, code, type) =>
+    request('/otp/verify', {
+      method: 'POST',
+      body: JSON.stringify({ email, code, type }),
+    }),
+
+  resetPasswordWithOtp: (resetToken, password, passwordConfirmation) =>
+    request('/otp/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({
+        reset_token: resetToken,
+        password,
+        password_confirmation: passwordConfirmation,
+      }),
+    }),
 
   logout: () =>
     request('/auth/logout', { method: 'POST' }),
 
   me: () =>
     request('/auth/me'),
+
+  updateProfile: (data) =>
+    request('/auth/profile', { method: 'PUT', body: JSON.stringify(data) }),
+
+  getNotifications: () => request('/notifications'),
+  markNotificationRead: (id) => request(`/notifications/${id}/read`, { method: 'POST' }),
+  markAllNotificationsRead: () => request('/notifications/read-all', { method: 'POST' }),
 
   // Dashboard
   dashboardStats: () => request('/dashboard/stats'),
@@ -120,13 +155,29 @@ export const api = {
   assignRole: (id, role) => request(`/users/${id}/assign-role`, { method: 'POST', body: JSON.stringify({ role }) }),
   resetPassword: (id, password) => request(`/users/${id}/reset-password`, { method: 'POST', body: JSON.stringify({ password }) }),
 
-  // Receipts (returns blob for download)
-  getSaleReceipt: (id) => `${API_URL}/sales/${id}/receipt`,
-  getPaymentReceipt: (id) => `${API_URL}/payments/${id}/receipt`,
+  // Receipts — bearer token stays in the Authorization header, never in an URL.
+  downloadReceipt: async (endpoint, fallbackFilename) => {
+    const response = await fetch(`${API_URL}${endpoint}`, {
+      headers: { Authorization: `Bearer ${getToken()}`, Accept: 'application/pdf' },
+    })
+    if (!response.ok) throw new Error('Téléchargement du reçu impossible')
+    const blob = await response.blob()
+    const filename = response.headers.get('Content-Disposition')?.match(/filename="?([^";]+)"?/i)?.[1] || fallbackFilename
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = filename
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.URL.revokeObjectURL(url)
+  },
+  downloadSaleReceipt: (id) => api.downloadReceipt(`/sales/${id}/receipt`, `recu-vente-${id}.pdf`),
+  downloadPaymentReceipt: (id) => api.downloadReceipt(`/payments/${id}/receipt`, `recu-paiement-${id}.pdf`),
 
   // Exports (download via fetch with auth header)
   downloadExport: async (endpoint) => {
-    const token = localStorage.getItem('auth_token')
+    const token = getToken()
     const response = await fetch(`${API_URL}${endpoint}`, {
       headers: { Authorization: `Bearer ${token}` }
     })
@@ -159,6 +210,7 @@ export const api = {
   getWallet: () => request('/wallet'),
   getWalletTransactions: (params = '') => request(`/wallet/transactions${params}`),
   requestWithdrawal: (data) => request('/wallet/withdraw', { method: 'POST', body: JSON.stringify(data) }),
+  getWithdrawalQuote: (data) => request('/wallet/withdraw/quote', { method: 'POST', body: JSON.stringify(data) }),
   getWithdrawals: () => request('/wallet/withdrawals'),
 
   // ─── KYC ────────────────────────────────────────────────────────────────────

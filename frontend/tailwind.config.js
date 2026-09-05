@@ -4,13 +4,17 @@ export default {
   theme: {
     extend: {
       colors: {
+        // ── PayTrack Brand (charte graphique officielle) ──────────
+        brand:   '#3768AF',   // Bleu principal
+        green:   '#44AC45',   // Vert croissance
         // ── Core palette ──────────────────────────────────────────
         navy:    '#0F2744',   // kept for compat
-        blue:    '#1D6FE8',   // CTA principal, liens actifs
-        sky:     '#EFF6FF',   // fond clair bleuté
-        blueL:   '#EEF4FE',   // nav-item active bg
+        blue:    '#3768AF',   // CTA principal, liens actifs
+        sky:     '#E8F0FA',   // fond clair bleuté
+        blueL:   '#E8F0FA',   // nav-item active bg
+        greenL:  '#E8F5E8',   // fond clair vert
         // ── Semantic ──────────────────────────────────────────────
-        success: '#16A34A',
+        success: '#44AC45',
         warning: '#D97706',
         danger:  '#DC2626',
         // ── Neutrals ──────────────────────────────────────────────
@@ -37,8 +41,8 @@ export default {
         'status-pending-fg': '#6B7280',
       },
       fontFamily: {
-        sans: ['"Geist"', 'system-ui', 'sans-serif'],
-        mono: ['"Geist Mono"', 'monospace'],
+        sans: ['"Source Sans 3"', '"Source Sans Pro"', 'system-ui', 'sans-serif'],
+        mono: ['"Source Code Pro"', 'monospace'],
       },
       fontSize: {
         '2xs': ['10px', { lineHeight: '14px' }],
@@ -69,8 +73,8 @@ export default {
         md:   '0 4px 6px rgba(0,0,0,0.05), 0 2px 4px rgba(0,0,0,0.04)',
         lg:   '0 10px 24px rgba(0,0,0,0.07), 0 4px 8px rgba(0,0,0,0.04)',
         xl:   '0 20px 40px rgba(0,0,0,0.08), 0 8px 16px rgba(0,0,0,0.04)',
-        blue: '0 4px 14px rgba(26,86,219,0.25)',
-        ring: '0 0 0 3px rgba(26,86,219,0.2)',
+        blue: '0 4px 14px rgba(55,104,175,0.25)',
+        ring: '0 0 0 3px rgba(55,104,175,0.2)',
         card: '0 0 0 1px rgba(0,0,0,0.04), 0 2px 8px rgba(0,0,0,0.06)',
       },
       animation: {

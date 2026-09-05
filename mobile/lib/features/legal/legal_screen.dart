@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_colors.dart';
 
@@ -10,7 +11,19 @@ class MentionsLegalesScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text('Mentions légales', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700)),
+        leading: IconButton(
+          tooltip: 'Retour',
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/profil');
+            }
+          },
+        ),
+        title: Text('Mentions légales',
+            style: GoogleFonts.sourceSans3(fontWeight: FontWeight.w700)),
         backgroundColor: AppColors.surface,
       ),
       body: SingleChildScrollView(
@@ -22,7 +35,7 @@ class MentionsLegalesScreen extends StatelessWidget {
 PayTrack est édité par :
 ATAABA GROUP
 Siège social : Dakar, Sénégal
-Email : contact@ataaba.com
+Email : contact@paytrack.sn
 Téléphone : +221 XX XXX XX XX
 NINEA : [En cours d'immatriculation]
 '''),
@@ -42,7 +55,7 @@ Toute reproduction, représentation, modification, publication ou adaptation de 
 '''),
             _buildSection('Contact', '''
 Pour toute question concernant ces mentions légales, vous pouvez nous contacter :
-- Par email : legal@ataaba.com
+- Par email : legal@paytrack.sn
 - Par courrier : ATAABA GROUP, Dakar, Sénégal
 '''),
           ],
@@ -57,9 +70,15 @@ Pour toute question concernant ces mentions légales, vous pouvez nous contacter
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: GoogleFonts.spaceGrotesk(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.ink)),
+          Text(title,
+              style: GoogleFonts.sourceSans3(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.ink)),
           const SizedBox(height: 8),
-          Text(content.trim(), style: GoogleFonts.inter(fontSize: 14, color: AppColors.sub, height: 1.6)),
+          Text(content.trim(),
+              style: GoogleFonts.sourceSans3(
+                  fontSize: 14, color: AppColors.sub, height: 1.6)),
         ],
       ),
     );
@@ -74,7 +93,19 @@ class CGUScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text('CGU', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700)),
+        leading: IconButton(
+          tooltip: 'Retour',
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/profil');
+            }
+          },
+        ),
+        title: Text('CGU',
+            style: GoogleFonts.sourceSans3(fontWeight: FontWeight.w700)),
         backgroundColor: AppColors.surface,
       ),
       body: SingleChildScrollView(
@@ -82,11 +113,14 @@ class CGUScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Conditions Générales d\'Utilisation', style: GoogleFonts.spaceGrotesk(fontSize: 20, fontWeight: FontWeight.w700)),
+            Text('Conditions Générales d\'Utilisation',
+                style: GoogleFonts.sourceSans3(
+                    fontSize: 20, fontWeight: FontWeight.w700)),
             const SizedBox(height: 8),
-            Text('Dernière mise à jour : Août 2026', style: GoogleFonts.inter(fontSize: 12, color: AppColors.muted)),
+            Text('Dernière mise à jour : Août 2026',
+                style: GoogleFonts.sourceSans3(
+                    fontSize: 12, color: AppColors.muted)),
             const SizedBox(height: 24),
-
             _buildSection('1. Objet', '''
 Les présentes Conditions Générales d'Utilisation (CGU) ont pour objet de définir les modalités d'accès et d'utilisation de l'application PayTrack, solution de gestion commerciale éditée par ATAABA GROUP.
 '''),
@@ -111,6 +145,8 @@ PayTrack propose plusieurs plans d'abonnement :
 - Business : 13 000 FCFA/mois
 
 Une période d'essai de 14 jours est offerte à l'inscription. Les tarifs peuvent être modifiés avec un préavis de 30 jours.
+
+Les frais de transaction sont facturés par DexPay, distinctement de l'abonnement PayTrack, et peuvent évoluer selon l'opérateur et le pays. Ils sont supportés par le marchand et affichés avant confirmation du retrait. Le client final paie uniquement le montant de son achat.
 '''),
             _buildSection('6. Données personnelles', '''
 ATAABA GROUP s'engage à protéger vos données personnelles conformément à la législation en vigueur. Pour plus d'informations, consultez notre Politique de confidentialité.
@@ -128,7 +164,7 @@ ATAABA GROUP se réserve le droit de modifier les présentes CGU. Les utilisateu
 Les présentes CGU sont régies par le droit sénégalais. Tout litige sera soumis aux tribunaux compétents de Dakar.
 '''),
             _buildSection('Contact', '''
-Pour toute question : support@ataaba.com
+Pour toute question : support@paytrack.sn
 '''),
           ],
         ),
@@ -142,9 +178,15 @@ Pour toute question : support@ataaba.com
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: GoogleFonts.spaceGrotesk(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.ink)),
+          Text(title,
+              style: GoogleFonts.sourceSans3(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.ink)),
           const SizedBox(height: 6),
-          Text(content.trim(), style: GoogleFonts.inter(fontSize: 14, color: AppColors.sub, height: 1.6)),
+          Text(content.trim(),
+              style: GoogleFonts.sourceSans3(
+                  fontSize: 14, color: AppColors.sub, height: 1.6)),
         ],
       ),
     );
@@ -159,7 +201,19 @@ class ConfidentialiteScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text('Confidentialité', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700)),
+        leading: IconButton(
+          tooltip: 'Retour',
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/profil');
+            }
+          },
+        ),
+        title: Text('Confidentialité',
+            style: GoogleFonts.sourceSans3(fontWeight: FontWeight.w700)),
         backgroundColor: AppColors.surface,
       ),
       body: SingleChildScrollView(
@@ -167,11 +221,14 @@ class ConfidentialiteScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Politique de confidentialité', style: GoogleFonts.spaceGrotesk(fontSize: 20, fontWeight: FontWeight.w700)),
+            Text('Politique de confidentialité',
+                style: GoogleFonts.sourceSans3(
+                    fontSize: 20, fontWeight: FontWeight.w700)),
             const SizedBox(height: 8),
-            Text('Dernière mise à jour : Août 2026', style: GoogleFonts.inter(fontSize: 12, color: AppColors.muted)),
+            Text('Dernière mise à jour : Août 2026',
+                style: GoogleFonts.sourceSans3(
+                    fontSize: 12, color: AppColors.muted)),
             const SizedBox(height: 24),
-
             _buildSection('1. Collecte des données', '''
 Nous collectons les données suivantes :
 - Informations d'identification (nom, email, téléphone)
@@ -201,7 +258,7 @@ Conformément à la législation, vous disposez des droits suivants :
 - Droit à la portabilité
 - Droit d'opposition
 
-Pour exercer ces droits : privacy@ataaba.com
+Pour exercer ces droits : privacy@paytrack.sn
 '''),
             _buildSection('6. Cookies', '''
 L'application utilise des cookies techniques nécessaires à son fonctionnement. Aucun cookie publicitaire n'est utilisé.
@@ -211,7 +268,7 @@ Vos données sont conservées pendant la durée de votre abonnement et 5 ans apr
 '''),
             _buildSection('8. Contact DPO', '''
 Délégué à la Protection des Données :
-Email : dpo@ataaba.com
+Email : privacy@paytrack.sn
 Adresse : ATAABA GROUP, Dakar, Sénégal
 '''),
           ],
@@ -226,9 +283,15 @@ Adresse : ATAABA GROUP, Dakar, Sénégal
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: GoogleFonts.spaceGrotesk(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.ink)),
+          Text(title,
+              style: GoogleFonts.sourceSans3(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.ink)),
           const SizedBox(height: 6),
-          Text(content.trim(), style: GoogleFonts.inter(fontSize: 14, color: AppColors.sub, height: 1.6)),
+          Text(content.trim(),
+              style: GoogleFonts.sourceSans3(
+                  fontSize: 14, color: AppColors.sub, height: 1.6)),
         ],
       ),
     );

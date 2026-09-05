@@ -3,12 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class SubscriptionInvoice extends Model
 {
     protected $fillable = [
         'tenant_id', 'subscription_id', 'invoice_number', 'amount',
-        'status', 'paytech_ref', 'due_date', 'paid_at', 'metadata',
+        'status', 'payment_reference', 'due_date', 'paid_at', 'metadata',
     ];
 
     protected $casts = [
@@ -24,21 +25,17 @@ class SubscriptionInvoice extends Model
     public function isPaid(): bool { return $this->status === 'paid'; }
     public function isPending(): bool { return $this->status === 'pending'; }
 
-    public function markPaid(string $paytechRef = null): void
+    public function markPaid(?string $paymentReference = null): void
     {
         $this->update([
             'status' => 'paid',
             'paid_at' => now(),
-            'paytech_ref' => $paytechRef,
+            'payment_reference' => $paymentReference,
         ]);
     }
 
     public static function generateNumber(): string
     {
-        $prefix = 'INV-' . date('Ym') . '-';
-        $last = static::where('invoice_number', 'like', $prefix . '%')
-            ->orderByDesc('id')->first();
-        $num = $last ? (int) substr($last->invoice_number, -4) + 1 : 1;
-        return $prefix . str_pad($num, 4, '0', STR_PAD_LEFT);
+        return 'INV-' . now()->format('Ym') . '-' . Str::ulid();
     }
 }

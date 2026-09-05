@@ -35,7 +35,7 @@ createRoot(document.getElementById('root')).render(
             boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
           },
           success: {
-            iconTheme: { primary: '#16A34A', secondary: '#F9FAFB' },
+            iconTheme: { primary: '#44AC45', secondary: '#F9FAFB' },
           },
           error: {
             iconTheme: { primary: '#DC2626', secondary: '#F9FAFB' },

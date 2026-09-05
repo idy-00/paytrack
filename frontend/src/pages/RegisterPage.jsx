@@ -8,7 +8,7 @@ function PasswordStrength({ password }) {
   if (!password) return null
   const checks = [password.length >= 8, /[A-Z]/.test(password), /\d/.test(password), /[^A-Za-z0-9]/.test(password)]
   const score = checks.filter(Boolean).length
-  const colors = ['', '#DC2626', '#D97706', '#0EA5E9', '#16A34A']
+  const colors = ['', '#DC2626', '#D97706', '#0EA5E9', '#44AC45']
   const labels = ['', 'Faible', 'Moyen', 'Bon', 'Fort']
   return (
     <div className="mt-2 flex items-center gap-2">
@@ -30,11 +30,11 @@ function Stepper({ step }) {
       {steps.map((label, i) => (
         <div key={i} className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all"
-            style={{ background: i <= step ? '#1D6FE8' : '#E8E4DD', color: i <= step ? 'white' : '#9CA3AF' }}>
+            style={{ background: i <= step ? '#3768AF' : '#E8E4DD', color: i <= step ? 'white' : '#9CA3AF' }}>
             {i < step ? <CheckCircle2 size={14} strokeWidth={2.5} /> : i + 1}
           </div>
           <span className="text-sm font-medium mr-2" style={{ color: i === step ? '#1A1A1A' : '#9CA3AF' }}>{label}</span>
-          {i < steps.length - 1 && <div className="w-10 h-px mr-2" style={{ background: i < step ? '#1D6FE8' : '#E8E4DD' }} />}
+          {i < steps.length - 1 && <div className="w-10 h-px mr-2" style={{ background: i < step ? '#3768AF' : '#E8E4DD' }} />}
         </div>
       ))}
     </div>
@@ -76,6 +76,7 @@ export default function RegisterPage() {
   const [done, setDone] = useState(false)
   const [error, setError] = useState('')
   const [cguAccepted, setCguAccepted] = useState(false)
+  const [accountType, setAccountType] = useState('boutique')
 
   const [form, setForm] = useState({
     name: '', email: '', phone: '', password: '',
@@ -84,34 +85,31 @@ export default function RegisterPage() {
 
   const up = (key, val) => setForm(f => ({ ...f, [key]: val }))
 
-  const step0Valid = form.name.trim() && form.email.trim() && form.phone.trim() && form.password.length >= 8
+  const isClient = accountType === 'client'
+  const step0Valid = form.name.trim() && form.email.trim() && form.phone.trim() && form.password.length >= 8 && (!isClient || cguAccepted)
   const step1Valid = form.shop_name.trim() && form.city.trim() && cguAccepted
 
-  const handleStep0 = e => { e.preventDefault(); if (step0Valid) setStep(1) }
-
-  const handleStep1 = async e => {
-    e.preventDefault()
-    if (!step1Valid) return
+  const createAccount = async () => {
     setLoading(true)
     setError('')
     try {
       await register({
-        name: form.name.trim(),
-        email: form.email.trim(),
-        phone: form.phone.trim(),
-        password: form.password,
-        password_confirmation: form.password,
-        shop_name: form.shop_name.trim(),
-        city: form.city.trim(),
-        activity: form.activity || null,
-        employees: form.employees,
+        name: form.name.trim(), email: form.email.trim(), phone: form.phone.trim(),
+        password: form.password, password_confirmation: form.password,
+        account_type: accountType,
+        ...(isClient ? {} : { shop_name: form.shop_name.trim(), city: form.city.trim(), activity: form.activity || null, employees: form.employees }),
       })
       setDone(true)
-    } catch (err) {
-      setError(err.message || 'Erreur lors de la création du compte')
-    } finally {
-      setLoading(false)
-    }
+    } catch (err) { setError(err.message || 'Erreur lors de la création du compte')
+    } finally { setLoading(false) }
+  }
+
+  const handleStep0 = async e => { e.preventDefault(); if (!step0Valid) return; if (isClient) await createAccount(); else setStep(1) }
+
+  const handleStep1 = async e => {
+    e.preventDefault()
+    if (!step1Valid) return
+    await createAccount()
   }
 
   if (done) {
@@ -156,6 +154,13 @@ export default function RegisterPage() {
           {step === 0 && (
             <form onSubmit={handleStep0} className="space-y-4">
               <div>
+                <label className="block text-sm font-semibold mb-2" style={{ color: '#1A1A1A' }}>Je crée un compte</label>
+                <div className="grid grid-cols-2 gap-3">
+                  {[['boutique', 'Boutique', 'Gérer ventes et clients'], ['client', 'Client', 'Suivre mes paiements']].map(([value, title, caption]) => <button key={value} type="button" onClick={() => setAccountType(value)} className="rounded-xl border p-3 text-left" style={{ borderColor: accountType === value ? '#3768AF' : '#E8E4DD', background: accountType === value ? '#EEF4FE' : 'white' }}><span className="block text-sm font-bold" style={{ color: '#1A1A1A' }}>{title}</span><span className="block mt-1 text-xs" style={{ color: '#6B7280' }}>{caption}</span></button>)}
+                </div>
+                {isClient && <p className="mt-2 text-xs" style={{ color: '#6B7280' }}>Utilisez le même e-mail et téléphone que sur votre fiche créée par la boutique.</p>}
+              </div>
+              <div>
                 <label className="block text-sm font-semibold mb-1.5" style={{ color: '#1A1A1A' }}>Nom complet *</label>
                 <input type="text" required autoComplete="name" value={form.name} onChange={e => up('name', e.target.value)}
                   className="input" placeholder="Moussa Diallo" />
@@ -183,8 +188,9 @@ export default function RegisterPage() {
                 </div>
                 <PasswordStrength password={form.password} />
               </div>
+              {isClient && <label className="flex items-start gap-2 text-xs" style={{ color: '#6B7280' }}><input type="checkbox" checked={cguAccepted} onChange={e => setCguAccepted(e.target.checked)} className="mt-0.5" />J’accepte les <Link to="/legal/cgu" className="underline" style={{ color: '#3768AF' }}>conditions générales</Link>.</label>}
               <button type="submit" disabled={!step0Valid} className="btn btn-primary w-full justify-center gap-2 mt-1" style={{ minHeight: 46 }}>
-                Continuer <ArrowRight size={15} />
+                {isClient ? 'Créer mon compte' : 'Continuer'} <ArrowRight size={15} />
               </button>
 
               {/* Social Login Divider */}
@@ -225,7 +231,7 @@ export default function RegisterPage() {
               </div>
 
               <p className="text-sm text-center mt-4" style={{ color: '#6B7280' }}>
-                Déjà inscrit ? <Link to="/login" className="font-semibold hover:underline" style={{ color: '#1D6FE8' }}>Se connecter</Link>
+                Déjà inscrit ? <Link to="/login" className="font-semibold hover:underline" style={{ color: '#3768AF' }}>Se connecter</Link>
               </p>
             </form>
           )}
@@ -248,7 +254,7 @@ export default function RegisterPage() {
                   {ACTIVITIES.map(act => (
                     <button key={act} type="button" onClick={() => up('activity', act)}
                       className="px-3 py-2.5 rounded-xl text-xs font-medium text-left border transition-all"
-                      style={{ background: form.activity === act ? '#EEF4FE' : 'white', borderColor: form.activity === act ? '#1D6FE8' : '#E8E4DD', color: form.activity === act ? '#1D6FE8' : '#6B7280', cursor: 'pointer' }}>
+                      style={{ background: form.activity === act ? '#EEF4FE' : 'white', borderColor: form.activity === act ? '#3768AF' : '#E8E4DD', color: form.activity === act ? '#3768AF' : '#6B7280', cursor: 'pointer' }}>
                       {act}
                     </button>
                   ))}
@@ -260,7 +266,7 @@ export default function RegisterPage() {
                   {TEAM_SIZES.map(size => (
                     <button key={size} type="button" onClick={() => up('employees', size)}
                       className="flex-1 py-2.5 rounded-xl text-sm font-semibold border transition-all"
-                      style={{ background: form.employees === size ? '#1D6FE8' : 'white', borderColor: form.employees === size ? '#1D6FE8' : '#E8E4DD', color: form.employees === size ? 'white' : '#6B7280', cursor: 'pointer' }}>
+                      style={{ background: form.employees === size ? '#3768AF' : 'white', borderColor: form.employees === size ? '#3768AF' : '#E8E4DD', color: form.employees === size ? 'white' : '#6B7280', cursor: 'pointer' }}>
                       {size}
                     </button>
                   ))}
@@ -270,7 +276,7 @@ export default function RegisterPage() {
                 <input type="checkbox" checked={cguAccepted} onChange={e => setCguAccepted(e.target.checked)}
                   className="mt-0.5 w-4 h-4 rounded border-ash accent-blue" />
                 <span className="text-xs leading-relaxed" style={{ color: '#6B7280' }}>
-                  En créant un compte, j'accepte les <a href="#" className="hover:underline" style={{ color: '#1D6FE8' }}>CGU</a> et la <a href="#" className="hover:underline" style={{ color: '#1D6FE8' }}>Politique de confidentialité</a>.
+                  En créant un compte, j'accepte les <a href="/legal/cgu" className="hover:underline" style={{ color: '#3768AF' }}>CGU</a> et la <a href="/legal/confidentialite" className="hover:underline" style={{ color: '#3768AF' }}>Politique de confidentialité</a>.
                 </span>
               </label>
               <div className="flex gap-3 pt-1">

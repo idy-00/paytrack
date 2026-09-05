@@ -13,7 +13,9 @@ class MobilePaymentController extends Controller
 {
     public function initiate(Request $request, Sale $sale): JsonResponse
     {
-        $this->authorize('recordPayment', $sale);
+        // Le client peut initier le checkout uniquement pour son propre dossier.
+        // La confirmation comptable reste exclusivement dans le webhook signé.
+        $this->authorize('view', $sale);
 
         if (in_array($sale->status, ['solde', 'annule'])) {
             return response()->json(['message' => 'Vente déjà soldée ou annulée.'], 422);
@@ -28,7 +30,10 @@ class MobilePaymentController extends Controller
             'amount'  => ['nullable', 'integer', 'min:1'],
         ]);
 
-        $amount  = $validated['amount'] ?? $sale->installment_amount;
+        $amount  = min($validated['amount'] ?? $sale->installment_amount, $sale->remaining_amount);
+        if ($amount < 1) {
+            return response()->json(['message' => 'Aucun montant restant à payer.'], 422);
+        }
         $gateway = PaymentGatewayFactory::make($validated['gateway']);
 
         $paymentRequest = new GatewayPaymentRequest(

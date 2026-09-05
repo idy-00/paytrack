@@ -43,7 +43,7 @@ class StatusBadge extends StatelessWidget {
           SizedBox(width: compact ? 4 : 6),
           Text(
             config.label,
-            style: GoogleFonts.inter(
+            style: GoogleFonts.sourceSans3(
               fontSize: compact ? 10 : 11,
               fontWeight: FontWeight.w600,
               color: config.text,

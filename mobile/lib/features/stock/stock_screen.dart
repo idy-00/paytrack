@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/services/api_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/formatters.dart';
+import '../../core/utils/json_parsers.dart';
 
 class StockScreen extends ConsumerStatefulWidget {
   const StockScreen({super.key});
@@ -27,15 +29,15 @@ class _StockScreenState extends ConsumerState<StockScreen> {
     setState(() => _loading = true);
     try {
       final res = await ApiService.getArticles(activeOnly: false);
+      if (!mounted) return;
       setState(() {
         _articles = res['data'] ?? [];
         _loading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() => _loading = false);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
-      }
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
     }
   }
 
@@ -44,7 +46,8 @@ class _StockScreenState extends ConsumerState<StockScreen> {
     return _articles.where((a) {
       final name = (a['name'] ?? '').toLowerCase();
       final ref = (a['reference'] ?? '').toLowerCase();
-      return name.contains(_search.toLowerCase()) || ref.contains(_search.toLowerCase());
+      return name.contains(_search.toLowerCase()) ||
+          ref.contains(_search.toLowerCase());
     }).toList();
   }
 
@@ -59,7 +62,8 @@ class _StockScreenState extends ConsumerState<StockScreen> {
       backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setModalState) => Container(
-          padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+          padding:
+              EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
           decoration: const BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -70,19 +74,24 @@ class _StockScreenState extends ConsumerState<StockScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Ajuster le stock', style: GoogleFonts.spaceGrotesk(fontSize: 18, fontWeight: FontWeight.w700)),
+                Text('Ajuster le stock',
+                    style: GoogleFonts.sourceSans3(
+                        fontSize: 18, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 4),
-                Text(article['name'], style: GoogleFonts.inter(color: AppColors.sub)),
+                Text(article['name'],
+                    style: GoogleFonts.sourceSans3(color: AppColors.sub)),
                 const SizedBox(height: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
                     color: AppColors.blueLight,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     'Stock actuel: ${article['stock'] ?? article['quantity'] ?? 0}',
-                    style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w600, color: AppColors.blue),
+                    style: GoogleFonts.sourceSans3(
+                        fontWeight: FontWeight.w600, color: AppColors.blue),
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -92,25 +101,36 @@ class _StockScreenState extends ConsumerState<StockScreen> {
                   children: [
                     Expanded(
                       child: GestureDetector(
-                        onTap: () => setModalState(() => adjustmentType = 'add'),
+                        onTap: () =>
+                            setModalState(() => adjustmentType = 'add'),
                         child: Container(
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           decoration: BoxDecoration(
-                            color: adjustmentType == 'add' ? Colors.green.shade50 : Colors.grey.shade100,
+                            color: adjustmentType == 'add'
+                                ? Colors.green.shade50
+                                : Colors.grey.shade100,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: adjustmentType == 'add' ? Colors.green : Colors.grey.shade300,
+                              color: adjustmentType == 'add'
+                                  ? Colors.green
+                                  : Colors.grey.shade300,
                               width: adjustmentType == 'add' ? 2 : 1,
                             ),
                           ),
                           child: Column(
                             children: [
-                              Icon(Icons.add_circle, color: adjustmentType == 'add' ? Colors.green : Colors.grey),
+                              Icon(Icons.add_circle,
+                                  color: adjustmentType == 'add'
+                                      ? Colors.green
+                                      : Colors.grey),
                               const SizedBox(height: 4),
-                              Text('Ajouter', style: GoogleFonts.inter(
-                                fontWeight: FontWeight.w600,
-                                color: adjustmentType == 'add' ? Colors.green : Colors.grey,
-                              )),
+                              Text('Ajouter',
+                                  style: GoogleFonts.sourceSans3(
+                                    fontWeight: FontWeight.w600,
+                                    color: adjustmentType == 'add'
+                                        ? Colors.green
+                                        : Colors.grey,
+                                  )),
                             ],
                           ),
                         ),
@@ -119,25 +139,36 @@ class _StockScreenState extends ConsumerState<StockScreen> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: GestureDetector(
-                        onTap: () => setModalState(() => adjustmentType = 'remove'),
+                        onTap: () =>
+                            setModalState(() => adjustmentType = 'remove'),
                         child: Container(
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           decoration: BoxDecoration(
-                            color: adjustmentType == 'remove' ? Colors.red.shade50 : Colors.grey.shade100,
+                            color: adjustmentType == 'remove'
+                                ? Colors.red.shade50
+                                : Colors.grey.shade100,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: adjustmentType == 'remove' ? Colors.red : Colors.grey.shade300,
+                              color: adjustmentType == 'remove'
+                                  ? Colors.red
+                                  : Colors.grey.shade300,
                               width: adjustmentType == 'remove' ? 2 : 1,
                             ),
                           ),
                           child: Column(
                             children: [
-                              Icon(Icons.remove_circle, color: adjustmentType == 'remove' ? Colors.red : Colors.grey),
+                              Icon(Icons.remove_circle,
+                                  color: adjustmentType == 'remove'
+                                      ? Colors.red
+                                      : Colors.grey),
                               const SizedBox(height: 4),
-                              Text('Retirer', style: GoogleFonts.inter(
-                                fontWeight: FontWeight.w600,
-                                color: adjustmentType == 'remove' ? Colors.red : Colors.grey,
-                              )),
+                              Text('Retirer',
+                                  style: GoogleFonts.sourceSans3(
+                                    fontWeight: FontWeight.w600,
+                                    color: adjustmentType == 'remove'
+                                        ? Colors.red
+                                        : Colors.grey,
+                                  )),
                             ],
                           ),
                         ),
@@ -153,24 +184,32 @@ class _StockScreenState extends ConsumerState<StockScreen> {
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
                     labelText: 'Quantité',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
 
                 const SizedBox(height: 12),
 
                 DropdownButtonFormField<String>(
-                  value: reason,
+                  initialValue: reason,
                   decoration: InputDecoration(
                     labelText: 'Raison',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12)),
                   ),
                   items: const [
-                    DropdownMenuItem(value: 'reception', child: Text('Réception marchandise')),
-                    DropdownMenuItem(value: 'correction', child: Text('Correction inventaire')),
-                    DropdownMenuItem(value: 'casse', child: Text('Casse / Perte')),
+                    DropdownMenuItem(
+                        value: 'reception',
+                        child: Text('Réception marchandise')),
+                    DropdownMenuItem(
+                        value: 'correction',
+                        child: Text('Correction inventaire')),
+                    DropdownMenuItem(
+                        value: 'casse', child: Text('Casse / Perte')),
                     DropdownMenuItem(value: 'vol', child: Text('Vol')),
-                    DropdownMenuItem(value: 'retour', child: Text('Retour client')),
+                    DropdownMenuItem(
+                        value: 'retour', child: Text('Retour client')),
                     DropdownMenuItem(value: 'autre', child: Text('Autre')),
                   ],
                   onChanged: (v) => setModalState(() => reason = v),
@@ -184,7 +223,8 @@ class _StockScreenState extends ConsumerState<StockScreen> {
                     onPressed: () async {
                       final qty = int.tryParse(controller.text) ?? 0;
                       if (qty <= 0) {
-                        ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Quantité invalide')));
+                        ScaffoldMessenger.of(ctx).showSnackBar(
+                            const SnackBar(content: Text('Quantité invalide')));
                         return;
                       }
                       try {
@@ -197,18 +237,24 @@ class _StockScreenState extends ConsumerState<StockScreen> {
                         if (ctx.mounted) Navigator.pop(ctx, true);
                       } catch (e) {
                         if (ctx.mounted) {
-                          ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text('$e')));
+                          ScaffoldMessenger.of(ctx)
+                              .showSnackBar(SnackBar(content: Text('$e')));
                         }
                       }
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: adjustmentType == 'add' ? Colors.green : Colors.red,
+                      backgroundColor:
+                          adjustmentType == 'add' ? Colors.green : Colors.red,
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
                     ),
                     child: Text(
-                      adjustmentType == 'add' ? 'Ajouter au stock' : 'Retirer du stock',
-                      style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600),
+                      adjustmentType == 'add'
+                          ? 'Ajouter au stock'
+                          : 'Retirer du stock',
+                      style: GoogleFonts.sourceSans3(
+                          color: Colors.white, fontWeight: FontWeight.w600),
                     ),
                   ),
                 ),
@@ -219,8 +265,10 @@ class _StockScreenState extends ConsumerState<StockScreen> {
       ),
     );
 
+    if (!mounted) return;
     if (result == true) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Stock ajusté')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Stock ajusté')));
       _loadData();
     }
   }
@@ -247,13 +295,16 @@ class _StockScreenState extends ConsumerState<StockScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Nouvel article', style: GoogleFonts.spaceGrotesk(fontSize: 18, fontWeight: FontWeight.w700)),
+              Text('Nouvel article',
+                  style: GoogleFonts.sourceSans3(
+                      fontSize: 18, fontWeight: FontWeight.w700)),
               const SizedBox(height: 16),
               TextField(
                 controller: nameController,
                 decoration: InputDecoration(
                   labelText: 'Nom *',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
               ),
               const SizedBox(height: 12),
@@ -265,7 +316,8 @@ class _StockScreenState extends ConsumerState<StockScreen> {
                       keyboardType: TextInputType.number,
                       decoration: InputDecoration(
                         labelText: 'Prix achat',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12)),
                       ),
                     ),
                   ),
@@ -276,7 +328,8 @@ class _StockScreenState extends ConsumerState<StockScreen> {
                       keyboardType: TextInputType.number,
                       decoration: InputDecoration(
                         labelText: 'Prix vente *',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12)),
                       ),
                     ),
                   ),
@@ -288,7 +341,8 @@ class _StockScreenState extends ConsumerState<StockScreen> {
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(
                   labelText: 'Stock initial',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
               ),
               const SizedBox(height: 20),
@@ -297,29 +351,35 @@ class _StockScreenState extends ConsumerState<StockScreen> {
                 child: ElevatedButton(
                   onPressed: () async {
                     if (nameController.text.isEmpty) {
-                      ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Nom requis')));
+                      ScaffoldMessenger.of(ctx).showSnackBar(
+                          const SnackBar(content: Text('Nom requis')));
                       return;
                     }
                     try {
                       await ApiService.post('/articles', {
                         'name': nameController.text,
                         'price': int.tryParse(priceController.text) ?? 0,
-                        'purchase_price': int.tryParse(purchasePriceController.text) ?? 0,
+                        'purchase_price':
+                            int.tryParse(purchasePriceController.text) ?? 0,
                         'stock': int.tryParse(stockController.text) ?? 0,
                       });
                       if (ctx.mounted) Navigator.pop(ctx, true);
                     } catch (e) {
                       if (ctx.mounted) {
-                        ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text('$e')));
+                        ScaffoldMessenger.of(ctx)
+                            .showSnackBar(SnackBar(content: Text('$e')));
                       }
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.blue,
+                    backgroundColor: AppColors.green,
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: Text('Créer', style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600)),
+                  child: Text('Créer',
+                      style: GoogleFonts.sourceSans3(
+                          color: Colors.white, fontWeight: FontWeight.w600)),
                 ),
               ),
             ],
@@ -328,25 +388,48 @@ class _StockScreenState extends ConsumerState<StockScreen> {
       ),
     );
 
+    if (!mounted) return;
     if (result == true) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Article créé')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Article créé')));
       _loadData();
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final lowStock = _articles.where((a) => (a['stock'] ?? a['quantity'] ?? 0) <= (a['stock_alert'] ?? 5)).length;
-    final totalValue = _articles.fold<int>(0, (sum, a) => sum + ((a['stock'] ?? a['quantity'] ?? 0) as int) * ((a['price'] ?? 0) as int));
+    final lowStock = _articles
+        .where((a) =>
+            (a['stock'] ?? a['quantity'] ?? 0) <= (a['stock_alert'] ?? 5))
+        .length;
+    final totalValue = _articles.fold<int>(
+      0,
+      (sum, article) =>
+          sum +
+          jsonInt(article['stock'] ?? article['quantity']) *
+              jsonInt(article['price']),
+    );
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text('Stock', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700)),
+        leading: IconButton(
+          tooltip: 'Retour',
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/dashboard');
+            }
+          },
+        ),
+        title: Text('Stock',
+            style: GoogleFonts.sourceSans3(fontWeight: FontWeight.w700)),
         backgroundColor: AppColors.surface,
         elevation: 0,
         actions: [
-          IconButton(icon: const Icon(Icons.add), onPressed: _addArticle),
+          IconButton(tooltip: 'Ajouter un article', icon: const Icon(Icons.add), onPressed: _addArticle),
         ],
       ),
       body: _loading
@@ -360,11 +443,23 @@ class _StockScreenState extends ConsumerState<StockScreen> {
                     padding: const EdgeInsets.all(16),
                     child: Row(
                       children: [
-                        Expanded(child: _buildStatCard('Articles', '${_articles.length}', Icons.inventory_2, AppColors.blue)),
+                        Expanded(
+                            child: _buildStatCard(
+                                'Articles',
+                                '${_articles.length}',
+                                Icons.inventory_2,
+                                AppColors.blue)),
                         const SizedBox(width: 12),
-                        Expanded(child: _buildStatCard('Alertes', '$lowStock', Icons.warning_amber, Colors.amber)),
+                        Expanded(
+                            child: _buildStatCard('Alertes', '$lowStock',
+                                Icons.warning_amber, Colors.amber)),
                         const SizedBox(width: 12),
-                        Expanded(child: _buildStatCard('Valeur', formatAmount(totalValue), Icons.attach_money, Colors.green)),
+                        Expanded(
+                            child: _buildStatCard(
+                                'Valeur',
+                                formatAmount(totalValue),
+                                Icons.attach_money,
+                                Colors.green)),
                       ],
                     ),
                   ),
@@ -377,8 +472,10 @@ class _StockScreenState extends ConsumerState<StockScreen> {
                       decoration: InputDecoration(
                         hintText: 'Rechercher un article...',
                         prefixIcon: const Icon(Icons.search, size: 20),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
                       ),
                     ),
                   ),
@@ -392,16 +489,20 @@ class _StockScreenState extends ConsumerState<StockScreen> {
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.inventory_2_outlined, size: 64, color: AppColors.muted),
+                                const Icon(Icons.inventory_2_outlined,
+                                    size: 64, color: AppColors.muted),
                                 const SizedBox(height: 16),
-                                Text('Aucun article', style: GoogleFonts.inter(color: AppColors.sub)),
+                                Text('Aucun article',
+                                    style: GoogleFonts.sourceSans3(
+                                        color: AppColors.sub)),
                               ],
                             ),
                           )
                         : ListView.builder(
                             padding: const EdgeInsets.all(16),
                             itemCount: _filteredArticles.length,
-                            itemBuilder: (_, i) => _buildArticleCard(_filteredArticles[i]),
+                            itemBuilder: (_, i) =>
+                                _buildArticleCard(_filteredArticles[i]),
                           ),
                   ),
                 ],
@@ -410,7 +511,8 @@ class _StockScreenState extends ConsumerState<StockScreen> {
     );
   }
 
-  Widget _buildStatCard(String label, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+      String label, String value, IconData icon, Color color) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -422,8 +524,12 @@ class _StockScreenState extends ConsumerState<StockScreen> {
         children: [
           Icon(icon, color: color, size: 20),
           const SizedBox(height: 6),
-          Text(value, style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700, fontSize: 14)),
-          Text(label, style: GoogleFonts.inter(color: AppColors.sub, fontSize: 10)),
+          Text(value,
+              style: GoogleFonts.sourceSans3(
+                  fontWeight: FontWeight.w700, fontSize: 14)),
+          Text(label,
+              style:
+                  GoogleFonts.sourceSans3(color: AppColors.sub, fontSize: 10)),
         ],
       ),
     );
@@ -440,7 +546,8 @@ class _StockScreenState extends ConsumerState<StockScreen> {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: isLow ? Colors.amber.shade200 : AppColors.borderSoft),
+        border: Border.all(
+            color: isLow ? Colors.amber.shade200 : AppColors.borderSoft),
       ),
       child: Row(
         children: [
@@ -462,9 +569,13 @@ class _StockScreenState extends ConsumerState<StockScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(article['name'] ?? '', style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14)),
+                Text(article['name'] ?? '',
+                    style: GoogleFonts.sourceSans3(
+                        fontWeight: FontWeight.w600, fontSize: 14)),
                 const SizedBox(height: 2),
-                Text(formatAmount(article['price'] ?? 0), style: GoogleFonts.inter(color: AppColors.sub, fontSize: 12)),
+                Text(formatAmount(article['price'] ?? 0),
+                    style: GoogleFonts.sourceSans3(
+                        color: AppColors.sub, fontSize: 12)),
               ],
             ),
           ),
@@ -472,14 +583,15 @@ class _StockScreenState extends ConsumerState<StockScreen> {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: isLow ? Colors.amber.shade50 : Colors.green.shade50,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
                   '$stock',
-                  style: GoogleFonts.spaceGrotesk(
+                  style: GoogleFonts.sourceSans3(
                     fontWeight: FontWeight.w700,
                     color: isLow ? Colors.amber.shade700 : Colors.green,
                   ),
@@ -488,7 +600,11 @@ class _StockScreenState extends ConsumerState<StockScreen> {
               const SizedBox(height: 4),
               GestureDetector(
                 onTap: () => _adjustStock(article),
-                child: Text('Ajuster', style: GoogleFonts.inter(color: AppColors.blue, fontSize: 11, fontWeight: FontWeight.w600)),
+                child: Text('Ajuster',
+                    style: GoogleFonts.sourceSans3(
+                        color: AppColors.blue,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600)),
               ),
             ],
           ),

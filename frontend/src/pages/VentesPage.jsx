@@ -7,7 +7,7 @@ import { useSaleStore } from '@/store/saleStore'
 import StatusBadge from '@/components/ui/StatusBadge'
 import ProgressBar from '@/components/ui/ProgressBar'
 
-const BLUE = '#1A56DB'
+const BLUE = '#3768AF'
 
 const STATUS_FILTERS = [
   { value: 'tous',     label: 'Tous' },

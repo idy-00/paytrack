@@ -40,7 +40,13 @@ class StockMovement extends Model
         ?string $notes = null
     ): self {
         $stockBefore = $article->stock;
-        $change = in_array($type, ['in', 'release']) ? abs($quantity) : -abs($quantity);
+        $change = match ($type) {
+            'in', 'release' => abs($quantity),
+            'out' => -abs($quantity),
+            'adjustment' => $quantity,
+            'reservation' => 0,
+            default => 0,
+        };
         $stockAfter = max(0, $stockBefore + $change);
 
         $article->update(['stock' => $stockAfter]);
@@ -51,7 +57,7 @@ class StockMovement extends Model
             'shop_id' => $shopId,
             'user_id' => $userId,
             'type' => $type,
-            'quantity' => $change,
+            'quantity' => $type === 'reservation' ? -abs($quantity) : $change,
             'stock_before' => $stockBefore,
             'stock_after' => $stockAfter,
             'reason' => $reason,

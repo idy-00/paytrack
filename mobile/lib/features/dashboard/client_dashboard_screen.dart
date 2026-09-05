@@ -2,35 +2,91 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../core/services/api_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/formatters.dart';
-import '../../data/mock/mock_data.dart';
+import '../../core/utils/json_parsers.dart';
 import '../../data/models/sale.dart';
 import '../../features/auth/auth_provider.dart';
 import '../../shared/widgets/progress_bar.dart';
 import '../../shared/widgets/status_badge.dart';
 
-class ClientDashboardScreen extends ConsumerWidget {
+class ClientDashboardScreen extends ConsumerStatefulWidget {
   const ClientDashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ClientDashboardScreen> createState() =>
+      _ClientDashboardScreenState();
+}
+
+class _ClientDashboardScreenState extends ConsumerState<ClientDashboardScreen> {
+  List<Sale> _sales = const [];
+  bool _loading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSales();
+  }
+
+  Future<void> _loadSales() async {
+    try {
+      final response = await ApiService.getSales();
+      final sales = jsonList(jsonMap(response)['data'])
+          .map((sale) => Sale.fromJson(jsonMap(sale)))
+          .toList();
+      if (mounted)
+        setState(() {
+          _sales = sales;
+          _loading = false;
+        });
+    } on ApiException catch (e) {
+      if (mounted)
+        setState(() {
+          _error = e.message;
+          _loading = false;
+        });
+    } catch (_) {
+      if (mounted)
+        setState(() {
+          _error = 'Impossible de charger vos dossiers.';
+          _loading = false;
+        });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final auth = ref.watch(authProvider);
     final user = auth.user;
 
-    final clientSales = user == null
-        ? <Sale>[]
-        : mockSales
-            .where((s) => s.clientName.toLowerCase() == user.name.toLowerCase())
-            .toList();
+    final clientSales = _sales;
 
     final totalAmount = clientSales.fold(0, (sum, s) => sum + s.totalAmount);
     final paidAmount = clientSales.fold(0, (sum, s) => sum + s.paidAmount);
-    final remainingAmount = clientSales.fold(0, (sum, s) => sum + s.remainingAmount);
+    final remainingAmount =
+        clientSales.fold(0, (sum, s) => sum + s.remainingAmount);
     final progressPercent = totalAmount > 0
         ? ((paidAmount / totalAmount) * 100).round().clamp(0, 100)
         : 0;
 
+    if (_loading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    if (_error != null) {
+      return Scaffold(
+        body: Center(
+            child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(mainAxisSize: MainAxisSize.min, children: [
+                  Text(_error!, textAlign: TextAlign.center),
+                  const SizedBox(height: 12),
+                  FilledButton(
+                      onPressed: _loadSales, child: const Text('Réessayer'))
+                ]))),
+      );
+    }
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -49,7 +105,7 @@ class ClientDashboardScreen extends ConsumerWidget {
                         children: [
                           Text(
                             'Bonjour, ${user?.name.split(' ').first ?? ''}',
-                            style: GoogleFonts.spaceGrotesk(
+                            style: GoogleFonts.sourceSans3(
                               fontSize: 24,
                               fontWeight: FontWeight.w700,
                               color: AppColors.ink,
@@ -59,7 +115,7 @@ class ClientDashboardScreen extends ConsumerWidget {
                           const SizedBox(height: 2),
                           Text(
                             'Vos dossiers de paiement',
-                            style: GoogleFonts.inter(
+                            style: GoogleFonts.sourceSans3(
                               fontSize: 13,
                               color: AppColors.sub,
                             ),
@@ -76,7 +132,7 @@ class ClientDashboardScreen extends ConsumerWidget {
                         width: 44,
                         height: 44,
                         decoration: BoxDecoration(
-                          gradient: AppColors.heroGradient,
+                          color: AppColors.green,
                           borderRadius: BorderRadius.circular(14),
                           boxShadow: [
                             BoxShadow(
@@ -89,12 +145,13 @@ class ClientDashboardScreen extends ConsumerWidget {
                         child: Center(
                           child: Text(
                             user?.name
-                                .split(' ')
-                                .where((p) => p.isNotEmpty)
-                                .map((p) => p[0])
-                                .take(2)
-                                .join() ?? 'AN',
-                            style: GoogleFonts.spaceGrotesk(
+                                    .split(' ')
+                                    .where((p) => p.isNotEmpty)
+                                    .map((p) => p[0])
+                                    .take(2)
+                                    .join() ??
+                                'AN',
+                            style: GoogleFonts.sourceSans3(
                               fontSize: 14,
                               color: Colors.white,
                               fontWeight: FontWeight.w700,
@@ -116,7 +173,7 @@ class ClientDashboardScreen extends ConsumerWidget {
                   width: double.infinity,
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    gradient: AppColors.darkGradient,
+                    color: AppColors.darkSurface,
                     borderRadius: BorderRadius.circular(24),
                     boxShadow: AppColors.elevatedShadow,
                   ),
@@ -138,16 +195,21 @@ class ClientDashboardScreen extends ConsumerWidget {
                             ),
                           ),
                           const SizedBox(width: 10),
-                          Text(
-                            'Reste à payer',
-                            style: GoogleFonts.inter(
-                              fontSize: 13,
-                              color: Colors.white.withValues(alpha: 0.7),
+                          Expanded(
+                            child: Text(
+                              'Reste à payer',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.sourceSans3(
+                                fontSize: 13,
+                                color: Colors.white.withValues(alpha: 0.7),
+                              ),
                             ),
                           ),
-                          const Spacer(),
+                          const SizedBox(width: 8),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 5),
                             decoration: BoxDecoration(
                               color: AppColors.gold.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(20),
@@ -157,7 +219,7 @@ class ClientDashboardScreen extends ConsumerWidget {
                             ),
                             child: Text(
                               '${clientSales.length} dossier${clientSales.length != 1 ? 's' : ''}',
-                              style: GoogleFonts.inter(
+                              style: GoogleFonts.sourceSans3(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
                                 color: AppColors.gold,
@@ -169,7 +231,7 @@ class ClientDashboardScreen extends ConsumerWidget {
                       const SizedBox(height: 20),
                       Text(
                         formatAmount(remainingAmount),
-                        style: GoogleFonts.spaceGrotesk(
+                        style: GoogleFonts.sourceSans3(
                           fontSize: 36,
                           fontWeight: FontWeight.w700,
                           color: Colors.white,
@@ -180,7 +242,7 @@ class ClientDashboardScreen extends ConsumerWidget {
                       const SizedBox(height: 4),
                       Text(
                         'sur ${formatAmount(totalAmount)} total',
-                        style: GoogleFonts.inter(
+                        style: GoogleFonts.sourceSans3(
                           fontSize: 12,
                           color: Colors.white.withValues(alpha: 0.5),
                         ),
@@ -191,7 +253,8 @@ class ClientDashboardScreen extends ConsumerWidget {
                         child: LinearProgressIndicator(
                           value: progressPercent / 100,
                           backgroundColor: Colors.white.withValues(alpha: 0.1),
-                          valueColor: AlwaysStoppedAnimation<Color>(AppColors.gold),
+                          valueColor: const AlwaysStoppedAnimation<Color>(
+                              AppColors.gold),
                           minHeight: 6,
                         ),
                       ),
@@ -201,14 +264,14 @@ class ClientDashboardScreen extends ConsumerWidget {
                         children: [
                           Text(
                             '${formatAmount(paidAmount)} payé',
-                            style: GoogleFonts.inter(
+                            style: GoogleFonts.sourceSans3(
                               fontSize: 11,
                               color: Colors.white.withValues(alpha: 0.6),
                             ),
                           ),
                           Text(
                             '$progressPercent%',
-                            style: GoogleFonts.spaceGrotesk(
+                            style: GoogleFonts.sourceSans3(
                               fontSize: 13,
                               fontWeight: FontWeight.w700,
                               color: AppColors.gold,
@@ -239,7 +302,7 @@ class ClientDashboardScreen extends ConsumerWidget {
                     const SizedBox(width: 10),
                     Text(
                       'Mes dossiers',
-                      style: GoogleFonts.spaceGrotesk(
+                      style: GoogleFonts.sourceSans3(
                         fontSize: 17,
                         fontWeight: FontWeight.w700,
                         color: AppColors.ink,
@@ -270,7 +333,7 @@ class ClientDashboardScreen extends ConsumerWidget {
 
   Widget _buildDossierCard(BuildContext context, Sale sale) {
     return GestureDetector(
-      onTap: () => context.push('/ventes/${sale.id}'),
+      onTap: () => context.push('/client-ventes/${sale.id}'),
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(18),
@@ -305,7 +368,7 @@ class ClientDashboardScreen extends ConsumerWidget {
                     children: [
                       Text(
                         sale.articleName,
-                        style: GoogleFonts.inter(
+                        style: GoogleFonts.sourceSans3(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                           color: AppColors.ink,
@@ -316,7 +379,7 @@ class ClientDashboardScreen extends ConsumerWidget {
                       const SizedBox(height: 2),
                       Text(
                         sale.reference,
-                        style: GoogleFonts.spaceGrotesk(
+                        style: GoogleFonts.sourceSans3(
                           fontSize: 11,
                           color: AppColors.sub,
                           fontFeatures: [const FontFeature.tabularFigures()],
@@ -343,12 +406,13 @@ class ClientDashboardScreen extends ConsumerWidget {
                   children: [
                     Text(
                       'Payé',
-                      style: GoogleFonts.inter(fontSize: 10, color: AppColors.sub),
+                      style: GoogleFonts.sourceSans3(
+                          fontSize: 10, color: AppColors.sub),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       formatAmount(sale.paidAmount),
-                      style: GoogleFonts.spaceGrotesk(
+                      style: GoogleFonts.sourceSans3(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
                         color: AppColors.success,
@@ -362,12 +426,13 @@ class ClientDashboardScreen extends ConsumerWidget {
                   children: [
                     Text(
                       'Restant',
-                      style: GoogleFonts.inter(fontSize: 10, color: AppColors.sub),
+                      style: GoogleFonts.sourceSans3(
+                          fontSize: 10, color: AppColors.sub),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       formatAmount(sale.remainingAmount),
-                      style: GoogleFonts.spaceGrotesk(
+                      style: GoogleFonts.sourceSans3(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
                         color: AppColors.ink,
@@ -391,7 +456,7 @@ class ClientDashboardScreen extends ConsumerWidget {
         children: [
           Container(
             padding: const EdgeInsets.all(28),
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: AppColors.surfaceDim,
               shape: BoxShape.circle,
             ),
@@ -404,7 +469,7 @@ class ClientDashboardScreen extends ConsumerWidget {
           const SizedBox(height: 20),
           Text(
             'Aucun dossier',
-            style: GoogleFonts.spaceGrotesk(
+            style: GoogleFonts.sourceSans3(
               fontSize: 18,
               fontWeight: FontWeight.w700,
               color: AppColors.ink,
@@ -414,7 +479,7 @@ class ClientDashboardScreen extends ConsumerWidget {
           Text(
             'Vous n\'avez aucun dossier de paiement actif.',
             textAlign: TextAlign.center,
-            style: GoogleFonts.inter(
+            style: GoogleFonts.sourceSans3(
               fontSize: 13,
               color: AppColors.sub,
               height: 1.5,

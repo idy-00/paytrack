@@ -10,6 +10,7 @@ use App\Models\StockMovement;
 use App\Services\StockService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class StockController extends Controller
 {
@@ -62,8 +63,9 @@ class StockController extends Controller
 
     public function adjustStock(Request $request)
     {
+        $tenantId = $request->user()->tenant_id;
         $validated = $request->validate([
-            'article_id' => 'required|exists:articles,id',
+            'article_id' => ['required', Rule::exists('articles', 'id')->where('tenant_id', $tenantId)],
             'quantity' => 'required|integer|not_in:0',
             'reason' => 'required|string|max:255',
             'notes' => 'nullable|string',
@@ -134,11 +136,12 @@ class StockController extends Controller
 
     public function createInventory(Request $request)
     {
+        $tenantId = $request->user()->tenant_id;
         $validated = $request->validate([
-            'shop_id' => 'nullable|exists:shops,id',
+            'shop_id' => ['nullable', Rule::exists('shops', 'id')->where('tenant_id', $tenantId)],
             'notes' => 'nullable|string',
             'articles' => 'sometimes|array',
-            'articles.*' => 'exists:articles,id',
+            'articles.*' => [Rule::exists('articles', 'id')->where('tenant_id', $tenantId)],
         ]);
 
         $inventory = DB::transaction(function () use ($validated, $request) {

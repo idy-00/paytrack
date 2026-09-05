@@ -7,8 +7,8 @@ import { api } from '@/lib/api'
 import StatusBadge from '@/components/ui/StatusBadge'
 import ProgressBar from '@/components/ui/ProgressBar'
 
-const BLUE = '#1D6FE8'
-const SUCCESS = '#16A34A'
+const BLUE = '#3768AF'
+const SUCCESS = '#44AC45'
 
 export default function QRScannerPage() {
   const [input, setInput] = useState('')

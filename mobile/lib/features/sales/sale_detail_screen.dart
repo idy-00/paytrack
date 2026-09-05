@@ -59,7 +59,7 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
             const SizedBox(height: 24),
             Text(
               'QR Code',
-              style: GoogleFonts.spaceGrotesk(
+              style: GoogleFonts.sourceSans3(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
                 color: AppColors.ink,
@@ -68,7 +68,7 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
             const SizedBox(height: 4),
             Text(
               sale.reference,
-              style: GoogleFonts.spaceGrotesk(
+              style: GoogleFonts.sourceSans3(
                 fontSize: 12,
                 color: AppColors.sub,
                 fontFeatures: [const FontFeature.tabularFigures()],
@@ -100,7 +100,7 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
             const SizedBox(height: 16),
             Text(
               sale.clientName,
-              style: GoogleFonts.inter(
+              style: GoogleFonts.sourceSans3(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: AppColors.ink,
@@ -138,7 +138,8 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
               children: [
                 Center(
                   child: Container(
-                    width: 40, height: 4,
+                    width: 40,
+                    height: 4,
                     decoration: BoxDecoration(
                       color: AppColors.border,
                       borderRadius: BorderRadius.circular(2),
@@ -148,7 +149,7 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
                 const SizedBox(height: 24),
                 Text(
                   'Enregistrer un paiement',
-                  style: GoogleFonts.spaceGrotesk(
+                  style: GoogleFonts.sourceSans3(
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
                     color: AppColors.ink,
@@ -157,13 +158,16 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
                 const SizedBox(height: 4),
                 Text(
                   '${sale.clientName} — ${sale.articleName}',
-                  style: GoogleFonts.inter(fontSize: 12, color: AppColors.sub),
+                  style: GoogleFonts.sourceSans3(
+                      fontSize: 12, color: AppColors.sub),
                 ),
                 const SizedBox(height: 24),
                 Text(
                   'Montant',
-                  style: GoogleFonts.inter(
-                    fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.ink,
+                  style: GoogleFonts.sourceSans3(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.ink,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -172,13 +176,18 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
                   keyboardType: TextInputType.number,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   onChanged: (_) => setSheetState(() {}),
-                  style: GoogleFonts.spaceGrotesk(fontSize: 18, color: AppColors.ink, fontWeight: FontWeight.w600),
+                  style: GoogleFonts.sourceSans3(
+                      fontSize: 18,
+                      color: AppColors.ink,
+                      fontWeight: FontWeight.w600),
                   cursorColor: AppColors.blue,
                   decoration: InputDecoration(
                     hintText: '0',
-                    hintStyle: GoogleFonts.spaceGrotesk(fontSize: 18, color: AppColors.hint),
+                    hintStyle: GoogleFonts.sourceSans3(
+                        fontSize: 18, color: AppColors.hint),
                     suffixText: 'FCFA',
-                    suffixStyle: GoogleFonts.inter(color: AppColors.sub, fontSize: 13),
+                    suffixStyle: GoogleFonts.sourceSans3(
+                        color: AppColors.sub, fontSize: 13),
                     filled: true,
                     fillColor: AppColors.surfaceDim,
                     border: OutlineInputBorder(
@@ -191,7 +200,8 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(color: AppColors.blue, width: 1.5),
+                      borderSide:
+                          const BorderSide(color: AppColors.blue, width: 1.5),
                     ),
                   ),
                 ),
@@ -199,7 +209,7 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
                   const SizedBox(height: 8),
                   Text(
                     'Reste après : ${formatAmount(reste.clamp(0, sale.remainingAmount))}',
-                    style: GoogleFonts.spaceGrotesk(
+                    style: GoogleFonts.sourceSans3(
                       fontSize: 12,
                       color: reste <= 0 ? AppColors.success : AppColors.warning,
                       fontWeight: FontWeight.w600,
@@ -209,8 +219,10 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
                 const SizedBox(height: 18),
                 Text(
                   'Mode de paiement',
-                  style: GoogleFonts.inter(
-                    fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.ink,
+                  style: GoogleFonts.sourceSans3(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.ink,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -219,19 +231,23 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: AppColors.surfaceDim,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 14),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
                       borderSide: BorderSide.none,
                     ),
                   ),
                   dropdownColor: Colors.white,
-                  style: GoogleFonts.inter(fontSize: 14, color: AppColors.ink),
+                  style: GoogleFonts.sourceSans3(
+                      fontSize: 14, color: AppColors.ink),
                   items: const [
                     DropdownMenuItem(value: 'especes', child: Text('Espèces')),
                     DropdownMenuItem(value: 'wave', child: Text('Wave')),
-                    DropdownMenuItem(value: 'orange_money', child: Text('Orange Money')),
-                    DropdownMenuItem(value: 'virement', child: Text('Virement bancaire')),
+                    DropdownMenuItem(
+                        value: 'orange_money', child: Text('Orange Money')),
+                    DropdownMenuItem(
+                        value: 'virement', child: Text('Virement bancaire')),
                   ],
                   onChanged: (v) {
                     if (v != null) setSheetState(() => _paymentMode = v);
@@ -243,7 +259,7 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
                   height: 54,
                   child: DecoratedBox(
                     decoration: BoxDecoration(
-                      gradient: AppColors.heroGradient,
+                      color: AppColors.green,
                       borderRadius: BorderRadius.circular(14),
                       boxShadow: [
                         BoxShadow(
@@ -267,10 +283,13 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
                         if (amount <= 0 || amount > sale.remainingAmount) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('Montant invalide', style: GoogleFonts.inter(color: Colors.white)),
+                              content: Text('Montant invalide',
+                                  style: GoogleFonts.sourceSans3(
+                                      color: Colors.white)),
                               backgroundColor: AppColors.danger,
                               behavior: SnackBarBehavior.floating,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10)),
                             ),
                           );
                           return;
@@ -281,17 +300,21 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
                           SnackBar(
                             content: Text(
                               'Paiement enregistré (mode démo)',
-                              style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w500),
+                              style: GoogleFonts.sourceSans3(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w500),
                             ),
                             backgroundColor: AppColors.success,
                             behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10)),
                           ),
                         );
                       },
                       child: Text(
                         'Confirmer le paiement',
-                        style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w600),
+                        style: GoogleFonts.sourceSans3(
+                            fontSize: 15, fontWeight: FontWeight.w600),
                       ),
                     ),
                   ),
@@ -312,7 +335,8 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
         backgroundColor: AppColors.background,
         body: SafeArea(
           child: Center(
-            child: Text('Vente introuvable', style: GoogleFonts.inter(color: AppColors.sub)),
+            child: Text('Vente introuvable',
+                style: GoogleFonts.sourceSans3(color: AppColors.sub)),
           ),
         ),
       );
@@ -322,7 +346,7 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
       backgroundColor: AppColors.background,
       floatingActionButton: Container(
         decoration: BoxDecoration(
-          gradient: AppColors.heroGradient,
+          color: AppColors.green,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
@@ -340,7 +364,8 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
           icon: const Icon(Icons.add_rounded, size: 18),
           label: Text(
             'Paiement',
-            style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600),
+            style: GoogleFonts.sourceSans3(
+                fontSize: 13, fontWeight: FontWeight.w600),
           ),
         ),
       ),
@@ -351,7 +376,7 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
           SliverToBoxAdapter(
             child: Container(
               decoration: const BoxDecoration(
-                gradient: AppColors.heroGradient,
+                color: AppColors.hero,
               ),
               child: SafeArea(
                 bottom: false,
@@ -371,7 +396,8 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
                                 color: Colors.white.withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              child: const Icon(Icons.arrow_back_rounded, size: 18, color: Colors.white),
+                              child: const Icon(Icons.arrow_back_rounded,
+                                  size: 18, color: Colors.white),
                             ),
                           ),
                           const Spacer(),
@@ -384,7 +410,8 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
                                 color: Colors.white.withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              child: const Icon(Icons.qr_code_rounded, size: 18, color: Colors.white),
+                              child: const Icon(Icons.qr_code_rounded,
+                                  size: 18, color: Colors.white),
                             ),
                           ),
                         ],
@@ -392,7 +419,7 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
                       const SizedBox(height: 24),
                       Text(
                         sale.reference,
-                        style: GoogleFonts.spaceGrotesk(
+                        style: GoogleFonts.sourceSans3(
                           fontSize: 12,
                           color: Colors.white.withValues(alpha: 0.6),
                           fontFeatures: [const FontFeature.tabularFigures()],
@@ -401,7 +428,7 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
                       const SizedBox(height: 8),
                       Text(
                         formatAmount(sale.totalAmount),
-                        style: GoogleFonts.spaceGrotesk(
+                        style: GoogleFonts.sourceSans3(
                           fontSize: 36,
                           fontWeight: FontWeight.w700,
                           color: Colors.white,
@@ -412,7 +439,7 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
                       const SizedBox(height: 4),
                       Text(
                         sale.articleName,
-                        style: GoogleFonts.inter(
+                        style: GoogleFonts.sourceSans3(
                           fontSize: 14,
                           color: Colors.white.withValues(alpha: 0.7),
                         ),
@@ -424,7 +451,8 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
                         child: LinearProgressIndicator(
                           value: sale.progressPercent / 100.0,
                           backgroundColor: Colors.white.withValues(alpha: 0.2),
-                          valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                          valueColor:
+                              const AlwaysStoppedAnimation<Color>(Colors.white),
                           minHeight: 6,
                         ),
                       ),
@@ -434,7 +462,7 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
                         children: [
                           Text(
                             '${sale.progressPercent}% remboursé',
-                            style: GoogleFonts.inter(
+                            style: GoogleFonts.sourceSans3(
                               fontSize: 12,
                               color: Colors.white.withValues(alpha: 0.7),
                             ),
@@ -457,11 +485,14 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
                 // Stats row
                 Row(
                   children: [
-                    _buildStatChip('Payé', formatAmount(sale.paidAmount), AppColors.success),
+                    _buildStatChip('Payé', formatAmount(sale.paidAmount),
+                        AppColors.success),
                     const SizedBox(width: 8),
-                    _buildStatChip('Restant', formatAmount(sale.remainingAmount), AppColors.warning),
+                    _buildStatChip('Restant',
+                        formatAmount(sale.remainingAmount), AppColors.warning),
                     const SizedBox(width: 8),
-                    _buildStatChip('Tranches', '${sale.installmentCount}×', AppColors.blue),
+                    _buildStatChip('Tranches', '${sale.installmentCount}×',
+                        AppColors.blue),
                   ],
                 ),
                 const SizedBox(height: 24),
@@ -479,26 +510,31 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
                   ),
                   child: Column(
                     children: [
-                      _buildInfoRow(Icons.person_outline_rounded, sale.clientName),
+                      _buildInfoRow(
+                          Icons.person_outline_rounded, sale.clientName),
                       if (sale.clientPhone != null) ...[
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 10),
-                          child: Container(height: 1, color: AppColors.borderSoft),
+                          child:
+                              Container(height: 1, color: AppColors.borderSoft),
                         ),
                         _buildInfoRow(Icons.phone_outlined, sale.clientPhone!),
                       ],
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 10),
-                        child: Container(height: 1, color: AppColors.borderSoft),
+                        child:
+                            Container(height: 1, color: AppColors.borderSoft),
                       ),
-                      _buildInfoRow(Icons.location_on_outlined, sale.clientCity),
+                      _buildInfoRow(
+                          Icons.location_on_outlined, sale.clientCity),
                     ],
                   ),
                 ),
                 const SizedBox(height: 24),
 
                 // Schedule section
-                _buildSectionTitle('Échéancier · ${sale.installmentCount} tranches'),
+                _buildSectionTitle(
+                    'Échéancier · ${sale.installmentCount} tranches'),
                 const SizedBox(height: 10),
                 Container(
                   decoration: BoxDecoration(
@@ -515,11 +551,12 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
                       return Column(
                         children: [
                           _buildScheduleItem(item),
-                          if (!isLast) Container(
-                            height: 1,
-                            margin: const EdgeInsets.only(left: 56),
-                            color: AppColors.borderSoft,
-                          ),
+                          if (!isLast)
+                            Container(
+                              height: 1,
+                              margin: const EdgeInsets.only(left: 56),
+                              color: AppColors.borderSoft,
+                            ),
                         ],
                       );
                     }).toList(),
@@ -549,12 +586,13 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
           children: [
             Text(
               label,
-              style: GoogleFonts.inter(fontSize: 10, color: AppColors.sub),
+              style:
+                  GoogleFonts.sourceSans3(fontSize: 10, color: AppColors.sub),
             ),
             const SizedBox(height: 4),
             Text(
               value,
-              style: GoogleFonts.spaceGrotesk(
+              style: GoogleFonts.sourceSans3(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
                 color: color,
@@ -583,7 +621,7 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
         const SizedBox(width: 10),
         Text(
           title,
-          style: GoogleFonts.spaceGrotesk(
+          style: GoogleFonts.sourceSans3(
             fontSize: 16,
             fontWeight: FontWeight.w700,
             color: AppColors.ink,
@@ -609,7 +647,7 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
         Expanded(
           child: Text(
             text,
-            style: GoogleFonts.inter(fontSize: 14, color: AppColors.ink),
+            style: GoogleFonts.sourceSans3(fontSize: 14, color: AppColors.ink),
           ),
         ),
       ],
@@ -658,7 +696,7 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
               children: [
                 Text(
                   'Tranche ${item.num}',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.sourceSans3(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                     color: AppColors.ink,
@@ -669,7 +707,8 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
                   item.paidDate != null
                       ? 'Payé le ${formatDate(item.paidDate)}'
                       : 'Échéance : ${formatDate(item.dueDate)}',
-                  style: GoogleFonts.inter(fontSize: 11, color: AppColors.sub),
+                  style: GoogleFonts.sourceSans3(
+                      fontSize: 11, color: AppColors.sub),
                 ),
               ],
             ),
@@ -679,7 +718,7 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
             children: [
               Text(
                 formatAmount(item.amount),
-                style: GoogleFonts.spaceGrotesk(
+                style: GoogleFonts.sourceSans3(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
                   color: AppColors.ink,

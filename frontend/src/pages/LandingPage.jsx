@@ -10,7 +10,7 @@ import Logo from '@/components/ui/Logo'
 /* ────────────────────────────────────────────────────────────────
    PALETTE
    bg:      #F7F5F0  — fond ivoire très doux
-   blue:    #1D6FE8  — bleu pur, calme, délié
+   blue:    #3768AF  — bleu pur, calme, délié
    ink:     #1A1A1A  — anthracite doux
    sub:     #6B7280  — texte secondaire
    border:  #E8E4DD  — séparateurs cohérents avec le fond
@@ -19,13 +19,14 @@ import Logo from '@/components/ui/Logo'
 
 const C = {
   bg:     '#F7F5F0',
-  blue:   '#1D6FE8',
+  blue:   '#3768AF',
+  green:  '#44AC45',
   ink:    '#1A1A1A',
   sub:    '#6B7280',
   border: '#E8E4DD',
   white:  '#FFFFFF',
-  blueL:  '#EEF4FE',  // bleu très léger pour les surfaces
-  blueMid:'#DBEAFE',  // bleu moyen pour badges
+  blueL:  '#E8F0FA',
+  greenL: '#E8F5E8',
 }
 
 // Hero : entrepreneure africaine avec smartphone à son bureau
@@ -142,19 +143,22 @@ export default function LandingPage() {
 
   const plans = [
     {
-      plan: 'Démarrage', price: 'Gratuit', period: 'Pour toujours', hi: false,
-      features: ['50 ventes / mois', '2 vendeurs', 'QR Code par dossier', 'Reçus PDF', 'Dashboard', 'Gestion de stock'],
-      cta: 'Commencer gratuitement',
-    },
-    {
-      plan: 'Professionnel', price: '25 000 FCFA', period: 'par trimestre · par boutique', hi: true, badge: 'Le plus populaire',
-      features: ['Ventes illimitées', 'Vendeurs illimités', 'Rappels SMS & WhatsApp', 'Wave · Orange Money', 'Export PDF / CSV', 'Rapports avancés', 'Vente comptant & tranche', 'Gestion de stock avancée'],
+      plan: 'Essentiel', price: '2 000 FCFA', period: '/mois · 20 000 F/an', hi: false,
+      desc: 'Petits commerçants, artisans, indépendants',
+      features: ['Encaissements & paiements', 'Historique des opérations', 'Créances, dettes, échéances', 'Reçus numériques', 'Factures simples', 'Tableau de bord simplifié', 'Export PDF'],
       cta: 'Essai 14 jours gratuit',
     },
     {
-      plan: 'Entreprise', price: '45 000 FCFA', period: 'par semestre · multi-boutiques', hi: false,
-      features: ['Boutiques illimitées', 'Rôles & permissions', 'Intégration sur mesure', 'Support prioritaire', 'Audit log complet', 'Fréquences personnalisées'],
-      cta: 'Nous contacter',
+      plan: 'Pro', price: '5 000 FCFA', period: '/mois · 50 000 F/an', hi: true, badge: 'Recommandé',
+      desc: 'TPE, boutiques, prestataires',
+      features: ['Tout Essentiel +', 'Base clients complète', 'Factures personnalisées avec logo', 'Numérotation automatique', 'Suivi détaillé des impayés', 'Relances et alertes', 'Rapports & statistiques', 'Export Excel & PDF', 'Multi-utilisateurs'],
+      cta: 'Essai 14 jours gratuit',
+    },
+    {
+      plan: 'Business', price: '10 000 FCFA', period: '/mois · 100 000 F/an', hi: false,
+      desc: 'PME et équipes structurées',
+      features: ['Tout Pro +', 'Multi-utilisateurs avancé', 'Gestion des rôles & permissions', 'Volume élevé de factures', 'Tableaux de bord avancés', 'Reporting financier', 'Archivage avancé', 'Assistance prioritaire'],
+      cta: 'Essai 14 jours gratuit',
     },
   ]
 
@@ -267,8 +271,8 @@ export default function LandingPage() {
                   <p style={{ fontSize: 18, color: C.ink, fontWeight: 800, fontFamily: '"Geist Mono", monospace', letterSpacing: '-0.02em' }}>108 334 FCFA</p>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#F0FDF4', padding: '6px 12px', borderRadius: 99, border: '1px solid #BBF7D0' }}>
-                  <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#16A34A' }} />
-                  <span style={{ fontSize: 12, color: '#15803D', fontWeight: 700 }}>Wave · Confirmé</span>
+                  <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#44AC45' }} />
+                  <span style={{ fontSize: 12, color: '#44AC45', fontWeight: 700 }}>Wave · Confirmé</span>
                 </div>
               </div>
             </div>
@@ -425,7 +429,7 @@ export default function LandingPage() {
               <h2 className="sr" data-delay="60" style={{ fontSize: 'clamp(26px, 3vw, 40px)', fontWeight: 800, letterSpacing: '-0.04em', color: C.ink, margin: 0, lineHeight: 1.1 }}>
                 Simple et transparent.
               </h2>
-              <p className="sr" data-delay="80" style={{ fontSize: 13, color: C.sub, fontWeight: 500 }}>Sans frais cachés. Annulez à tout moment.</p>
+              <p className="sr" data-delay="80" style={{ fontSize: 13, color: C.sub, fontWeight: 500 }}>Abonnement séparé des frais DexPay, affichés au marchand avant retrait.</p>
             </div>
 
             <div className="plan-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, alignItems: 'start' }}>

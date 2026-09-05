@@ -1,51 +1,69 @@
+import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import ProtectedRoute from '@/components/layout/ProtectedRoute'
 import OfflineScreen from '@/components/ui/OfflineScreen'
-import LandingPage from '@/pages/LandingPage'
-import LoginPage from '@/pages/LoginPage'
-import VendeurDashboard from '@/pages/VendeurDashboard'
-import ClientDashboard from '@/pages/ClientDashboard'
-import ClientPaiements from '@/pages/ClientPaiements'
-import VentesPage from '@/pages/VentesPage'
-import VenteDetailPage from '@/pages/VenteDetailPage'
-import NouvelleVentePage from '@/pages/NouvelleVentePage'
-import ClientsPage from '@/pages/ClientsPage'
-import QRScanPage from '@/pages/QRScanPage'
-import PaiementsPage from '@/pages/PaiementsPage'
-import QRScannerPage from '@/pages/QRScannerPage'
-import RegisterPage from '@/pages/RegisterPage'
-import StockPage from '@/pages/StockPage'
-import ShopsPage from '@/pages/ShopsPage'
-import UsersPage from '@/pages/UsersPage'
-import AdminDashboardPage from '@/pages/AdminDashboardPage'
-import AdminRapportsPage from '@/pages/AdminRapportsPage'
-import AdminParametresPage from '@/pages/AdminParametresPage'
-// New pages
-import SubscriptionPage from '@/pages/SubscriptionPage'
-import WalletPage from '@/pages/WalletPage'
-import OrdersPage from '@/pages/OrdersPage'
-import OrderDetailPage from '@/pages/OrderDetailPage'
-import NewOrderPage from '@/pages/NewOrderPage'
-import SuppliersPage from '@/pages/SuppliersPage'
-import SupplierOrdersPage from '@/pages/SupplierOrdersPage'
-import InventoriesPage from '@/pages/InventoriesPage'
-import AtaabaAdminPage from '@/pages/AtaabaAdminPage'
+
+const LandingPage = lazy(() => import('@/pages/LandingPage'))
+const LoginPage = lazy(() => import('@/pages/LoginPage'))
+const VendeurDashboard = lazy(() => import('@/pages/VendeurDashboard'))
+const ClientDashboard = lazy(() => import('@/pages/ClientDashboard'))
+const ClientPaiements = lazy(() => import('@/pages/ClientPaiements'))
+const ClientSaleDetail = lazy(() => import('@/pages/ClientSaleDetail'))
+const LegalPage = lazy(() => import('@/pages/LegalPage'))
+const VentesPage = lazy(() => import('@/pages/VentesPage'))
+const VenteDetailPage = lazy(() => import('@/pages/VenteDetailPage'))
+const NouvelleVentePage = lazy(() => import('@/pages/NouvelleVentePage'))
+const ClientsPage = lazy(() => import('@/pages/ClientsPage'))
+const QRScanPage = lazy(() => import('@/pages/QRScanPage'))
+const PaiementsPage = lazy(() => import('@/pages/PaiementsPage'))
+const QRScannerPage = lazy(() => import('@/pages/QRScannerPage'))
+const RegisterPage = lazy(() => import('@/pages/RegisterPage'))
+const StockPage = lazy(() => import('@/pages/StockPage'))
+const ShopsPage = lazy(() => import('@/pages/ShopsPage'))
+const UsersPage = lazy(() => import('@/pages/UsersPage'))
+const AdminDashboardPage = lazy(() => import('@/pages/AdminDashboardPage'))
+const AdminRapportsPage = lazy(() => import('@/pages/AdminRapportsPage'))
+const AdminParametresPage = lazy(() => import('@/pages/AdminParametresPage'))
+const SubscriptionPage = lazy(() => import('@/pages/SubscriptionPage'))
+const WalletPage = lazy(() => import('@/pages/WalletPage'))
+const OrdersPage = lazy(() => import('@/pages/OrdersPage'))
+const OrderDetailPage = lazy(() => import('@/pages/OrderDetailPage'))
+const NewOrderPage = lazy(() => import('@/pages/NewOrderPage'))
+const SuppliersPage = lazy(() => import('@/pages/SuppliersPage'))
+const SupplierOrdersPage = lazy(() => import('@/pages/SupplierOrdersPage'))
+const InventoriesPage = lazy(() => import('@/pages/InventoriesPage'))
+const AtaabaAdminPage = lazy(() => import('@/pages/AtaabaAdminPage'))
+const NotificationsPage = lazy(() => import('@/pages/NotificationsPage'))
+const ProfilePage = lazy(() => import('@/pages/ProfilePage'))
 
 const VENDOR_ROLES = ['vendeur', 'responsable_boutique', 'admin_entreprise', 'super_admin']
 const ADMIN_ROLES = ['admin_entreprise', 'super_admin']
 const SUPER_ADMIN_ROLES = ['super_admin']
 
+function PageLoader() {
+  return (
+    <div className="min-h-dvh grid place-items-center" role="status" aria-live="polite">
+      <div className="text-center">
+        <div className="w-10 h-10 rounded-xl mx-auto mb-3 animate-pulse" style={{ background: '#44AC45' }} />
+        <p className="text-sm font-semibold" style={{ color: '#3768AF' }}>Chargement PayTrack…</p>
+      </div>
+    </div>
+  )
+}
+
 export default function App() {
   return (
     <BrowserRouter>
       <OfflineScreen />
-      <Routes>
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
         {/* Vitrine publique */}
         <Route path="/" element={<LandingPage />} />
 
         {/* Auth */}
         <Route path="/login"    element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/legal/:page" element={<LegalPage />} />
         <Route path="/qr/:uuid" element={<QRScanPage />} />
 
         {/* Vendor routes */}
@@ -105,6 +123,8 @@ export default function App() {
         <Route path="/abonnement" element={
           <ProtectedRoute roles={VENDOR_ROLES}><SubscriptionPage /></ProtectedRoute>
         } />
+        <Route path="/profil" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+        <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
 
         {/* Admin routes */}
         <Route path="/admin" element={
@@ -135,9 +155,13 @@ export default function App() {
         <Route path="/client/paiements" element={
           <ProtectedRoute roles={['client']}><ClientPaiements /></ProtectedRoute>
         } />
+        <Route path="/client/vente/:id" element={
+          <ProtectedRoute roles={['client']}><ClientSaleDetail /></ProtectedRoute>
+        } />
 
         <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   )
 }

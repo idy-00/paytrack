@@ -4,9 +4,9 @@ import { Search, Download, Wallet, Calendar, Receipt, TrendingUp, CreditCard, Lo
 import { formatAmount, formatDate } from '@/lib/utils'
 import { api, getToken } from '@/lib/api'
 
-const BLUE = '#1A56DB'
+const BLUE = '#3768AF'
 const NAVY = '#0F2744'
-const SUCCESS = '#16A34A'
+const SUCCESS = '#44AC45'
 
 const METHOD_LABELS = { especes: 'Espèces', wave: 'Wave', orange_money: 'Orange Money', free_money: 'Free Money', virement: 'Virement', cheque: 'Chèque' }
 const METHOD_STYLES = {

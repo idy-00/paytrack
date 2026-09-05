@@ -62,15 +62,20 @@ class SaleController extends Controller
                 Rule::exists('articles', 'id')->where('tenant_id', $tenantId),
             ],
             'article_name'      => ['required', 'string', 'max:255'],
+            'quantity'          => ['nullable', 'integer', 'min:1', 'max:10000'],
             'total_amount'      => ['required', 'integer', 'min:1'],
             'down_payment'      => ['nullable', 'integer', 'min:0', 'max:' . $totalAmount],
             'payment_mode'      => ['nullable', 'in:tranche,comptant'],
             'installment_count' => ['required', 'integer', 'min:1', 'max:120'],
-            'frequency'         => ['required', 'in:hebdomadaire,bimestriel,mensuel,trimestriel'],
+            'frequency'         => ['required', 'in:quotidien,hebdomadaire,bimestriel,mensuel,trimestriel,personnalise'],
+            'custom_interval_days' => ['nullable', 'required_if:frequency,personnalise', 'integer', 'min:1', 'max:365'],
             'start_date'        => ['required', 'date', 'after_or_equal:today'],
             'notes'             => ['nullable', 'string', 'max:2000'],
         ]);
 
+        // Concurrent sales may deadlock while competing for the same stock row.
+        // Laravel retries the complete transaction, then the conditional decrement
+        // returns the normal 422 response when stock is no longer sufficient.
         return DB::transaction(function () use ($validated, $request) {
             $isCash = ($validated['payment_mode'] ?? 'tranche') === 'comptant';
             $downPayment = $validated['down_payment'] ?? 0;
@@ -86,6 +91,8 @@ class SaleController extends Controller
                 'bimestriel'   => $startDate->copy()->addWeeks($validated['installment_count'] * 2),
                 'mensuel'      => $startDate->copy()->addMonths($validated['installment_count']),
                 'trimestriel'  => $startDate->copy()->addMonths($validated['installment_count'] * 3),
+                'quotidien'    => $startDate->copy()->addDays($validated['installment_count']),
+                'personnalise' => $startDate->copy()->addDays($validated['installment_count'] * $validated['custom_interval_days']),
             };
 
             $sale = Sale::create([
@@ -93,7 +100,7 @@ class SaleController extends Controller
                 'created_by'       => $request->user()->id,
                 'shop_id'          => $request->user()->shop_id,
                 // Fix #6: tenant-scoped sequence inside the transaction to avoid duplicate references
-                'reference'        => $this->generateReference(),
+                'reference'        => 'VT-' . now()->format('Y') . '-' . Str::ulid(),
                 'qr_uuid'          => Str::uuid(),
                 'down_payment'     => $downPayment,
                 'paid_amount'      => $isCash ? $validated['total_amount'] : $downPayment,
@@ -106,7 +113,10 @@ class SaleController extends Controller
             if (! $isCash) $sale->generateSchedule();
 
             if ($sale->article_id) {
-                $updated = \App\Models\Article::whereKey($sale->article_id)->where('stock', '>', 0)->decrement('stock');
+                $quantity = $validated['quantity'] ?? 1;
+                $updated = \App\Models\Article::whereKey($sale->article_id)
+                    ->where('stock', '>=', $quantity)
+                    ->decrement('stock', $quantity);
                 if (! $updated) abort(422, 'Article indisponible.');
             }
 
@@ -121,7 +131,7 @@ class SaleController extends Controller
             ]);
 
             return response()->json($sale->load(['client', 'schedules']), 201);
-        });
+        }, 3);
     }
 
     // Public QR endpoint — minimal, no auth required
@@ -137,13 +147,6 @@ class SaleController extends Controller
             'article'     => $sale->article_name,
             // Intentionally no amounts, phone, email, payment history
         ]);
-    }
-
-    private function generateReference(): string
-    {
-        // Uses DB-level MAX for safe concurrency within the transaction
-        $max = Sale::withoutGlobalScopes()->lockForUpdate()->max('id') ?? 0;
-        return 'VT-' . date('Y') . '-' . str_pad($max + 1, 4, '0', STR_PAD_LEFT);
     }
 
     private function maskName(string $name): string

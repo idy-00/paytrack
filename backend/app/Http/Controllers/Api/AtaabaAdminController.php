@@ -9,8 +9,10 @@ use App\Models\SubscriptionPlan;
 use App\Models\Tenant;
 use App\Models\TenantKycDocument;
 use App\Models\Wallet;
+use App\Models\WalletReserve;
+use App\Models\WalletTransaction;
 use App\Models\WithdrawalRequest;
-use App\Services\IntechService;
+use App\Services\DexpayService;
 use App\Services\SubscriptionService;
 use Illuminate\Http\Request;
 
@@ -18,7 +20,7 @@ class AtaabaAdminController extends Controller
 {
     public function __construct(
         private SubscriptionService $subscriptionService,
-        private IntechService $intechService
+        private DexpayService $dexpayService
     ) {}
 
     public function dashboard()
@@ -171,22 +173,29 @@ class AtaabaAdminController extends Controller
         return response()->json(['message' => 'Retrait rejeté']);
     }
 
-    public function intechBalance()
+    /**
+     * Afficher le statut DexPay et les providers disponibles
+     * Note: DexPay n'a pas d'endpoint /balance public, le solde est visible dans le dashboard
+     */
+    public function dexpayStatus()
     {
-        $balance = $this->intechService->getBalance();
-
-        if (!$balance) {
-            return response()->json([
-                'configured' => $this->intechService->isConfigured(),
-                'balance' => null,
-                'message' => 'Unable to fetch Intech balance',
-            ]);
-        }
+        $providers = $this->dexpayService->getPayoutProviders('SN');
 
         return response()->json([
-            'configured' => true,
-            'balance' => $balance,
+            'configured' => $this->dexpayService->isConfigured(),
+            'providers' => $providers,
+            'dashboard_url' => 'https://app.dexpay.africa',
+            'note' => 'Le solde ATAABA est visible dans le dashboard DexPay',
         ]);
+    }
+
+    /**
+     * Legacy endpoint - redirige vers dexpayStatus
+     * @deprecated Utiliser dexpayStatus
+     */
+    public function intechBalance()
+    {
+        return $this->dexpayStatus();
     }
 
     public function kycDocuments(Request $request)
@@ -238,5 +247,185 @@ class AtaabaAdminController extends Controller
 
         $plan->update($validated);
         return response()->json(['message' => 'Plan mis à jour', 'plan' => $plan]);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // GESTION FONDS CARTE (retenus, réserves, chargebacks)
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    /**
+     * Dashboard des fonds carte : retenus, réserves, chargebacks
+     */
+    public function cardFundsDashboard()
+    {
+        return response()->json([
+            'held_funds' => [
+                'total' => Wallet::sum('held_balance'),
+                'transactions_count' => WalletTransaction::whereIn('release_status', ['held', 'partial'])->count(),
+            ],
+            'reserves' => [
+                'total' => Wallet::sum('reserved_balance'),
+                'active_count' => WalletReserve::where('status', 'active')->count(),
+            ],
+            'chargebacks' => [
+                'pending' => WalletReserve::where('reason', 'chargeback_pending')->where('status', 'active')->count(),
+                'total_lost' => WalletTransaction::where('special_type', 'chargeback')->sum('amount'),
+            ],
+        ]);
+    }
+
+    /**
+     * Liste des transactions carte avec fonds retenus
+     */
+    public function heldTransactions(Request $request)
+    {
+        $query = WalletTransaction::with(['wallet.tenant', 'transactionable'])
+            ->where('payment_method', 'card')
+            ->whereIn('release_status', ['held', 'partial']);
+
+        if ($tenantId = $request->get('tenant_id')) {
+            $query->where('tenant_id', $tenantId);
+        }
+
+        return response()->json($query->orderBy('available_at')->paginate(20));
+    }
+
+    /**
+     * Libérer manuellement les fonds d'une transaction carte
+     */
+    public function releaseHeldFunds(Request $request, WalletTransaction $transaction)
+    {
+        if ($transaction->release_status === 'released') {
+            return response()->json(['message' => 'Fonds déjà libérés'], 400);
+        }
+
+        $validated = $request->validate([
+            'amount' => 'nullable|integer|min:1',
+            'full' => 'nullable|boolean',
+        ]);
+
+        $wallet = $transaction->wallet;
+        if (!$wallet) {
+            return response()->json(['message' => 'Wallet non trouvé'], 404);
+        }
+
+        $amount = $validated['amount'] ?? null;
+        $isFull = $validated['full'] ?? ($amount === null);
+
+        $wallet->releaseFunds($transaction, $amount, $isFull);
+
+        return response()->json([
+            'message' => 'Fonds libérés',
+            'transaction' => $transaction->fresh(),
+        ]);
+    }
+
+    /**
+     * Liste des réserves de garantie
+     */
+    public function reserves(Request $request)
+    {
+        $query = WalletReserve::with(['wallet.tenant', 'createdBy', 'releasedBy']);
+
+        if ($status = $request->get('status')) {
+            $query->where('status', $status);
+        }
+
+        if ($tenantId = $request->get('tenant_id')) {
+            $query->where('tenant_id', $tenantId);
+        }
+
+        return response()->json($query->orderByDesc('created_at')->paginate(20));
+    }
+
+    /**
+     * Créer une réserve de garantie (retenue DexPay)
+     */
+    public function createReserve(Request $request)
+    {
+        $validated = $request->validate([
+            'wallet_id' => 'required|exists:wallets,id',
+            'amount' => 'required|integer|min:1',
+            'reason' => 'required|string|max:100',
+            'reference' => 'nullable|string|max:100',
+            'notes' => 'nullable|string|max:500',
+        ]);
+
+        $wallet = Wallet::findOrFail($validated['wallet_id']);
+
+        $reserve = $wallet->applyReserve(
+            $validated['amount'],
+            $validated['reason'],
+            $request->user(),
+            $validated['reference'] ?? null,
+            $validated['notes'] ?? null
+        );
+
+        return response()->json([
+            'message' => 'Réserve créée',
+            'reserve' => $reserve->load('wallet.tenant'),
+        ], 201);
+    }
+
+    /**
+     * Libérer une réserve de garantie
+     */
+    public function releaseReserve(Request $request, WalletReserve $reserve)
+    {
+        if ($reserve->status !== 'active') {
+            return response()->json(['message' => 'Réserve déjà traitée'], 400);
+        }
+
+        $reserve->wallet->releaseReserve($reserve, $request->user());
+
+        return response()->json([
+            'message' => 'Réserve libérée',
+            'reserve' => $reserve->fresh(),
+        ]);
+    }
+
+    /**
+     * Convertir une réserve en chargeback (débiter définitivement)
+     */
+    public function convertToChargeback(Request $request, WalletReserve $reserve)
+    {
+        if ($reserve->status !== 'active') {
+            return response()->json(['message' => 'Réserve déjà traitée'], 400);
+        }
+
+        $transaction = $reserve->wallet->convertReserveToChargeback($reserve, $request->user());
+
+        return response()->json([
+            'message' => 'Chargeback appliqué',
+            'reserve' => $reserve->fresh(),
+            'transaction' => $transaction,
+        ]);
+    }
+
+    /**
+     * Appliquer un chargeback direct (sans réserve préalable)
+     */
+    public function applyChargeback(Request $request)
+    {
+        $validated = $request->validate([
+            'wallet_id' => 'required|exists:wallets,id',
+            'amount' => 'required|integer|min:1',
+            'reason' => 'required|string|max:255',
+            'reference' => 'nullable|string|max:100',
+        ]);
+
+        $wallet = Wallet::findOrFail($validated['wallet_id']);
+
+        $transaction = $wallet->forceDebit(
+            $validated['amount'],
+            "Chargeback: {$validated['reason']}",
+            'chargeback'
+        );
+
+        return response()->json([
+            'message' => 'Chargeback appliqué',
+            'transaction' => $transaction,
+            'new_balance' => $wallet->fresh()->balance,
+        ]);
     }
 }

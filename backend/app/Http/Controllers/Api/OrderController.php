@@ -7,10 +7,11 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderPayment;
 use App\Models\Article;
-use App\Services\PaytechService;
+use App\Services\DexpayService;
 use App\Services\StockService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class OrderController extends Controller
 {
@@ -19,13 +20,14 @@ class OrderController extends Controller
         return app(StockService::class);
     }
 
-    private function paytechService(): PaytechService
+    private function dexpayService(): DexpayService
     {
-        return app(PaytechService::class);
+        return app(DexpayService::class);
     }
 
     public function index(Request $request)
     {
+        $this->authorize('viewAny', Order::class);
         $query = Order::with(['client', 'createdBy', 'shop'])
             ->withCount('items');
 
@@ -49,14 +51,18 @@ class OrderController extends Controller
 
     public function store(Request $request)
     {
+        $this->authorize('create', Order::class);
+        $tenantId = $request->user()->tenant_id;
         $validated = $request->validate([
-            'client_id' => 'required|exists:clients,id',
-            'shop_id' => 'nullable|exists:shops,id',
+            'client_id' => ['required', Rule::exists('clients', 'id')->where('tenant_id', $tenantId)],
+            'shop_id' => ['nullable', Rule::exists('shops', 'id')->where('tenant_id', $tenantId)],
             'payment_mode' => 'sometimes|in:comptant,tranche',
             'discount' => 'sometimes|integer|min:0',
             'notes' => 'nullable|string',
+            'delivery_date' => 'nullable|date|after_or_equal:today',
+            'delivery_address' => 'nullable|string|max:500',
             'items' => 'required|array|min:1',
-            'items.*.article_id' => 'required|exists:articles,id',
+            'items.*.article_id' => ['required', Rule::exists('articles', 'id')->where('tenant_id', $tenantId)],
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.discount' => 'sometimes|integer|min:0',
         ]);
@@ -69,6 +75,8 @@ class OrderController extends Controller
                 'created_by' => $request->user()->id,
                 'payment_mode' => $validated['payment_mode'] ?? 'comptant',
                 'discount' => $validated['discount'] ?? 0,
+                'delivery_date' => $validated['delivery_date'] ?? null,
+                'delivery_address' => $validated['delivery_address'] ?? null,
                 'order_date' => now(),
                 'subtotal' => 0,
                 'total_amount' => 0,
@@ -80,6 +88,10 @@ class OrderController extends Controller
                 $article = Article::findOrFail($itemData['article_id']);
                 $discount = $itemData['discount'] ?? 0;
                 $totalPrice = ($article->price * $itemData['quantity']) - $discount;
+
+                if ($discount > ($article->price * $itemData['quantity'])) {
+                    abort(422, 'La remise d’un article ne peut pas dépasser son montant.');
+                }
 
                 OrderItem::create([
                     'order_id' => $order->id,
@@ -110,66 +122,63 @@ class OrderController extends Controller
 
     public function show(Order $order)
     {
+        $this->authorize('view', $order);
         $order->load(['client', 'createdBy', 'shop', 'items.article', 'payments.recordedBy']);
         return response()->json($order);
     }
 
     public function updateStatus(Request $request, Order $order)
     {
+        $this->authorize('update', $order);
         $validated = $request->validate([
             'status' => 'required|in:pending,confirmed,preparing,ready,delivered,cancelled',
         ]);
 
-        $oldStatus = $order->status;
         $newStatus = $validated['status'];
-
-        // Handle stock on confirm
-        if ($newStatus === 'confirmed' && $oldStatus === 'pending') {
-            $this->stockService()->reserveForOrder($order);
-        }
-
-        // Handle cancellation
-        if ($newStatus === 'cancelled' && in_array($oldStatus, ['confirmed', 'preparing', 'ready'])) {
-            $this->stockService()->releaseOrderReservation($order);
-        }
-
-        // Handle delivery
-        if ($newStatus === 'delivered') {
-            $this->stockService()->deliverOrder($order);
-            return response()->json(['message' => 'Commande livrée', 'order' => $order->fresh()]);
-        }
-
-        $order->update(['status' => $newStatus]);
-
+        $order = DB::transaction(function () use ($order, $newStatus) {
+            $order = Order::with('items.article')->lockForUpdate()->findOrFail($order->id);
+            if (! $order->canTransitionTo($newStatus)) {
+                abort(422, "Transition {$order->status} → {$newStatus} non autorisée.");
+            }
+            if ($newStatus === 'confirmed') $this->stockService()->reserveForOrder($order);
+            if ($newStatus === 'cancelled' && $order->status !== 'pending') $this->stockService()->releaseOrderReservation($order);
+            if ($newStatus === 'delivered') $this->stockService()->deliverOrder($order);
+            else $order->update(['status' => $newStatus]);
+            return $order->fresh();
+        });
         return response()->json(['message' => 'Statut mis à jour', 'order' => $order]);
     }
 
     public function recordPayment(Request $request, Order $order)
     {
+        $this->authorize('recordPayment', $order);
         $validated = $request->validate([
             'amount' => 'required|integer|min:1',
             'payment_method' => 'required|in:especes,wave,orange_money,free_money,card,wizall,emoney',
             'notes' => 'nullable|string',
         ]);
 
-        if ($validated['amount'] > $order->remaining_amount) {
-            return response()->json([
-                'message' => 'Montant supérieur au reste à payer',
-                'remaining' => $order->remaining_amount,
-            ], 400);
-        }
+        [$payment, $order] = DB::transaction(function () use ($validated, $order, $request) {
+            $order = Order::lockForUpdate()->findOrFail($order->id);
+            if ($validated['amount'] > $order->remaining_amount) {
+                abort(422, 'Montant supérieur au reste à payer.');
+            }
 
-        $payment = OrderPayment::create([
-            'tenant_id' => $order->tenant_id,
-            'order_id' => $order->id,
-            'recorded_by' => $request->user()->id,
-            'receipt_number' => OrderPayment::generateReceiptNumber(),
-            'amount' => $validated['amount'],
-            'payment_date' => now(),
-            'payment_method' => $validated['payment_method'],
-            'source' => 'manual',
-            'notes' => $validated['notes'],
-        ]);
+            $payment = OrderPayment::create([
+                'tenant_id' => $order->tenant_id,
+                'order_id' => $order->id,
+                'recorded_by' => $request->user()->id,
+                'receipt_number' => OrderPayment::generateReceiptNumber(),
+                'amount' => $validated['amount'],
+                'payment_date' => now(),
+                'payment_method' => $validated['payment_method'],
+                'source' => 'manual',
+                'notes' => $validated['notes'],
+            ]);
+            $order->recalculateTotals();
+
+            return [$payment, $order->fresh()];
+        });
 
         return response()->json([
             'message' => 'Paiement enregistré',
@@ -180,8 +189,11 @@ class OrderController extends Controller
 
     public function initiateOnlinePayment(Request $request, Order $order)
     {
+        $this->authorize('recordPayment', $order);
         $validated = $request->validate([
             'amount' => 'sometimes|integer|min:1',
+            'success_url' => 'nullable|url',
+            'cancel_url' => 'nullable|url',
         ]);
 
         $amount = $validated['amount'] ?? $order->remaining_amount;
@@ -190,18 +202,23 @@ class OrderController extends Controller
             return response()->json(['message' => 'Montant supérieur au reste à payer'], 400);
         }
 
-        if (!$this->paytechService()->isConfigured()) {
+        if (!$this->dexpayService()->isConfigured()) {
             return response()->json([
                 'message' => 'Paiement en ligne non disponible',
-                'code' => 'paytech_not_configured',
+                'code' => 'dexpay_not_configured',
             ], 503);
         }
 
-        $payment = $this->paytechService()->initiatePayment([
+        $baseUrl = config('app.frontend_url', config('app.url'));
+        $checkout = $this->dexpayService()->createCheckoutSession([
             'item_name' => "Commande {$order->reference}",
             'amount' => $amount,
-            'reference' => $order->reference . '-' . time(),
+            'currency' => 'XOF',
+            'reference' => "ORD-{$order->id}-" . time(),
             'description' => "Paiement commande {$order->reference}",
+            'success_url' => $validated['success_url'] ?? "{$baseUrl}/payment/success",
+            'failure_url' => $validated['cancel_url'] ?? "{$baseUrl}/payment/cancel",
+            'webhook_url' => route('webhooks.dexpay'),
             'metadata' => [
                 'type' => 'order_payment',
                 'order_id' => $order->id,
@@ -209,11 +226,27 @@ class OrderController extends Controller
             ],
         ]);
 
-        $order->update(['paytech_payment_ref' => $payment['token'] ?? null]);
+        $paymentUrl = $checkout['payment_url']
+            ?? $checkout['checkout_url']
+            ?? $checkout['url']
+            ?? $checkout['data']['payment_url']
+            ?? $checkout['data']['url']
+            ?? null;
+
+        if (! $paymentUrl) {
+            return response()->json([
+                'message' => 'DexPay n’a pas retourné de lien de paiement.',
+                'code' => 'dexpay_no_url',
+            ], 502);
+        }
+
+        $order->update([
+            'dexpay_checkout_id' => $checkout['id'] ?? $checkout['data']['id'] ?? null,
+        ]);
 
         return response()->json([
-            'payment_url' => $payment['redirect_url'] ?? $payment['payment_url'],
-            'token' => $payment['token'] ?? null,
+            'payment_url' => $paymentUrl,
+            'checkout_id' => $order->dexpay_checkout_id,
         ]);
     }
 

@@ -69,7 +69,8 @@ class _QRScanScreenState extends State<QRScanScreen>
   void _handleScannedValue(String value) {
     final uuid = value.split('/').last.trim();
     final sale = mockSales
-        .where((s) => s.qrUuid == uuid || s.qrUuid == value || s.reference == value)
+        .where((s) =>
+            s.qrUuid == uuid || s.qrUuid == value || s.reference == value)
         .firstOrNull;
 
     if (sale != null) {
@@ -87,11 +88,12 @@ class _QRScanScreenState extends State<QRScanScreen>
         SnackBar(
           content: Text(
             'Aucune vente trouvée pour ce code',
-            style: GoogleFonts.outfit(color: Colors.white, fontSize: 13),
+            style: GoogleFonts.sourceSans3(color: Colors.white, fontSize: 13),
           ),
           backgroundColor: AppColors.danger,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         ),
       );
@@ -123,15 +125,15 @@ class _QRScanScreenState extends State<QRScanScreen>
           child: Row(
             children: [
               IconButton(
+                tooltip: 'Fermer',
                 icon: const Icon(Icons.close, color: Colors.white, size: 22),
                 onPressed: () => context.go('/dashboard'),
-                tooltip: 'Fermer',
               ),
               Expanded(
                 child: Text(
                   'Scanner un QR',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.sourceSans3(
                     fontSize: 17,
                     fontWeight: FontWeight.w600,
                     color: Colors.white,
@@ -181,7 +183,7 @@ class _QRScanScreenState extends State<QRScanScreen>
             children: [
               Text(
                 'Scanner le QR Code',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.sourceSans3(
                   fontSize: 15,
                   fontWeight: FontWeight.w500,
                   color: Colors.white,
@@ -190,7 +192,7 @@ class _QRScanScreenState extends State<QRScanScreen>
               const SizedBox(height: 4),
               Text(
                 'Placez le code QR dans le cadre ci-dessus',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.sourceSans3(
                   fontSize: 12,
                   color: Colors.white54,
                 ),
@@ -204,16 +206,14 @@ class _QRScanScreenState extends State<QRScanScreen>
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
-                      _showManual
-                          ? Icons.keyboard_arrow_up
-                          : Icons.keyboard,
+                      _showManual ? Icons.keyboard_arrow_up : Icons.keyboard,
                       size: 16,
                       color: AppColors.blue,
                     ),
                     const SizedBox(width: 6),
                     Text(
                       'Saisie manuelle',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.sourceSans3(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                         color: AppColors.blue,
@@ -230,14 +230,14 @@ class _QRScanScreenState extends State<QRScanScreen>
                     Expanded(
                       child: TextField(
                         controller: _manualCtrl,
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.sourceSans3(
                           color: Colors.white,
                           fontSize: 14,
                         ),
                         cursorColor: AppColors.blue,
                         decoration: InputDecoration(
                           hintText: 'Référence VT-2026-XXXX',
-                          hintStyle: GoogleFonts.outfit(
+                          hintStyle: GoogleFonts.sourceSans3(
                             color: Colors.white38,
                             fontSize: 13,
                           ),
@@ -275,7 +275,7 @@ class _QRScanScreenState extends State<QRScanScreen>
                       height: 50,
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.blue,
+                          backgroundColor: AppColors.green,
                           foregroundColor: Colors.white,
                           minimumSize: const Size(56, 50),
                           shape: RoundedRectangleBorder(
@@ -286,7 +286,7 @@ class _QRScanScreenState extends State<QRScanScreen>
                         onPressed: _manualSearch,
                         child: Text(
                           'Rechercher',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.sourceSans3(
                             fontWeight: FontWeight.w600,
                             fontSize: 13,
                           ),
@@ -317,25 +317,33 @@ class _QRScanScreenState extends State<QRScanScreen>
         children: [
           // Top
           Positioned(
-            top: 0, left: 0, right: 0,
+            top: 0,
+            left: 0,
+            right: 0,
             height: cy - half,
             child: ColoredBox(color: Colors.black.withValues(alpha: 0.55)),
           ),
           // Bottom
           Positioned(
-            bottom: 0, left: 0, right: 0,
+            bottom: 0,
+            left: 0,
+            right: 0,
             height: cy - half,
             child: ColoredBox(color: Colors.black.withValues(alpha: 0.55)),
           ),
           // Left
           Positioned(
-            top: cy - half, bottom: cy - half, left: 0,
+            top: cy - half,
+            bottom: cy - half,
+            left: 0,
             width: cx - half,
             child: ColoredBox(color: Colors.black.withValues(alpha: 0.55)),
           ),
           // Right
           Positioned(
-            top: cy - half, bottom: cy - half, right: 0,
+            top: cy - half,
+            bottom: cy - half,
+            right: 0,
             width: cx - half,
             child: ColoredBox(color: Colors.black.withValues(alpha: 0.55)),
           ),
@@ -358,22 +366,26 @@ class _QRScanScreenState extends State<QRScanScreen>
         children: [
           // Top-left corner
           Positioned(
-            top: 0, left: 0,
+            top: 0,
+            left: 0,
             child: _corner(cornerW, cornerLen, color, top: true, left: true),
           ),
           // Top-right corner
           Positioned(
-            top: 0, right: 0,
+            top: 0,
+            right: 0,
             child: _corner(cornerW, cornerLen, color, top: true, left: false),
           ),
           // Bottom-left corner
           Positioned(
-            bottom: 0, left: 0,
+            bottom: 0,
+            left: 0,
             child: _corner(cornerW, cornerLen, color, top: false, left: true),
           ),
           // Bottom-right corner
           Positioned(
-            bottom: 0, right: 0,
+            bottom: 0,
+            right: 0,
             child: _corner(cornerW, cornerLen, color, top: false, left: false),
           ),
 
@@ -389,13 +401,7 @@ class _QRScanScreenState extends State<QRScanScreen>
                 child: Container(
                   height: 2,
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Colors.transparent,
-                        AppColors.blue.withValues(alpha: 0.9),
-                        Colors.transparent,
-                      ],
-                    ),
+                    color: AppColors.green,
                     borderRadius: BorderRadius.circular(1),
                   ),
                 ),
@@ -453,7 +459,7 @@ class _QRScanScreenState extends State<QRScanScreen>
               const SizedBox(height: 24),
               Text(
                 'Accès caméra refusé',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.sourceSans3(
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
                   color: Colors.white,
@@ -463,7 +469,7 @@ class _QRScanScreenState extends State<QRScanScreen>
               Text(
                 'Autorisez l\'accès à la caméra dans les paramètres de votre appareil pour scanner des QR codes.',
                 textAlign: TextAlign.center,
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.sourceSans3(
                   fontSize: 13,
                   color: Colors.white54,
                   height: 1.6,
@@ -484,13 +490,13 @@ class _QRScanScreenState extends State<QRScanScreen>
                     onPressed: () => context.go('/dashboard'),
                     child: Text(
                       'Retour',
-                      style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+                      style: GoogleFonts.sourceSans3(fontWeight: FontWeight.w600),
                     ),
                   ),
                   const SizedBox(width: 12),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.blue,
+                      backgroundColor: AppColors.green,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
@@ -506,7 +512,7 @@ class _QRScanScreenState extends State<QRScanScreen>
                     },
                     child: Text(
                       'Réessayer',
-                      style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+                      style: GoogleFonts.sourceSans3(fontWeight: FontWeight.w600),
                     ),
                   ),
                 ],

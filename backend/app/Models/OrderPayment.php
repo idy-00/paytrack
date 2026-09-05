@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class OrderPayment extends Model
 {
@@ -11,7 +12,7 @@ class OrderPayment extends Model
 
     protected $fillable = [
         'tenant_id', 'order_id', 'recorded_by', 'receipt_number', 'amount',
-        'payment_date', 'payment_method', 'paytech_transaction_id', 'source', 'notes',
+        'payment_date', 'payment_method', 'dexpay_transaction_id', 'source', 'notes',
     ];
 
     protected $casts = [
@@ -22,16 +23,11 @@ class OrderPayment extends Model
     public function order() { return $this->belongsTo(Order::class); }
     public function recordedBy() { return $this->belongsTo(User::class, 'recorded_by'); }
 
-    public function isFromPaytech(): bool { return $this->source === 'paytech'; }
+    public function isFromDexpay(): bool { return $this->source === 'dexpay'; }
 
     public static function generateReceiptNumber(?int $tenantId = null): string
     {
-        $t = $tenantId ? str_pad($tenantId, 3, '0', STR_PAD_LEFT) : '000';
-        $prefix = "RCO-{$t}-" . date('Ym') . '-';
-        $last = static::withoutGlobalScopes()->where('receipt_number', 'like', $prefix . '%')
-            ->orderByDesc('id')->first();
-        $num = $last ? (int) substr($last->receipt_number, -4) + 1 : 1;
-        return $prefix . str_pad($num, 4, '0', STR_PAD_LEFT);
+        return 'RCO-' . now()->format('Ym') . '-' . Str::ulid();
     }
 
     protected static function booted(): void

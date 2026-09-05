@@ -24,6 +24,14 @@ export default function SubscriptionPage() {
   const [changingPlan, setChangingPlan] = useState(false)
   const [billingCycle, setBillingCycle] = useState('monthly')
 
+  const BILLING_OPTIONS = [
+    { key: 'daily', label: 'Jour' },
+    { key: 'weekly', label: 'Semaine' },
+    { key: 'monthly', label: 'Mois' },
+    { key: 'quarterly', label: '3 mois', discount: '-8%' },
+    { key: 'yearly', label: 'An', discount: '-17%', bonus: '1 mois offert' },
+  ]
+
   useEffect(() => {
     loadData()
   }, [])
@@ -130,28 +138,30 @@ export default function SubscriptionPage() {
 
       {/* Billing cycle toggle */}
       <div className="flex justify-center">
-        <div className="inline-flex bg-gray-100 rounded-xl p-1">
-          <button
-            onClick={() => setBillingCycle('monthly')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${billingCycle === 'monthly' ? 'bg-white shadow text-gray-900' : 'text-gray-600'}`}
-          >
-            Mensuel
-          </button>
-          <button
-            onClick={() => setBillingCycle('yearly')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${billingCycle === 'yearly' ? 'bg-white shadow text-gray-900' : 'text-gray-600'}`}
-          >
-            Annuel <span className="text-green-600 text-xs">-17%</span>
-          </button>
+        <div className="inline-flex flex-wrap justify-center bg-gray-100 rounded-xl p-1 gap-1">
+          {BILLING_OPTIONS.map(opt => (
+            <button
+              key={opt.key}
+              onClick={() => setBillingCycle(opt.key)}
+              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${billingCycle === opt.key ? 'bg-white shadow text-gray-900' : 'text-gray-600'}`}
+            >
+              {opt.label}
+              {opt.discount && <span className="text-green-600 text-xs ml-1">{opt.discount}</span>}
+            </button>
+          ))}
         </div>
       </div>
+      {billingCycle === 'yearly' && (
+        <p className="text-center text-sm text-green-600 font-medium">Offre de lancement : 1 mois gratuit sur l'abonnement annuel</p>
+      )}
 
       {/* Plans grid */}
       <div className="grid md:grid-cols-3 gap-5">
         {plans.map((plan) => {
           const Icon = PLAN_ICONS[plan.slug] || Zap
           const color = PLAN_COLORS[plan.slug] || 'blue'
-          const price = billingCycle === 'yearly' ? plan.price_yearly : plan.price_monthly
+          const priceKey = `price_${billingCycle}`
+          const price = plan[priceKey] || plan.price_monthly
           const isCurrent = currentPlan?.id === plan.id
 
           return (
@@ -169,7 +179,7 @@ export default function SubscriptionPage() {
               <h3 className="text-xl font-bold text-gray-900">{plan.name}</h3>
               <div className="mt-2 mb-4">
                 <span className="text-3xl font-bold text-gray-900">{formatAmount(price)}</span>
-                <span className="text-gray-500">/{billingCycle === 'yearly' ? 'an' : 'mois'}</span>
+                <span className="text-gray-500">/{BILLING_OPTIONS.find(o => o.key === billingCycle)?.label.toLowerCase()}</span>
               </div>
 
               <ul className="space-y-2 mb-6">

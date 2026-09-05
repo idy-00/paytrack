@@ -60,14 +60,43 @@ return [
         'enabled' => false,  // Désactivé définitivement pour la V1
     ],
 
-    // ── PayTech (INTECH GROUP) — Agrégateur paiements (Cash In) ────────────────
-    // Dashboard: paytech.sn → Mes applications → Détails
-    // Tous les paiements arrivent sur le compte ATAABA (modèle portefeuille)
-    'paytech' => [
-        'api_key'    => env('PAYTECH_API_KEY'),
-        'api_secret' => env('PAYTECH_API_SECRET'),
-        'base_url'   => env('PAYTECH_BASE_URL', 'https://paytech.sn/api'),
-        'env'        => env('PAYTECH_ENV', 'test'), // test ou prod
+    // ── DexPay (DEXCHANGE PAY) — Agrégateur paiements (Cash In) ─────────────────
+    // Dashboard: app.dexpay.africa → API Keys
+    // Docs: docs.dexpay.africa
+    // Opérateurs: Wave, Orange Money, MTN, Moov
+    'dexpay' => [
+        // Le mode est le seul sélecteur runtime : ne jamais dépendre de clés
+        // génériques dupliquées dans .env. Par défaut, rester en sandbox.
+        'mode'       => env('DEXPAY_MODE', 'test'),
+        'public_key' => env('DEXPAY_MODE', 'test') === 'live'
+            ? env('DEXPAY_LIVE_PUBLIC_KEY')
+            : env('DEXPAY_TEST_PUBLIC_KEY'),
+        'secret_key' => env('DEXPAY_MODE', 'test') === 'live'
+            ? env('DEXPAY_LIVE_SECRET_KEY')
+            : env('DEXPAY_TEST_SECRET_KEY'),
+        // L'URL suit impérativement le même sélecteur que les clés : une clé de
+        // test ne doit jamais pouvoir appeler l'API de production via une
+        // variable DEXPAY_BASE_URL héritée.
+        'base_url'   => env('DEXPAY_MODE', 'test') === 'live'
+            ? env('DEXPAY_LIVE_BASE_URL', 'https://api.dexpay.africa/api/v1')
+            : env('DEXPAY_TEST_BASE_URL', 'https://api-sandbox.dexpay.africa/api/v1'),
+        'env'        => env('DEXPAY_MODE', 'test'),
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // PAIEMENT CARTE — DÉSACTIVÉ JUSQU'À CONFIRMATION DEXPAY
+        // ═══════════════════════════════════════════════════════════════════════
+        // Mettre à true UNIQUEMENT après confirmation de DexPay sur :
+        // 1. Quel pourcentage exact est libéré après le premier délai ?
+        // 2. Quels sont les délais exacts (72h et 7j, ou autre) ?
+        // 3. Envoyez-vous un webhook funds.released quand les fonds sont libérés ?
+        // ═══════════════════════════════════════════════════════════════════════
+        'card_enabled' => env('DEXPAY_CARD_ENABLED', false), // ⛔ DÉSACTIVÉ par défaut
+
+        'card_release' => [
+            'partial_hours' => env('DEXPAY_CARD_PARTIAL_HOURS', 72),
+            'partial_percent' => env('DEXPAY_CARD_PARTIAL_PERCENT', 80), // À CONFIRMER
+            'full_hours' => env('DEXPAY_CARD_FULL_HOURS', 168),
+        ],
     ],
 
     // ── INTECH API — Cash In / Cash Out direct (contrat ATAABA-INTECH) ────────

@@ -3,7 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/theme/app_theme.dart';
+import 'core/services/api_service.dart';
 import 'core/services/notification_service.dart';
+import 'features/auth/auth_provider.dart';
 import 'shared/navigation/app_router.dart';
 
 void main() {
@@ -39,6 +41,10 @@ class _PayTrackAppState extends ConsumerState<PayTrackApp> {
   @override
   void initState() {
     super.initState();
+    // Configure auto-logout on session expiry
+    onSessionExpired = () {
+      ref.read(authProvider.notifier).logout();
+    };
     // Initialize notifications after first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeServices();

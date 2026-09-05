@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/services/api_service.dart';
+import '../../core/utils/json_parsers.dart';
 
 class DashboardStats {
   final int totalEncaisse;
@@ -18,11 +19,11 @@ class DashboardStats {
 
   factory DashboardStats.fromJson(Map<String, dynamic> json) {
     return DashboardStats(
-      totalEncaisse: (json['total_encaisse'] ?? 0).toInt(),
-      totalRestant: (json['total_restant'] ?? 0).toInt(),
-      ventesActives: (json['ventes_actives'] ?? 0).toInt(),
-      ventesEnRetard: (json['ventes_en_retard'] ?? 0).toInt(),
-      ventesSoldees: (json['ventes_soldees'] ?? 0).toInt(),
+      totalEncaisse: jsonInt(json['total_encaisse']),
+      totalRestant: jsonInt(json['total_restant']),
+      ventesActives: jsonInt(json['ventes_actives']),
+      ventesEnRetard: jsonInt(json['ventes_en_retard']),
+      ventesSoldees: jsonInt(json['ventes_soldees']),
     );
   }
 }
@@ -58,8 +59,8 @@ class DashboardNotifier extends StateNotifier<DashboardState> {
       ]);
 
       state = DashboardState(
-        stats: DashboardStats.fromJson(results[0] as Map<String, dynamic>),
-        upcomingSchedules: results[1] as List<dynamic>,
+        stats: DashboardStats.fromJson(jsonMap(results[0])),
+        upcomingSchedules: jsonList(results[1]),
         isLoading: false,
       );
     } on ApiException catch (e) {
@@ -80,6 +81,7 @@ class DashboardNotifier extends StateNotifier<DashboardState> {
   }
 }
 
-final dashboardProvider = StateNotifierProvider<DashboardNotifier, DashboardState>(
+final dashboardProvider =
+    StateNotifierProvider<DashboardNotifier, DashboardState>(
   (ref) => DashboardNotifier(),
 );

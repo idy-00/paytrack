@@ -8,14 +8,14 @@ import { QRCodeSVG } from 'qrcode.react'
 import toast from 'react-hot-toast'
 import { formatAmount, formatDate, getProgressPercent } from '@/lib/utils'
 import { useSaleStore } from '@/store/saleStore'
-import { api, getToken } from '@/lib/api'
+import { api } from '@/lib/api'
 import StatusBadge from '@/components/ui/StatusBadge'
 import ProgressBar from '@/components/ui/ProgressBar'
 import Modal from '@/components/ui/Modal'
 
-const BLUE = '#1A56DB'
+const BLUE = '#3768AF'
 const NAVY = '#0F2744'
-const SUCCESS = '#16A34A'
+const SUCCESS = '#44AC45'
 const WARNING = '#D97706'
 
 const PAYMENT_METHODS = [
@@ -89,6 +89,14 @@ export default function VenteDetailPage() {
     }
   }
 
+  const handleReceiptDownload = async () => {
+    try {
+      await api.downloadSaleReceipt(sale.id)
+    } catch (err) {
+      toast.error(err.message || 'Téléchargement du reçu impossible.')
+    }
+  }
+
   return (
     <div className="max-w-6xl mx-auto space-y-5 pb-8">
       <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -96,9 +104,9 @@ export default function VenteDetailPage() {
           <ArrowLeft size={16} /> Retour
         </button>
         <div className="flex gap-2">
-          <a href={`${api.getSaleReceipt(sale.id)}?token=${getToken()}`} className="btn btn-ghost gap-2" download>
+          <button type="button" onClick={handleReceiptDownload} className="btn btn-ghost gap-2">
             <Download size={15} /> PDF
-          </a>
+          </button>
           <button onClick={() => setShowQR(true)} className="btn btn-secondary gap-2"><QrCode size={15} /> QR</button>
           <button onClick={() => setShowPayModal(true)} className="btn btn-primary gap-2" disabled={sale.status === 'solde'}>
             <Plus size={15} /> Enregistrer paiement

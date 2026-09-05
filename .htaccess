@@ -3,15 +3,18 @@ DirectoryIndex index.html index.php
 <IfModule mod_rewrite.c>
     RewriteEngine On
     RewriteBase /
-    
-    # API calls -> Laravel backend
-    RewriteRule ^api/(.*)$ backend/public/index.php [L,QSA]
-    
+
+    # API calls -> Laravel backend via proxy
+    RewriteCond %{REQUEST_URI} ^/api(/.*)?$
+    RewriteRule ^api(.*)$ api.php [L,QSA]
+
     # Existing files/dirs -> serve directly
     RewriteCond %{REQUEST_FILENAME} -f [OR]
     RewriteCond %{REQUEST_FILENAME} -d
     RewriteRule ^ - [L]
-    
+
     # SPA fallback -> index.html
+    RewriteCond %{REQUEST_URI} !^/api
+    RewriteCond %{REQUEST_URI} !^/backend
     RewriteRule ^(.*)$ index.html [L]
 </IfModule>

@@ -1,7 +1,7 @@
 const COLORS = {
-  actif:      '#1A56DB',
-  solde:      '#16A34A',
-  paye:       '#16A34A',
+  actif:      '#3768AF',
+  solde:      '#44AC45',
+  paye:       '#44AC45',
   retard:     '#D97706',
   litige:     '#DC2626',
   en_attente: '#9CA3AF',

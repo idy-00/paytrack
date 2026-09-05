@@ -2,6 +2,7 @@
 
 use App\Jobs\SendPaymentReminders;
 use App\Jobs\SendWeeklySummary;
+use App\Jobs\ReleaseHeldCardFunds;
 use App\Console\Commands\DataCleanupCommand;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -30,3 +31,9 @@ Schedule::command('paytrack:data-cleanup')
     ->name('data-cleanup')
     ->withoutOverlapping()
     ->runInBackground();
+
+// Daily at 03:00 — release held card funds (72h partial, 7j full)
+Schedule::job(new ReleaseHeldCardFunds)->dailyAt('03:00')
+    ->name('release-held-card-funds')
+    ->withoutOverlapping()
+    ->onFailure(fn() => \Illuminate\Support\Facades\Log::error('Scheduler: ReleaseHeldCardFunds failed'));

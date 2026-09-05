@@ -15,7 +15,8 @@ class Order extends Model
         'tenant_id', 'shop_id', 'client_id', 'created_by', 'reference', 'qr_uuid',
         'subtotal', 'discount', 'total_amount', 'paid_amount', 'remaining_amount',
         'payment_mode', 'status', 'payment_status', 'order_date', 'delivery_date',
-        'notes', 'paytech_payment_ref',
+        'delivery_address',
+        'notes', 'dexpay_checkout_id',
     ];
 
     protected $casts = [
@@ -56,15 +57,20 @@ class Order extends Model
 
     public function isPaid(): bool { return $this->payment_status === 'paid'; }
 
+    public function canTransitionTo(string $status): bool
+    {
+        return in_array($status, match ($this->status) {
+            'pending' => ['confirmed', 'cancelled'],
+            'confirmed' => ['preparing', 'cancelled'],
+            'preparing' => ['ready', 'cancelled'],
+            'ready' => ['delivered', 'cancelled'],
+            default => [],
+        }, true);
+    }
+
     public static function generateReference(?int $tenantId = null): string
     {
-        // Format: CMD-{tenant}-{YYYYMM}-{0001} pour unicité globale
-        $t = $tenantId ? str_pad($tenantId, 3, '0', STR_PAD_LEFT) : '000';
-        $prefix = "CMD-{$t}-" . date('Ym') . '-';
-        $query = static::withoutGlobalScopes()->where('reference', 'like', $prefix . '%');
-        $last = $query->orderByDesc('id')->first();
-        $num = $last ? (int) substr($last->reference, -4) + 1 : 1;
-        return $prefix . str_pad($num, 4, '0', STR_PAD_LEFT);
+        return 'CMD-' . now()->format('Ym') . '-' . Str::ulid();
     }
 
     protected static function booted(): void

@@ -4,6 +4,7 @@ import { ArrowLeft, Search, Plus, Minus, Trash2, ShoppingCart, Loader2, User } f
 import { api } from '@/lib/api'
 import { formatAmount } from '@/lib/utils'
 import toast from 'react-hot-toast'
+import Modal from '@/components/ui/Modal'
 
 export default function NewOrderPage() {
   const navigate = useNavigate()
@@ -21,6 +22,10 @@ export default function NewOrderPage() {
   const [paymentMode, setPaymentMode] = useState('comptant')
   const [discount, setDiscount] = useState(0)
   const [notes, setNotes] = useState('')
+  const [showNewClient, setShowNewClient] = useState(false)
+  const [showNewArticle, setShowNewArticle] = useState(false)
+  const [quickClient, setQuickClient] = useState({ full_name: '', phone: '' })
+  const [quickArticle, setQuickArticle] = useState({ name: '', price: '', stock: '0' })
 
   useEffect(() => {
     loadData()
@@ -84,6 +89,31 @@ export default function NewOrderPage() {
     setCart(cart.filter(item => item.article_id !== articleId))
   }
 
+  const createQuickClient = async () => {
+    if (!quickClient.full_name.trim()) return toast.error('Le nom du client est requis.')
+    try {
+      const client = await api.createClient({ full_name: quickClient.full_name.trim(), phone: quickClient.phone.trim() })
+      setClients(items => [...items, client])
+      setSelectedClient(client)
+      setShowNewClient(false)
+      setQuickClient({ full_name: '', phone: '' })
+      toast.success('Client créé et sélectionné')
+    } catch (err) { toast.error(err.message || 'Impossible de créer le client') }
+  }
+
+  const createQuickArticle = async () => {
+    const price = Number(quickArticle.price)
+    if (!quickArticle.name.trim() || !Number.isFinite(price) || price < 0) return toast.error('Saisissez un article et un prix valide.')
+    try {
+      const article = await api.createArticle({ name: quickArticle.name.trim(), price, stock: Number(quickArticle.stock) || 0 })
+      setArticles(items => [...items, article])
+      addToCart(article)
+      setShowNewArticle(false)
+      setQuickArticle({ name: '', price: '', stock: '0' })
+      toast.success('Article créé et ajouté au panier')
+    } catch (err) { toast.error(err.message || 'Impossible de créer l’article') }
+  }
+
   const subtotal = cart.reduce((sum, item) => sum + (item.unit_price * item.quantity), 0)
   const total = Math.max(0, subtotal - discount)
 
@@ -145,10 +175,7 @@ export default function NewOrderPage() {
         <div className="lg:col-span-2 space-y-5">
           {/* Client selection */}
           <div className="card p-5">
-            <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-              <User size={18} />
-              Client
-            </h3>
+            <div className="flex items-center justify-between mb-3"><h3 className="font-semibold text-gray-900 flex items-center gap-2"><User size={18} />Client</h3><button type="button" onClick={() => setShowNewClient(true)} className="text-sm font-semibold text-green-700 inline-flex items-center gap-1"><Plus size={15} /> Ajouter</button></div>
 
             {selectedClient ? (
               <div className="flex items-center justify-between bg-blue-50 p-3 rounded-xl">
@@ -195,7 +222,7 @@ export default function NewOrderPage() {
 
           {/* Articles */}
           <div className="card p-5">
-            <h3 className="font-semibold text-gray-900 mb-3">Articles</h3>
+            <div className="flex items-center justify-between mb-3"><h3 className="font-semibold text-gray-900">Articles</h3><button type="button" onClick={() => setShowNewArticle(true)} className="text-sm font-semibold text-green-700 inline-flex items-center gap-1"><Plus size={15} /> Ajouter</button></div>
             <div className="relative mb-4">
               <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
@@ -343,6 +370,12 @@ export default function NewOrderPage() {
           </div>
         </div>
       </div>
+      <Modal open={showNewClient} onClose={() => setShowNewClient(false)} title="Ajouter un client">
+        <div className="space-y-4"><div><label className="block text-sm font-medium mb-1" htmlFor="quick-client-name">Nom complet *</label><input id="quick-client-name" className="input" value={quickClient.full_name} onChange={e => setQuickClient(v => ({ ...v, full_name: e.target.value }))} /></div><div><label className="block text-sm font-medium mb-1" htmlFor="quick-client-phone">Téléphone</label><input id="quick-client-phone" className="input" value={quickClient.phone} onChange={e => setQuickClient(v => ({ ...v, phone: e.target.value }))} /></div><button type="button" onClick={createQuickClient} className="btn btn-primary w-full">Créer et sélectionner</button></div>
+      </Modal>
+      <Modal open={showNewArticle} onClose={() => setShowNewArticle(false)} title="Ajouter un article">
+        <div className="space-y-4"><div><label className="block text-sm font-medium mb-1" htmlFor="quick-article-name">Nom de l’article *</label><input id="quick-article-name" className="input" value={quickArticle.name} onChange={e => setQuickArticle(v => ({ ...v, name: e.target.value }))} /></div><div><label className="block text-sm font-medium mb-1" htmlFor="quick-article-price">Prix (FCFA) *</label><input id="quick-article-price" type="number" min="0" className="input" value={quickArticle.price} onChange={e => setQuickArticle(v => ({ ...v, price: e.target.value }))} /></div><button type="button" onClick={createQuickArticle} className="btn btn-primary w-full">Créer et ajouter au panier</button></div>
+      </Modal>
     </div>
   )
 }

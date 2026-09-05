@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Log;
  *   composer require endroid/qr-code
  *
  * Required .env:
- *   APP_URL=https://app.paytrack.sn      # Used to build the QR URL
+ *   FRONTEND_URL=https://app.paytrack.sn # Used to build the QR URL
  *   FILESYSTEM_DISK=s3                   # Where to store generated QR PNGs
  */
 class QrCodeService
@@ -27,7 +27,7 @@ class QrCodeService
      */
     public function generateAndStore(Sale $sale): string
     {
-        $url  = config('app.url') . "/qr/{$sale->qr_uuid}";
+        $url  = rtrim((string) config('app.frontend_url', config('app.url')), '/') . "/qr/{$sale->qr_uuid}";
         $path = "tenants/{$sale->tenant_id}/qr/{$sale->qr_uuid}.png";
 
         if ($this->storage->exists($path)) {

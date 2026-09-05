@@ -13,6 +13,7 @@ export default function WalletPage() {
   const [showWithdrawModal, setShowWithdrawModal] = useState(false)
   const [showKycModal, setShowKycModal] = useState(false)
   const [withdrawForm, setWithdrawForm] = useState({ amount: '', method: 'wave', phone: '' })
+  const [withdrawQuote, setWithdrawQuote] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const [uploading, setUploading] = useState(null)
   const identityInputRef = useRef(null)
@@ -55,14 +56,21 @@ export default function WalletPage() {
 
     setSubmitting(true)
     try {
+      const amount = parseInt(withdrawForm.amount)
+      if (!withdrawQuote) {
+        const response = await api.getWithdrawalQuote({ amount, payout_method: withdrawForm.method })
+        setWithdrawQuote(response.quote)
+        return
+      }
       await api.requestWithdrawal({
-        amount: parseInt(withdrawForm.amount),
+        amount,
         payout_method: withdrawForm.method,
         payout_account: withdrawForm.phone,
       })
       toast.success('Demande de retrait envoyée !')
       setShowWithdrawModal(false)
       setWithdrawForm({ amount: '', method: 'wave', phone: '' })
+      setWithdrawQuote(null)
       loadData()
     } catch (err) {
       toast.error(err.message || 'Erreur')
@@ -151,7 +159,7 @@ export default function WalletPage() {
       )}
 
       {/* Balance card */}
-      <div className="card p-6 text-white" style={{ background: 'linear-gradient(135deg, #1D6FE8 0%, #1557B0 100%)' }}>
+      <div className="card p-6 text-white" style={{ background: '#3768AF' }}>
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm" style={{ color: 'rgba(255,255,255,0.8)' }}>Solde disponible</p>
@@ -170,7 +178,7 @@ export default function WalletPage() {
           onClick={() => canWithdraw ? setShowWithdrawModal(true) : setShowKycModal(true)}
           disabled={availableBalance < 1000}
           className="mt-6 w-full font-semibold py-3 rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
-          style={{ background: 'white', color: '#1D6FE8' }}
+          style={{ background: 'white', color: '#3768AF' }}
         >
           {canWithdraw ? (
             <>
@@ -323,7 +331,7 @@ export default function WalletPage() {
                   min="1000"
                   max={availableBalance}
                   value={withdrawForm.amount}
-                  onChange={e => setWithdrawForm({ ...withdrawForm, amount: e.target.value })}
+                  onChange={e => { setWithdrawQuote(null); setWithdrawForm({ ...withdrawForm, amount: e.target.value }) }}
                   required
                 />
                 <p className="text-xs text-gray-500 mt-1">Disponible: {formatAmount(availableBalance)} (min: 1 000 FCFA)</p>
@@ -333,11 +341,10 @@ export default function WalletPage() {
                 <select
                   className="input"
                   value={withdrawForm.method}
-                  onChange={e => setWithdrawForm({ ...withdrawForm, method: e.target.value })}
+                  onChange={e => { setWithdrawQuote(null); setWithdrawForm({ ...withdrawForm, method: e.target.value }) }}
                 >
-                  <option value="wave">Wave (frais 2%)</option>
-                  <option value="orange_money">Orange Money (frais 1.5%)</option>
-                  <option value="free_money">Free Money (frais 1.5%)</option>
+                  <option value="wave">Wave</option>
+                  <option value="orange_money">Orange Money</option>
                 </select>
               </div>
               <div>
@@ -351,13 +358,24 @@ export default function WalletPage() {
                   required
                 />
               </div>
+              {withdrawQuote && (
+                <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm">
+                  <p className="font-semibold text-blue-950">Récapitulatif DexPay</p>
+                  <div className="mt-2 space-y-1 text-blue-900">
+                    <p className="flex justify-between"><span>Montant demandé</span><strong>{formatAmount(withdrawQuote.gross_amount)}</strong></p>
+                    <p className="flex justify-between"><span>Frais DexPay estimés</span><strong>-{formatAmount(withdrawQuote.estimated_fee)}</strong></p>
+                    <p className="flex justify-between border-t border-blue-200 pt-2 font-semibold"><span>Vous recevrez estimativement</span><strong>{formatAmount(withdrawQuote.estimated_net_amount)}</strong></p>
+                  </div>
+                  <p className="mt-2 text-xs text-blue-700">Le montant final est celui confirmé par DexPay au traitement.</p>
+                </div>
+              )}
               <div className="flex gap-3 pt-2">
-                <button type="button" onClick={() => setShowWithdrawModal(false)} className="btn btn-secondary flex-1">
+                <button type="button" onClick={() => { setWithdrawQuote(null); setShowWithdrawModal(false) }} className="btn btn-secondary flex-1">
                   Annuler
                 </button>
                 <button type="submit" disabled={submitting} className="btn btn-primary flex-1 flex items-center justify-center gap-2">
                   {submitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
-                  {submitting ? 'Envoi...' : 'Envoyer'}
+                  {submitting ? 'Envoi...' : withdrawQuote ? 'Confirmer le retrait' : 'Voir les frais DexPay'}
                 </button>
               </div>
             </form>

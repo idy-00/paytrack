@@ -1,3 +1,5 @@
+import '../../core/utils/json_parsers.dart';
+
 enum SaleStatus { actif, retard, litige, solde, annule, enAttente }
 
 SaleStatus saleStatusFromString(String s) {
@@ -32,13 +34,13 @@ class SaleScheduleItem {
     this.paidDate,
   });
 
-  factory SaleScheduleItem.fromJson(Map<String, dynamic> j) =>
-      SaleScheduleItem(
-        num: j['installment_number'] as int? ?? j['num'] as int? ?? 0,
-        dueDate: j['due_date'] as String,
-        amount: j['amount'] as int,
-        status: saleStatusFromString(j['status'] as String),
-        paidDate: j['paid_date'] as String?,
+  factory SaleScheduleItem.fromJson(Map<String, dynamic> j) => SaleScheduleItem(
+        num: jsonInt(j['installment_number'] ?? j['num']),
+        dueDate: jsonString(j['due_date']),
+        amount: jsonInt(j['amount']),
+        status: saleStatusFromString(
+            jsonString(j['status'], fallback: 'en_attente')),
+        paidDate: j['paid_date'] == null ? null : jsonString(j['paid_date']),
       );
 }
 
@@ -92,8 +94,7 @@ class Sale {
     try {
       return schedule.firstWhere(
         (s) =>
-            s.status == SaleStatus.enAttente ||
-            s.status == SaleStatus.retard,
+            s.status == SaleStatus.enAttente || s.status == SaleStatus.retard,
       );
     } catch (_) {
       return null;
@@ -101,29 +102,30 @@ class Sale {
   }
 
   factory Sale.fromJson(Map<String, dynamic> j) => Sale(
-        id: j['id'] as int,
-        reference: j['reference'] as String,
-        qrUuid: j['qr_uuid'] as String,
+        id: jsonInt(j['id']),
+        reference: jsonString(j['reference'], fallback: '—'),
+        qrUuid: jsonString(j['qr_uuid']),
         clientName:
-            (j['client'] as Map?)?['name'] as String? ??
-                j['client_name'] as String? ??
-                '',
-        clientCity: (j['client'] as Map?)?['city'] as String? ?? '',
-        clientPhone: (j['client'] as Map?)?['phone'] as String?,
-        articleName: j['article_name'] as String? ?? '',
-        totalAmount: j['total_amount'] as int,
-        downPayment: j['down_payment'] as int? ?? 0,
-        paidAmount: j['paid_amount'] as int,
-        remainingAmount: j['remaining_amount'] as int,
-        installmentCount: j['installment_count'] as int,
-        installmentAmount: j['installment_amount'] as int,
-        frequency: j['frequency'] as String? ?? 'mensuel',
-        startDate: j['start_date'] as String,
-        endDate: j['end_date'] as String,
-        status: saleStatusFromString(j['status'] as String),
-        schedule: (j['schedules'] as List<dynamic>? ?? j['schedule'] as List<dynamic>? ?? [])
-            .map((s) =>
-                SaleScheduleItem.fromJson(s as Map<String, dynamic>))
+            jsonString(jsonMap(j['client'])['name'] ?? j['client_name']),
+        clientCity: jsonString(jsonMap(j['client'])['city']),
+        clientPhone: jsonMap(j['client'])['phone'] == null
+            ? null
+            : jsonString(jsonMap(j['client'])['phone']),
+        articleName:
+            jsonString(j['article_name'] ?? jsonMap(j['article'])['name']),
+        totalAmount: jsonInt(j['total_amount']),
+        downPayment: jsonInt(j['down_payment']),
+        paidAmount: jsonInt(j['paid_amount']),
+        remainingAmount: jsonInt(j['remaining_amount']),
+        installmentCount: jsonInt(j['installment_count']),
+        installmentAmount: jsonInt(j['installment_amount']),
+        frequency: jsonString(j['frequency'], fallback: 'mensuel'),
+        startDate: jsonString(j['start_date']),
+        endDate: jsonString(j['end_date']),
+        status: saleStatusFromString(
+            jsonString(j['status'], fallback: 'en_attente')),
+        schedule: jsonList(j['schedules'] ?? j['schedule'])
+            .map((s) => SaleScheduleItem.fromJson(jsonMap(s)))
             .toList(),
       );
 }

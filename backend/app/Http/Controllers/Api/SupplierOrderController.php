@@ -10,6 +10,7 @@ use App\Models\SupplierPayment;
 use App\Services\StockService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class SupplierOrderController extends Controller
 {
@@ -20,6 +21,7 @@ class SupplierOrderController extends Controller
 
     public function index(Request $request)
     {
+        $this->authorize('viewAny', SupplierOrder::class);
         $query = SupplierOrder::with(['supplier', 'createdBy', 'shop'])
             ->withCount('items');
 
@@ -43,13 +45,15 @@ class SupplierOrderController extends Controller
 
     public function store(Request $request)
     {
+        $this->authorize('create', SupplierOrder::class);
+        $tenantId = $request->user()->tenant_id;
         $validated = $request->validate([
-            'supplier_id' => 'required|exists:suppliers,id',
-            'shop_id' => 'nullable|exists:shops,id',
+            'supplier_id' => ['required', Rule::exists('suppliers', 'id')->where('tenant_id', $tenantId)],
+            'shop_id' => ['nullable', Rule::exists('shops', 'id')->where('tenant_id', $tenantId)],
             'expected_date' => 'nullable|date',
             'notes' => 'nullable|string',
             'items' => 'required|array|min:1',
-            'items.*.article_id' => 'nullable|exists:articles,id',
+            'items.*.article_id' => ['nullable', Rule::exists('articles', 'id')->where('tenant_id', $tenantId)],
             'items.*.article_name' => 'required|string|max:255',
             'items.*.quantity_ordered' => 'required|integer|min:1',
             'items.*.unit_price' => 'required|integer|min:0',
@@ -98,12 +102,14 @@ class SupplierOrderController extends Controller
 
     public function show(SupplierOrder $supplierOrder)
     {
+        $this->authorize('view', $supplierOrder);
         $supplierOrder->load(['supplier', 'createdBy', 'shop', 'items.article', 'payments.recordedBy']);
         return response()->json($supplierOrder);
     }
 
     public function updateStatus(Request $request, SupplierOrder $supplierOrder)
     {
+        $this->authorize('update', $supplierOrder);
         $validated = $request->validate([
             'status' => 'required|in:draft,sent,partial_received,received,cancelled',
         ]);
@@ -118,15 +124,17 @@ class SupplierOrderController extends Controller
 
     public function receiveItems(Request $request, SupplierOrder $supplierOrder)
     {
+        $this->authorize('update', $supplierOrder);
         $validated = $request->validate([
             'items' => 'required|array|min:1',
-            'items.*.id' => 'required|exists:supplier_order_items,id',
+            'items.*.id' => ['required', Rule::exists('supplier_order_items', 'id')->where('supplier_order_id', $supplierOrder->id)],
             'items.*.quantity_received' => 'required|integer|min:0',
         ]);
 
         DB::transaction(function () use ($validated, $supplierOrder, $request) {
+            $supplierOrder = SupplierOrder::lockForUpdate()->findOrFail($supplierOrder->id);
             foreach ($validated['items'] as $itemData) {
-                $item = SupplierOrderItem::find($itemData['id']);
+                $item = SupplierOrderItem::lockForUpdate()->find($itemData['id']);
                 if ($item->supplier_order_id !== $supplierOrder->id) continue;
 
                 $qty = $itemData['quantity_received'];
@@ -144,29 +152,31 @@ class SupplierOrderController extends Controller
 
     public function recordPayment(Request $request, SupplierOrder $supplierOrder)
     {
+        $this->authorize('update', $supplierOrder);
         $validated = $request->validate([
             'amount' => 'required|integer|min:1',
             'payment_method' => 'required|in:especes,wave,orange_money,virement,cheque',
             'notes' => 'nullable|string',
         ]);
 
-        if ($validated['amount'] > $supplierOrder->remaining_amount) {
-            return response()->json([
-                'message' => 'Montant supérieur au reste à payer',
-                'remaining' => $supplierOrder->remaining_amount,
-            ], 400);
-        }
-
-        $payment = SupplierPayment::create([
-            'tenant_id' => $supplierOrder->tenant_id,
-            'supplier_order_id' => $supplierOrder->id,
-            'recorded_by' => $request->user()->id,
-            'reference' => SupplierPayment::generateReference(),
-            'amount' => $validated['amount'],
-            'payment_date' => now(),
-            'payment_method' => $validated['payment_method'],
-            'notes' => $validated['notes'],
-        ]);
+        [$payment, $supplierOrder] = DB::transaction(function () use ($validated, $supplierOrder, $request) {
+            $supplierOrder = SupplierOrder::lockForUpdate()->findOrFail($supplierOrder->id);
+            if ($validated['amount'] > $supplierOrder->remaining_amount) {
+                abort(422, 'Montant supérieur au reste à payer.');
+            }
+            $payment = SupplierPayment::create([
+                'tenant_id' => $supplierOrder->tenant_id,
+                'supplier_order_id' => $supplierOrder->id,
+                'recorded_by' => $request->user()->id,
+                'reference' => SupplierPayment::generateReference(),
+                'amount' => $validated['amount'],
+                'payment_date' => now(),
+                'payment_method' => $validated['payment_method'],
+                'notes' => $validated['notes'],
+            ]);
+            $supplierOrder->recalculateTotals();
+            return [$payment, $supplierOrder->fresh()];
+        });
 
         return response()->json([
             'message' => 'Paiement enregistré',

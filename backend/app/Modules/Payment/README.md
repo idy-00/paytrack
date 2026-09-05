@@ -108,7 +108,7 @@ Schema::create('wallet_transactions', function (Blueprint $table) {
     $table->bigInteger('amount');
     $table->bigInteger('balance_after');
     $table->string('description')->nullable();
-    $table->string('paytech_transaction_id')->nullable();
+    $table->string('dexpay_transaction_id')->nullable();
     $table->nullableMorphs('transactionable');
     $table->timestamps();
 });

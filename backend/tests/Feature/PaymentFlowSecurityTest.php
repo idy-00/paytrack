@@ -25,6 +25,16 @@ class PaymentFlowSecurityTest extends TestCase
         $this->actingAs($user, 'sanctum')->getJson('/api/clients')->assertForbidden();
     }
 
+    public function test_client_cannot_access_a_merchant_wallet(): void
+    {
+        $tenant = Tenant::create(['name' => 'Tenant Wallet', 'slug' => 'tenant-wallet']);
+        Role::create(['name' => 'client', 'guard_name' => 'web']);
+        $user = User::factory()->create(['tenant_id' => $tenant->id]);
+        $user->assignRole('client');
+
+        $this->actingAs($user, 'sanctum')->getJson('/api/wallet')->assertForbidden();
+    }
+
     public function test_vendor_creates_cash_sale_and_stock_is_decremented(): void
     {
         $tenant = Tenant::create(['name' => 'Tenant B', 'slug' => 'tenant-b']);

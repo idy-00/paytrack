@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Calendar, QrCode, CheckCircle2, Clock, AlertCircle, ArrowRight, PackageOpen, Loader2 } from 'lucide-react'
+import { Calendar, QrCode, CheckCircle2, Clock, AlertCircle, ArrowRight, PackageOpen, Loader2, WalletCards } from 'lucide-react'
 import { formatAmount, formatDate, getProgressPercent } from '@/lib/utils'
 import { useAuthStore } from '@/store/authStore'
 import { api } from '@/lib/api'
@@ -49,51 +49,80 @@ export default function ClientDashboard() {
   const nextInstallment = schedule.find(s => s.status === 'retard' || s.status === 'en_attente')
 
   return (
-    <div className="max-w-2xl mx-auto space-y-5 py-2">
-      <div>
-        <p className="text-muted text-sm mb-0.5">Bonjour,</p>
-        <h1 className="text-2xl font-bold text-ink">{user?.name}</h1>
+    <div className="max-w-[1180px] mx-auto space-y-6 py-1">
+      <header className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="pt-eyebrow mb-1">Espace client</p>
+          <h1 className="page-heading text-3xl">Bonjour, {user?.name?.split(' ')[0] || 'client'}</h1>
+          <p className="text-sm text-muted mt-1">Voici l’état de vos paiements et de vos dossiers.</p>
+        </div>
+        <div className="inline-flex items-center gap-2 self-start sm:self-auto rounded-full bg-white border border-ash px-3 py-2 text-xs text-muted shadow-sm">
+          <span className="w-2 h-2 rounded-full bg-green" />
+          Compte actif
+        </div>
+      </header>
+
+      <div className="grid gap-5 xl:grid-cols-3">
+        <section className="xl:col-span-2 relative overflow-hidden rounded-[22px] p-6 sm:p-8 text-white"
+          style={{ background: '#10243E', boxShadow: '0 20px 42px rgba(16,36,62,.18)' }}>
+          <div className="absolute -right-16 -top-24 w-72 h-72 rounded-full border border-white/10" />
+          <div className="absolute right-16 bottom-[-10rem] w-80 h-80 rounded-full bg-green/30 blur-2xl" />
+          <div className="relative">
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[.14em] text-green-100">
+              <WalletCards size={15} /> À régulariser
+            </div>
+            <p className="amount mt-4 text-[clamp(2.4rem,5vw,4.25rem)] font-bold tracking-tight leading-none">{formatAmount(totalDue)}</p>
+            <p className="mt-3 text-sm text-slate-300">sur un total de {formatAmount(totalAmount)}</p>
+            <div className="mt-7 grid grid-cols-2 gap-3 border-t border-white/15 pt-5 sm:max-w-md">
+              <div>
+                <p className="text-xs text-slate-400">Déjà réglé</p>
+                <p className="amount mt-1 text-lg font-semibold">{formatAmount(totalPaid)}</p>
+              </div>
+              <div className="border-l border-white/15 pl-4">
+                <p className="text-xs text-slate-400">Progression</p>
+                <p className="amount mt-1 text-lg font-semibold">{overallPct}%</p>
+              </div>
+            </div>
+            <div className="mt-5 max-w-xl h-2 rounded-full bg-white/15 overflow-hidden">
+              <div className="h-full rounded-full bg-green transition-all duration-700" style={{ width: `${overallPct}%` }} />
+            </div>
+          </div>
+        </section>
+
+        {nextInstallment && (
+          <section className={`rounded-[22px] border p-6 flex flex-col justify-between ${nextInstallment.status === 'retard' ? 'border-amber-200 bg-amber-50' : 'border-blue/25 bg-white shadow-sm'}`}>
+            <div>
+              <div className={`inline-flex w-10 h-10 rounded-xl items-center justify-center ${nextInstallment.status === 'retard' ? 'bg-amber-100 text-warning' : 'bg-blue/10 text-blue'}`}>
+                {nextInstallment.status === 'retard' ? <AlertCircle size={21} /> : <Clock size={21} />}
+              </div>
+              <p className={`mt-5 text-sm font-bold ${nextInstallment.status === 'retard' ? 'text-warning' : 'text-blue'}`}>
+                {nextInstallment.status === 'retard' ? 'Paiement en retard' : 'Prochaine échéance'}
+              </p>
+              <p className="amount mt-2 text-2xl font-bold text-ink">{formatAmount(nextInstallment.amount)}</p>
+              <p className="mt-1 text-sm text-dim">Tranche n°{nextInstallment.num || 1}</p>
+            </div>
+            <div className="mt-6 pt-4 border-t border-ash flex items-center justify-between text-xs text-muted">
+              <span>Prévue le {formatDate(nextInstallment.due_date)}</span>
+              <Calendar size={15} />
+            </div>
+          </section>
+        )}
       </div>
 
-      <div className="rounded-2xl bg-white p-6 relative overflow-hidden"
-        style={{ border: '1px solid #E8E4DD', borderTop: '3px solid #1D6FE8', boxShadow: '0 2px 12px rgba(29,111,232,0.08)' }}>
-        <p className="text-sm mb-2" style={{ color: '#6B7280' }}>Total restant à payer</p>
-        <div className="amount text-[40px] font-bold leading-none mb-1" style={{ color: '#1A1A1A' }}>
-          {formatAmount(totalDue)}
-        </div>
-        <p className="text-sm font-mono mt-1.5" style={{ color: '#6B7280' }}>
-          {formatAmount(totalPaid)} réglé sur {formatAmount(totalAmount)}
-        </p>
-        <div className="mt-5">
-          <div className="h-1.5 rounded-full overflow-hidden" style={{ background: '#EEF4FE' }}>
-            <div className="h-full rounded-full transition-all duration-700" style={{ width: `${overallPct}%`, background: '#1D6FE8' }} />
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,.65fr)]">
+        <section>
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <p className="pt-eyebrow">Vos achats</p>
+              <h2 className="text-xl font-bold text-ink">Mes dossiers</h2>
+            </div>
+            <span className="text-sm text-muted">{clientSales.length} dossier{clientSales.length > 1 ? 's' : ''}</span>
           </div>
-          <p className="text-xs mt-1.5" style={{ color: '#6B7280' }}>{overallPct}% réglé</p>
-        </div>
-      </div>
-
-      {nextInstallment && (
-        <div className={`rounded-xl border p-4 flex items-start gap-3 ${nextInstallment.status === 'retard' ? 'border-amber-200 bg-amber-50' : 'border-blue/30 bg-sky'}`}>
-          {nextInstallment.status === 'retard' ? <AlertCircle size={20} className="text-warning flex-shrink-0 mt-0.5" /> : <Clock size={20} className="text-blue flex-shrink-0 mt-0.5" />}
-          <div className="flex-1 min-w-0">
-            <p className={`text-sm font-semibold ${nextInstallment.status === 'retard' ? 'text-warning' : 'text-blue'}`}>
-              {nextInstallment.status === 'retard' ? 'Paiement en retard' : 'Prochaine échéance'}
-            </p>
-            <p className="text-dim text-sm mt-0.5">
-              <span className="amount font-semibold">{formatAmount(nextInstallment.amount)}</span> — Tranche n°{nextInstallment.num || 1}
-            </p>
-            <p className="text-muted text-xs mt-0.5">Prévue le {formatDate(nextInstallment.due_date)}</p>
-          </div>
-        </div>
-      )}
-
-      <section>
-        <h2 className="text-base font-semibold text-ink mb-3">Mes dossiers</h2>
-        <div className="space-y-3">
+          <div className="space-y-3">
           {clientSales.map(sale => {
             const pct = getProgressPercent(sale.paid_amount, sale.total_amount)
             return (
-              <Link key={sale.id} to={`/client/vente/${sale.id}`} className="card block p-5 hover:shadow-md transition-shadow duration-150">
+              <Link key={sale.id} to={`/client/vente/${sale.id}`} className="card block p-5 hover:-translate-y-0.5 hover:shadow-md transition-all duration-150">
                 <div className="flex items-start justify-between gap-3 mb-4">
                   <div>
                     <p className="font-semibold text-ink">{sale.article?.name || '—'}</p>
@@ -134,9 +163,11 @@ export default function ClientDashboard() {
         </div>
       </section>
 
-      {mainSale && schedule.length > 0 && (
-        <section className="card p-5">
-          <h2 className="text-base font-semibold text-ink mb-4">Échéancier — {mainSale.article?.name}</h2>
+        {mainSale && schedule.length > 0 && (
+        <section className="card p-5 xl:sticky xl:top-6 self-start">
+          <p className="pt-eyebrow mb-1">À venir</p>
+          <h2 className="text-lg font-bold text-ink mb-4">Échéancier</h2>
+          <p className="text-sm text-muted -mt-3 mb-4 truncate">{mainSale.article?.name}</p>
           <div className="space-y-2">
             {schedule.map((item, i) => (
               <div key={i} className={`flex items-center gap-3 p-3 rounded-lg ${item.status === 'paye' ? 'bg-green-50' : item.status === 'retard' ? 'bg-amber-50' : 'bg-fog'}`}>
@@ -159,7 +190,8 @@ export default function ClientDashboard() {
             ))}
           </div>
         </section>
-      )}
+        )}
+      </div>
     </div>
   )
 }

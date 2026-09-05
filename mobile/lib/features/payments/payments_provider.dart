@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/services/api_service.dart';
+import '../../core/utils/json_parsers.dart';
 
 class PaymentEntry {
   final int id;
@@ -31,12 +32,15 @@ class PaymentEntry {
     final rawMethod = json['payment_method'] ?? 'especes';
 
     return PaymentEntry(
-      id: json['id'] ?? 0,
-      receipt: json['receipt_number'] ?? 'RC-${json['id']}',
-      clientName: json['sale']?['client']?['full_name'] ?? json['sale']?['client']?['name'] ?? '',
-      amount: json['amount'] ?? 0,
-      paidDate: json['payment_date'] ?? json['created_at'] ?? '',
-      mode: methodMap[rawMethod] ?? rawMethod,
+      id: jsonInt(json['id']),
+      receipt: jsonString(json['receipt_number'],
+          fallback: 'RC-${jsonInt(json['id'])}'),
+      clientName: jsonString(
+          jsonMap(jsonMap(json['sale'])['client'])['full_name'] ??
+              jsonMap(jsonMap(json['sale'])['client'])['name']),
+      amount: jsonInt(json['amount']),
+      paidDate: jsonString(json['payment_date'] ?? json['created_at']),
+      mode: jsonString(methodMap[rawMethod] ?? rawMethod, fallback: 'Espèces'),
     );
   }
 }
@@ -73,7 +77,8 @@ class PaymentsState {
   }
 }
 
-final paymentsProvider = StateNotifierProvider<PaymentsNotifier, PaymentsState>((ref) {
+final paymentsProvider =
+    StateNotifierProvider<PaymentsNotifier, PaymentsState>((ref) {
   return PaymentsNotifier();
 });
 
@@ -84,7 +89,9 @@ class PaymentsNotifier extends StateNotifier<PaymentsState> {
     state = state.copyWith(isLoading: true, error: null);
     try {
       final data = await ApiService.get('/payments');
-      final list = (data['data'] as List).map((e) => PaymentEntry.fromJson(e)).toList();
+      final list = jsonList(jsonMap(data)['data'])
+          .map((e) => PaymentEntry.fromJson(jsonMap(e)))
+          .toList();
 
       final now = DateTime.now();
       int total = 0;

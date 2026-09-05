@@ -56,6 +56,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Public frontend URL
+    |--------------------------------------------------------------------------
+    |
+    | The frontend can be hosted separately from Laravel (for example when the
+    | API lives below /backend/public). Keep checkout return URLs and QR links
+    | on the public application, never on the API base path.
+    |
+    */
+
+    'frontend_url' => env('FRONTEND_URL', env('APP_URL', 'http://localhost')),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |

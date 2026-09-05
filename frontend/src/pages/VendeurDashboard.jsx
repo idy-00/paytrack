@@ -13,10 +13,11 @@ import { useAuthStore } from '@/store/authStore'
 import { useDashboardStore } from '@/store/dashboardStore'
 import StatusBadge from '@/components/ui/StatusBadge'
 import ProgressBar from '@/components/ui/ProgressBar'
+import Logo from '@/components/ui/Logo'
 
-const BLUE    = '#1D6FE8'
+const BLUE    = '#3768AF'
 const INK     = '#111827'
-const SUCCESS = '#16A34A'
+const SUCCESS = '#44AC45'
 const WARNING = '#D97706'
 const DANGER  = '#DC2626'
 const PURPLE  = '#7C3AED'
@@ -25,11 +26,11 @@ function initials(name = '') {
   return name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()
 }
 const GRADIENTS = [
-  `linear-gradient(135deg,${BLUE},#60A5FA)`,
-  `linear-gradient(135deg,${SUCCESS},#4ADE80)`,
-  `linear-gradient(135deg,${PURPLE},#A78BFA)`,
-  `linear-gradient(135deg,${DANGER},#F87171)`,
-  `linear-gradient(135deg,${WARNING},#FCD34D)`,
+  BLUE,
+  SUCCESS,
+  PURPLE,
+  DANGER,
+  WARNING,
 ]
 function avatarGradient(name = '') {
   const sum = [...name].reduce((a, c) => a + c.charCodeAt(0), 0)
@@ -64,16 +65,16 @@ function ChartTooltip({ active, payload, label }) {
 
 function KpiCard({ color, bgColor, icon: Icon, label, value }) {
   return (
-    <div className="card overflow-hidden">
-      <div style={{ height: 2, background: color }} />
-      <div className="p-4">
+    <div className="pt-kpi-card overflow-hidden">
+      <div className="h-1" style={{ background: color }} />
+      <div className="p-5">
         <div className="flex items-start justify-between mb-3">
           <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: bgColor }}>
             <Icon size={18} style={{ color }} />
           </div>
         </div>
-        <div className="text-3xl font-bold amount" style={{ color: INK }}>{value}</div>
-        <p className="text-xs text-gray-500 mt-1">{label}</p>
+        <div className="text-3xl font-bold amount tracking-tight" style={{ color: INK }}>{value}</div>
+        <p className="text-xs font-medium text-gray-500 mt-1">{label}</p>
       </div>
     </div>
   )
@@ -232,23 +233,42 @@ export default function VendeurDashboard() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-5 pb-8">
-      <div className="flex items-start justify-between gap-4 flex-wrap pt-1">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Bonjour {user?.name?.split(' ')[0]}</h1>
-          <p className="text-sm text-gray-500 mt-0.5 capitalize">{today}</p>
+    <div className="max-w-6xl mx-auto space-y-5 pb-8 pt-2">
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div className="flex items-start gap-3">
+          <div className="pt-brand-mark"><Logo size={34} /></div>
+          <div>
+            <p className="pt-eyebrow">Votre espace de pilotage</p>
+            <h1 className="text-3xl font-bold page-heading mt-0.5">Bonjour, {user?.name?.split(' ')[0]}</h1>
+            <p className="text-sm text-gray-500 mt-1 capitalize">{today}</p>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <Link to="/ventes" className="btn btn-secondary btn-sm gap-1.5"><ShoppingBag size={14} /> Ventes</Link>
-          <Link to="/ventes/nouvelle" className="btn btn-primary gap-1.5"><Plus size={14} /> Nouvelle vente</Link>
+          <Link to="/ventes/nouvelle" className="pt-create-sale"><Plus size={16} /> Nouvelle vente</Link>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-        <KpiCard color={BLUE} bgColor="#DBEAFE" icon={Wallet} label="Total encaissé" value={formatAmount(stats?.total_encaisse || 0)} />
-        <KpiCard color={SUCCESS} bgColor="#DCFCE7" icon={ShoppingBag} label="Ventes actives" value={String(stats?.ventes_actives || 0)} />
-        <KpiCard color={WARNING} bgColor="#FEF3C7" icon={AlertCircle} label="En retard" value={String(stats?.ventes_en_retard || 0)} />
-        <KpiCard color={SUCCESS} bgColor="#DCFCE7" icon={CheckCircle2} label="Soldées" value={String(stats?.ventes_soldees || 0)} />
+      <section className="pt-cash-hero">
+        <div className="pt-hero-glow" />
+        <div className="relative z-10">
+          <div className="flex items-center gap-2"><span className="pt-live-dot" /> <span className="pt-hero-eyebrow">Trésorerie disponible</span></div>
+          <p className="text-sm text-slate-300 mt-6">Déjà encaissé</p>
+          <p className="amount text-4xl md:text-5xl font-bold tracking-tight text-white mt-1">{formatAmount(stats?.total_encaisse || 0)}</p>
+          <p className="flex gap-1.5 items-center text-sm mt-5 text-emerald-100"><TrendingUp size={16} /> Chaque paiement renforce votre élan.</p>
+        </div>
+        <div className="pt-hero-panel relative z-10">
+          <div><p>À sécuriser</p><strong className="amount">{formatAmount(stats?.total_restant || 0)}</strong></div>
+          <div className="pt-hero-divider" />
+          <div><p>Ventes actives</p><strong>{stats?.ventes_actives || 0}</strong></div>
+          <ArrowUpRight size={28} className="pt-hero-arrow" />
+        </div>
+      </section>
+
+      <div className="grid grid-cols-2 xl:grid-cols-3 gap-4">
+        <KpiCard color={SUCCESS} bgColor="#E8F5E8" icon={CheckCircle2} label="Ventes soldées" value={String(stats?.ventes_soldees || 0)} />
+        <KpiCard color={BLUE} bgColor="#EAF1FA" icon={ShoppingBag} label="Ventes en cours" value={String(stats?.ventes_actives || 0)} />
+        <KpiCard color={WARNING} bgColor="#FEF3C7" icon={AlertCircle} label="Échéances en retard" value={String(stats?.ventes_en_retard || 0)} />
       </div>
 
       <div className="grid xl:grid-cols-[1fr_340px] gap-5">

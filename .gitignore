@@ -3,6 +3,9 @@ dist/
 site/
 .env
 .env.*
+.hostinger-ssh.dpapi
+.deploy-deps/
+deploy_backups/
 *.log
 .DS_Store
 Thumbs.db
@@ -14,6 +17,8 @@ mobile/.packages
 mobile/android/.gradle/
 mobile/android/app/build/
 mobile/ios/Pods/
+mobile/tmp/
+mobile/tool/
 
 # Backend
 backend/vendor/
@@ -29,3 +34,23 @@ backend/.env
 *.zip
 mobile/android/app/google-services.json
 mobile/ios/Runner/GoogleService-Info.plist
+mobile/android/key.properties
+mobile/android/paytrack-upload.jks
+
+# Deploy scripts with credentials
+create_users.py
+test_payout*.py
+deploy_hostinger*.py
+*.output
+playwright-report/
+test-results/
+
+# Reports and temp files
+*.docx
+*.pdf
+deploy_package/
+scripts/
+generate_*.js
+tool/
+AUDIT_*.md
+*.rar

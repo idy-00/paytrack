@@ -38,9 +38,9 @@ class SubscriptionService
         ]);
     }
 
-    public function activateFromPayment(SubscriptionInvoice $invoice, string $paytechRef = null): void
+    public function activateFromPayment(SubscriptionInvoice $invoice, ?string $paymentReference = null): void
     {
-        $invoice->markPaid($paytechRef);
+        $invoice->markPaid($paymentReference);
         $invoice->subscription->activate();
     }
 

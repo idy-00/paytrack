@@ -40,13 +40,17 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
           final url = request.url;
 
           // Check success redirect
-          if (url.startsWith(widget.successUrl) || url.contains('payment/success') || url.contains('success=true')) {
+          if (url.startsWith(widget.successUrl) ||
+              url.contains('payment/success') ||
+              url.contains('success=true')) {
             _handleSuccess();
             return NavigationDecision.prevent;
           }
 
           // Check cancel redirect
-          if (url.startsWith(widget.cancelUrl) || url.contains('payment/cancel') || url.contains('cancel=true')) {
+          if (url.startsWith(widget.cancelUrl) ||
+              url.contains('payment/cancel') ||
+              url.contains('cancel=true')) {
             _handleCancel();
             return NavigationDecision.prevent;
           }
@@ -64,7 +68,8 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
 
   void _handleSuccess() {
     if (mounted) {
-      context.pop({'success': true, 'message': 'Paiement effectue avec succes'});
+      context
+          .pop({'success': true, 'message': 'Paiement effectue avec succes'});
     }
   }
 
@@ -80,13 +85,16 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
       _controller.goBack();
       return false;
     }
+    if (!mounted) return false;
 
     // Confirm exit
     final exit = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Annuler le paiement ?', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700)),
-        content: const Text('Voulez-vous vraiment quitter et annuler ce paiement ?'),
+        title: Text('Annuler le paiement ?',
+            style: GoogleFonts.sourceSans3(fontWeight: FontWeight.w700)),
+        content:
+            const Text('Voulez-vous vraiment quitter et annuler ce paiement ?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -120,9 +128,10 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
           backgroundColor: AppColors.surface,
           title: Text(
             widget.title ?? 'Paiement',
-            style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700),
+            style: GoogleFonts.sourceSans3(fontWeight: FontWeight.w700),
           ),
           leading: IconButton(
+            tooltip: 'Fermer',
             icon: const Icon(Icons.close),
             onPressed: _onWillPop,
           ),
@@ -132,7 +141,8 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
                   child: LinearProgressIndicator(
                     value: _progress,
                     backgroundColor: AppColors.borderSoft,
-                    valueColor: const AlwaysStoppedAnimation<Color>(AppColors.blue),
+                    valueColor:
+                        const AlwaysStoppedAnimation<Color>(AppColors.blue),
                   ),
                 )
               : null,
@@ -151,7 +161,7 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
                       const SizedBox(height: 16),
                       Text(
                         'Chargement du paiement...',
-                        style: GoogleFonts.inter(color: AppColors.sub),
+                        style: GoogleFonts.sourceSans3(color: AppColors.sub),
                       ),
                     ],
                   ),

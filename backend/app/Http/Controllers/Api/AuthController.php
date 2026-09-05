@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
+use App\Models\Client;
 use App\Models\SubscriptionPlan;
 use App\Models\User;
 use App\Services\SubscriptionService;
@@ -25,13 +26,69 @@ class AuthController extends Controller
             'email'     => ['required', 'email', 'max:255', 'unique:users'],
             'phone'     => ['required', 'string', 'max:20'],
             'password'  => ['required', 'string', 'min:8', 'max:128', 'confirmed'],
-            'shop_name' => ['required', 'string', 'max:255'],
+            'account_type' => ['sometimes', 'in:boutique,client'],
+            'shop_name' => ['required_unless:account_type,client', 'nullable', 'string', 'max:255'],
             'plan_slug' => ['sometimes', 'string', 'exists:subscription_plans,slug'],
             'wave_number' => ['nullable', 'string', 'max:20'],
             'orange_money_number' => ['nullable', 'string', 'max:20'],
+            'device_name' => ['sometimes', 'string', 'max:80'],
         ]);
 
         return \DB::transaction(function () use ($request) {
+            $accountType = $request->input('account_type', 'boutique');
+
+            // Un client final possède son propre accès, mais il doit déjà être
+            // connu de la boutique (même email et téléphone) afin d'éviter
+            // qu'un tiers accède à un dossier de paiement qui ne lui appartient pas.
+            if ($accountType === 'client') {
+                $client = Client::withoutGlobalScopes()
+                    ->where('email', $request->email)
+                    ->where('phone', $request->phone)
+                    ->first();
+
+                if (! $client) {
+                    throw ValidationException::withMessages([
+                        'email' => ['Votre fiche client est introuvable. Demandez à votre boutique d’enregistrer le même email et le même numéro de téléphone.'],
+                    ]);
+                }
+
+                if ($client->user_id) {
+                    throw ValidationException::withMessages([
+                        'email' => ['Un compte Client est déjà associé à cette fiche. Utilisez « Mot de passe oublié ».'],
+                    ]);
+                }
+
+                $user = User::create([
+                    'tenant_id' => $client->tenant_id,
+                    'shop_id' => $client->shop_id,
+                    'name' => $request->name,
+                    'email' => $request->email,
+                    'phone' => $request->phone,
+                    'password' => Hash::make($request->password),
+                    'is_active' => true,
+                ]);
+                $user->assignRole('client');
+                $client->update(['user_id' => $user->id]);
+
+                AuditLog::create([
+                    'tenant_id' => $client->tenant_id,
+                    'user_id' => $user->id,
+                    'event' => 'auth.client_registered',
+                    'ip_address' => $request->ip(),
+                    'user_agent' => $request->userAgent(),
+                ]);
+
+                return response()->json([
+                    'message' => 'Compte Client créé. Vous pouvez consulter vos dossiers.',
+                    'user' => [
+                        'id' => $user->id,
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'role' => 'client',
+                    ],
+                ], 201);
+            }
+
             // Create tenant
             $tenant = \App\Models\Tenant::create([
                 'name' => $request->shop_name,
@@ -74,7 +131,8 @@ class AuthController extends Controller
             // Create wallet
             $tenant->getOrCreateWallet();
 
-            $token = $user->createToken('api', ['*'], now()->addHours(8))->plainTextToken;
+            $tokenName = $this->tokenName($request);
+            $token = $user->createToken($tokenName, ['*'], now()->addHours(8))->plainTextToken;
 
             AuditLog::create([
                 'tenant_id'  => $tenant->id,
@@ -107,6 +165,7 @@ class AuthController extends Controller
         $request->validate([
             'email'    => ['required', 'email', 'max:255'],
             'password' => ['required', 'string', 'min:8', 'max:128'],
+            'device_name' => ['sometimes', 'string', 'max:80'],
         ]);
 
         // Rate limiting: 5 attempts per minute per IP+email
@@ -142,10 +201,12 @@ class AuthController extends Controller
 
         RateLimiter::clear($key);
 
-        // Revoke old tokens for same device (optional: keep multi-device by removing this)
-        $user->tokens()->where('name', 'api')->delete();
+        // Renouveler uniquement la session du même type d'appareil. Une connexion
+        // mobile ne doit pas invalider la session web, et inversement.
+        $tokenName = $this->tokenName($request);
+        $user->tokens()->where('name', $tokenName)->delete();
 
-        $token = $user->createToken('api', ['*'], now()->addHours(8))->plainTextToken;
+        $token = $user->createToken($tokenName, ['*'], now()->addHours(8))->plainTextToken;
         $user->update(['last_active_at' => now()]);
 
         AuditLog::create([
@@ -193,5 +254,59 @@ class AuthController extends Controller
             'email' => $user->email,
             'role'  => $user->getRoleNames()->first(),
         ]);
+    }
+
+    public function updateProfile(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:20'],
+        ]);
+        $user = $request->user();
+        $user->update($validated);
+
+        AuditLog::create([
+            'tenant_id' => $user->tenant_id,
+            'user_id' => $user->id,
+            'event' => 'auth.profile_updated',
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ]);
+
+        return response()->json(['message' => 'Profil mis à jour.']);
+    }
+
+    public function updatePassword(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'current_password' => ['required', 'string'],
+            'password' => ['required', 'string', 'min:8', 'max:128', 'confirmed'],
+        ]);
+        $user = $request->user();
+        if (! Hash::check($validated['current_password'], $user->password)) {
+            throw ValidationException::withMessages([
+                'current_password' => ['Le mot de passe actuel est incorrect.'],
+            ]);
+        }
+        $user->update(['password' => Hash::make($validated['password'])]);
+        // Révoquer les autres sessions après une action de sécurité.
+        $user->tokens()->whereKeyNot($user->currentAccessToken()->id)->delete();
+
+        AuditLog::create([
+            'tenant_id' => $user->tenant_id,
+            'user_id' => $user->id,
+            'event' => 'auth.password_updated',
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ]);
+
+        return response()->json(['message' => 'Mot de passe mis à jour.']);
+    }
+
+    private function tokenName(Request $request): string
+    {
+        $device = \Str::slug($request->string('device_name')->trim()->value() ?: 'appareil');
+
+        return 'api:' . ($device ?: 'appareil');
     }
 }

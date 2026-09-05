@@ -176,7 +176,7 @@ export default function AdminRapportsPage() {
                             className="h-full rounded-full"
                             style={{
                               width: `${performance}%`,
-                              backgroundColor: performance >= 80 ? '#16A34A' : performance >= 60 ? '#D97706' : '#DC2626'
+                              backgroundColor: performance >= 80 ? '#44AC45' : performance >= 60 ? '#D97706' : '#DC2626'
                             }}
                           />
                         </div>

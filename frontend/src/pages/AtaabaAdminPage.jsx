@@ -4,7 +4,7 @@ import { api } from '@/lib/api'
 import { formatAmount } from '@/lib/utils'
 import toast from 'react-hot-toast'
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://lightsalmon-eel-638395.hostingersite.com/backend/public/api'
+const API_URL = import.meta.env.VITE_API_URL || 'https://paytrack.sn/backend/public/api'
 
 export default function AtaabaAdminPage() {
   const [stats, setStats] = useState(null)

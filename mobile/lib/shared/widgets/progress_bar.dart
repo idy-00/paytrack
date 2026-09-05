@@ -50,12 +50,7 @@ class PayTrackProgressBar extends StatelessWidget {
               widthFactor: (percent / 100).clamp(0.0, 1.0),
               child: Container(
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      _color,
-                      _color.withValues(alpha: 0.7),
-                    ],
-                  ),
+                  color: _color,
                   borderRadius: BorderRadius.circular(height / 2),
                   boxShadow: [
                     BoxShadow(
@@ -73,7 +68,7 @@ class PayTrackProgressBar extends StatelessWidget {
           const SizedBox(width: 10),
           Text(
             '$percent%',
-            style: GoogleFonts.spaceGrotesk(
+            style: GoogleFonts.sourceSans3(
               fontSize: 12,
               fontWeight: FontWeight.w700,
               color: _color,

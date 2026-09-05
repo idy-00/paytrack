@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { Eye, EyeOff, ArrowRight, AlertCircle, CheckCircle2, ArrowLeft } from 'lucide-react'
 import Logo from '@/components/ui/Logo'
 import { useAuthStore } from '@/store/authStore'
+import { api } from '@/lib/api'
 
 // ── Login form ──────────────────────────────────────────────────────
 function LoginForm({ onForgot }) {
@@ -46,23 +47,6 @@ function LoginForm({ onForgot }) {
       <h2 className="text-2xl font-bold mb-1" style={{ color: '#1A1A1A' }}>Bon retour</h2>
       <p className="text-sm mb-7" style={{ color: '#6B7280' }}>Connectez-vous à votre espace PayTrack</p>
 
-      {/* Demo hint */}
-      <div className="rounded-xl p-3.5 mb-6 space-y-1"
-        style={{ background: '#EEF4FE', border: '1px solid #DBEAFE' }}>
-        <p className="text-xs" style={{ color: '#1D6FE8' }}>
-          <strong>Admin :</strong> admin@paytrack.com &middot; admin2024
-        </p>
-        <p className="text-xs" style={{ color: '#1D6FE8' }}>
-          <strong>Démo admin :</strong> moussa@phoneshop-dakar.com &middot; demo1234
-        </p>
-        <p className="text-xs" style={{ color: '#1D6FE8' }}>
-          <strong>Démo vendeur :</strong> fatou@phoneshop-dakar.com &middot; demo1234
-        </p>
-        <p className="text-xs" style={{ color: '#1D6FE8' }}>
-          <strong>Démo client :</strong> aminata@gmail.com &middot; demo1234
-        </p>
-      </div>
-
       <form onSubmit={handleSubmit} noValidate className="space-y-4">
         {/* Email */}
         <div>
@@ -89,7 +73,7 @@ function LoginForm({ onForgot }) {
             </label>
             <button type="button" onClick={onForgot}
               className="text-xs font-medium hover:underline bg-transparent border-0 cursor-pointer p-0"
-              style={{ color: '#1D6FE8' }}>
+              style={{ color: '#3768AF' }}>
               Mot de passe oublié ?
             </button>
           </div>
@@ -169,7 +153,7 @@ function LoginForm({ onForgot }) {
 
       <p className="text-sm text-center mt-6" style={{ color: '#6B7280' }}>
         Pas encore de compte ?{' '}
-        <Link to="/register" className="font-semibold hover:underline" style={{ color: '#1D6FE8' }}>Créer un compte</Link>
+        <Link to="/register" className="font-semibold hover:underline" style={{ color: '#3768AF' }}>Créer un compte</Link>
       </p>
     </>
   )
@@ -177,28 +161,51 @@ function LoginForm({ onForgot }) {
 
 // ── Forgot password form ────────────────────────────────────────────
 function ForgotForm({ onBack }) {
-  const [email, setEmail]     = useState('')
+  const [email, setEmail] = useState('')
+  const [code, setCode] = useState('')
+  const [password, setPassword] = useState('')
+  const [passwordConfirmation, setPasswordConfirmation] = useState('')
+  const [step, setStep] = useState('email')
+  const [resetToken, setResetToken] = useState('')
   const [loading, setLoading] = useState(false)
-  const [sent, setSent]       = useState(false)
+  const [error, setError] = useState('')
 
   const handleSubmit = async e => {
     e.preventDefault()
+    setError('')
     setLoading(true)
-    await new Promise(r => setTimeout(r, 800))
-    setLoading(false)
-    setSent(true)
+    try {
+      if (step === 'email') {
+        await api.sendOtp(email, 'password_reset')
+        setStep('code')
+      } else if (step === 'code') {
+        const response = await api.verifyOtp(email, code, 'password_reset')
+        setResetToken(response.reset_token)
+        setStep('password')
+      } else {
+        if (password !== passwordConfirmation) {
+          setError('Les mots de passe ne correspondent pas.')
+          return
+        }
+        await api.resetPasswordWithOtp(resetToken, password, passwordConfirmation)
+        setStep('done')
+      }
+    } catch (err) {
+      setError(err.message || 'Une erreur est survenue. Réessayez.')
+    } finally {
+      setLoading(false)
+    }
   }
 
-  if (sent) {
+  if (step === 'done') {
     return (
       <div className="text-center py-6 animate-scale-in">
         <div className="w-14 h-14 rounded-2xl bg-green-50 flex items-center justify-center mx-auto mb-5">
           <CheckCircle2 size={28} className="text-success" />
         </div>
-        <h2 className="text-xl font-bold mb-2" style={{ color: '#1A1A1A' }}>Email envoyé !</h2>
+        <h2 className="text-xl font-bold mb-2" style={{ color: '#1A1A1A' }}>Mot de passe mis à jour</h2>
         <p className="text-sm max-w-xs mx-auto mb-7" style={{ color: '#6B7280' }}>
-          Si un compte existe pour <strong style={{ color: '#1A1A1A' }}>{email}</strong>,
-          vous recevrez un lien sous quelques minutes.
+          Votre mot de passe a été changé. Vous pouvez maintenant vous connecter.
         </p>
         <button onClick={onBack}
           className="btn btn-secondary gap-2 mx-auto">
@@ -217,19 +224,39 @@ function ForgotForm({ onBack }) {
       </button>
 
       <h2 className="text-2xl font-bold mb-1" style={{ color: '#1A1A1A' }}>Mot de passe oublié</h2>
-      <p className="text-sm mb-7" style={{ color: '#6B7280' }}>Saisissez votre email pour recevoir un lien de réinitialisation.</p>
+      <p className="text-sm mb-7" style={{ color: '#6B7280' }}>
+        {step === 'email' && 'Saisissez votre email pour recevoir un code de réinitialisation.'}
+        {step === 'code' && `Saisissez le code à 6 chiffres envoyé à ${email}.`}
+        {step === 'password' && 'Choisissez un nouveau mot de passe sécurisé.'}
+      </p>
 
       <form onSubmit={handleSubmit} noValidate className="space-y-4">
-        <div>
-          <label className="block text-sm font-semibold mb-1.5" style={{ color: '#1A1A1A' }}>Email</label>
-          <input type="email" required value={email} onChange={e => setEmail(e.target.value)}
+        {step === 'email' && <div>
+          <label htmlFor="forgot-email" className="block text-sm font-semibold mb-1.5" style={{ color: '#1A1A1A' }}>Email</label>
+          <input id="forgot-email" type="email" required value={email} onChange={e => setEmail(e.target.value)}
             className="input" placeholder="vous@email.com" />
-        </div>
-        <button type="submit" disabled={loading || !email}
+        </div>}
+        {step === 'code' && <div>
+          <label htmlFor="forgot-code" className="block text-sm font-semibold mb-1.5" style={{ color: '#1A1A1A' }}>Code de vérification</label>
+          <input id="forgot-code" inputMode="numeric" autoComplete="one-time-code" maxLength="6" required value={code}
+            onChange={e => setCode(e.target.value.replace(/\D/g, ''))} className="input tracking-[0.45em]" placeholder="123456" />
+        </div>}
+        {step === 'password' && <>
+          <div>
+            <label htmlFor="forgot-password" className="block text-sm font-semibold mb-1.5" style={{ color: '#1A1A1A' }}>Nouveau mot de passe</label>
+            <input id="forgot-password" type="password" autoComplete="new-password" minLength="8" required value={password} onChange={e => setPassword(e.target.value)} className="input" placeholder="8 caractères minimum" />
+          </div>
+          <div>
+            <label htmlFor="forgot-password-confirmation" className="block text-sm font-semibold mb-1.5" style={{ color: '#1A1A1A' }}>Confirmer le mot de passe</label>
+            <input id="forgot-password-confirmation" type="password" autoComplete="new-password" minLength="8" required value={passwordConfirmation} onChange={e => setPasswordConfirmation(e.target.value)} className="input" placeholder="Répétez le mot de passe" />
+          </div>
+        </>}
+        {error && <p className="flex gap-2 text-sm text-red-600"><AlertCircle size={16} className="shrink-0 mt-0.5" />{error}</p>}
+        <button type="submit" disabled={loading || (step === 'email' && !email) || (step === 'code' && code.length !== 6) || (step === 'password' && (!password || !passwordConfirmation))}
           className="btn btn-primary w-full justify-center gap-2" style={{ minHeight: 46 }}>
           {loading
             ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            : <>Envoyer le lien <ArrowRight size={16} /></>
+            : <>{step === 'email' ? 'Envoyer le code' : step === 'code' ? 'Vérifier le code' : 'Enregistrer le mot de passe'} <ArrowRight size={16} /></>
           }
         </button>
       </form>

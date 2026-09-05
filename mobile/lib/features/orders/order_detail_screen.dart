@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../core/services/api_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/formatters.dart';
+import '../../core/utils/json_parsers.dart';
 
 class OrderDetailScreen extends ConsumerStatefulWidget {
   final int orderId;
@@ -34,7 +35,8 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
     } catch (e) {
       setState(() => _loading = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Erreur: $e')));
       }
     }
   }
@@ -44,17 +46,20 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
       await ApiService.updateOrderStatus(widget.orderId, status);
       _loadOrder();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Statut mis à jour')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Statut mis à jour')));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Erreur: $e')));
       }
     }
   }
 
   Future<void> _recordPayment() async {
-    final amountController = TextEditingController(text: '${_order?['remaining_amount'] ?? 0}');
+    final amountController =
+        TextEditingController(text: '${_order?['remaining_amount'] ?? 0}');
     String method = 'especes';
 
     final result = await showModalBottomSheet<bool>(
@@ -68,27 +73,32 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Enregistrer un paiement', style: GoogleFonts.spaceGrotesk(fontSize: 18, fontWeight: FontWeight.w700)),
+              Text('Enregistrer un paiement',
+                  style: GoogleFonts.sourceSans3(
+                      fontSize: 18, fontWeight: FontWeight.w700)),
               const SizedBox(height: 16),
               TextField(
                 controller: amountController,
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(
                   labelText: 'Montant (FCFA)',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                value: method,
+                initialValue: method,
                 decoration: InputDecoration(
                   labelText: 'Mode de paiement',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
                 items: const [
                   DropdownMenuItem(value: 'especes', child: Text('Espèces')),
                   DropdownMenuItem(value: 'wave', child: Text('Wave')),
-                  DropdownMenuItem(value: 'orange_money', child: Text('Orange Money')),
+                  DropdownMenuItem(
+                      value: 'orange_money', child: Text('Orange Money')),
                 ],
                 onChanged: (v) => method = v ?? 'especes',
               ),
@@ -97,24 +107,39 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () async {
+                    final amount = int.tryParse(amountController.text.trim());
+                    final remaining = jsonInt(_order?['remaining_amount']);
+                    if (amount == null || amount <= 0 || amount > remaining) {
+                      ScaffoldMessenger.of(ctx).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                              'Saisissez un montant valide, sans dépasser le reste à payer.'),
+                        ),
+                      );
+                      return;
+                    }
                     try {
                       await ApiService.recordOrderPayment(widget.orderId, {
-                        'amount': int.parse(amountController.text),
+                        'amount': amount,
                         'payment_method': method,
                       });
                       if (ctx.mounted) Navigator.pop(ctx, true);
                     } catch (e) {
                       if (ctx.mounted) {
-                        ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text('Erreur: $e')));
+                        ScaffoldMessenger.of(ctx).showSnackBar(
+                            SnackBar(content: Text('Erreur: $e')));
                       }
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.blue,
+                    backgroundColor: AppColors.green,
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: Text('Enregistrer', style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600)),
+                  child: Text('Enregistrer',
+                      style: GoogleFonts.sourceSans3(
+                          color: Colors.white, fontWeight: FontWeight.w600)),
                 ),
               ),
             ],
@@ -148,9 +173,13 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Paiement en ligne', style: GoogleFonts.spaceGrotesk(fontSize: 18, fontWeight: FontWeight.w700)),
+              Text('Paiement en ligne',
+                  style: GoogleFonts.sourceSans3(
+                      fontSize: 18, fontWeight: FontWeight.w700)),
               const SizedBox(height: 8),
-              Text('Via Wave, Orange Money, Free Money ou carte bancaire', style: GoogleFonts.inter(color: AppColors.sub, fontSize: 13)),
+              Text('Via Wave, Orange Money, Free Money ou carte bancaire',
+                  style: GoogleFonts.sourceSans3(
+                      color: AppColors.sub, fontSize: 13)),
               const SizedBox(height: 16),
               TextField(
                 controller: amountController,
@@ -158,7 +187,8 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                 decoration: InputDecoration(
                   labelText: 'Montant (FCFA)',
                   helperText: 'Reste à payer: ${formatAmount(remaining)}',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
               ),
               const SizedBox(height: 20),
@@ -168,17 +198,21 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                   onPressed: () {
                     final val = int.tryParse(amountController.text) ?? 0;
                     if (val < 100) {
-                      ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Minimum 100 FCFA')));
+                      ScaffoldMessenger.of(ctx).showSnackBar(
+                          const SnackBar(content: Text('Minimum 100 FCFA')));
                       return;
                     }
                     Navigator.pop(ctx, val);
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.blue,
+                    backgroundColor: AppColors.green,
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: Text('Continuer', style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600)),
+                  child: Text('Continuer',
+                      style: GoogleFonts.sourceSans3(
+                          color: Colors.white, fontWeight: FontWeight.w600)),
                 ),
               ),
             ],
@@ -195,9 +229,13 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
       barrierDismissible: false,
       builder: (_) => const Center(child: CircularProgressIndicator()),
     );
+    var loadingVisible = true;
 
     try {
-      final baseUrl = 'https://lightsalmon-eel-638395.hostingersite.com';
+      const baseUrl = String.fromEnvironment(
+        'PAYTRACK_WEB_BASE_URL',
+        defaultValue: 'https://paytrack.sn',
+      );
       final result = await ApiService.initiateOrderPayment(widget.orderId, {
         'amount': amount,
         'success_url': '$baseUrl/payment/success',
@@ -206,6 +244,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
 
       if (!mounted) return;
       Navigator.pop(context); // Close loading
+      loadingVisible = false;
 
       final paymentUrl = result['payment_url'];
       if (paymentUrl == null) {
@@ -226,20 +265,27 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
         },
       );
 
+      if (!mounted) return;
       if (paymentResult?['success'] == true) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Paiement effectué avec succès!'), backgroundColor: Colors.green),
+          const SnackBar(
+              content: Text('Paiement effectué avec succès!'),
+              backgroundColor: Colors.green),
         );
         _loadOrder();
       } else if (paymentResult != null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(paymentResult['message'] ?? 'Paiement annulé')),
+          SnackBar(
+              content: Text(paymentResult['message'] ?? 'Paiement annulé')),
         );
       }
     } catch (e) {
       if (mounted) {
-        Navigator.pop(context); // Close loading
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
+        if (loadingVisible && context.canPop()) {
+          Navigator.pop(context);
+        }
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Erreur: $e')));
       }
     }
   }
@@ -249,7 +295,21 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
     if (_loading) {
       return Scaffold(
         backgroundColor: AppColors.background,
-        appBar: AppBar(title: const Text('Commande'), backgroundColor: AppColors.surface),
+        appBar: AppBar(
+          leading: IconButton(
+            tooltip: 'Retour',
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () {
+              if (context.canPop()) {
+                context.pop();
+              } else {
+                context.go('/commandes');
+              }
+            },
+          ),
+          title: const Text('Commande'),
+          backgroundColor: AppColors.surface,
+        ),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
@@ -257,7 +317,21 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
     if (_order == null) {
       return Scaffold(
         backgroundColor: AppColors.background,
-        appBar: AppBar(title: const Text('Commande'), backgroundColor: AppColors.surface),
+        appBar: AppBar(
+          leading: IconButton(
+            tooltip: 'Retour',
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () {
+              if (context.canPop()) {
+                context.pop();
+              } else {
+                context.go('/commandes');
+              }
+            },
+          ),
+          title: const Text('Commande'),
+          backgroundColor: AppColors.surface,
+        ),
         body: const Center(child: Text('Commande non trouvée')),
       );
     }
@@ -271,7 +345,19 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text(_order!['reference'] ?? 'Commande', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700)),
+        leading: IconButton(
+          tooltip: 'Retour',
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/commandes');
+            }
+          },
+        ),
+        title: Text(_order!['reference'] ?? 'Commande',
+            style: GoogleFonts.sourceSans3(fontWeight: FontWeight.w700)),
         backgroundColor: AppColors.surface,
         elevation: 0,
       ),
@@ -287,7 +373,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  gradient: AppColors.heroGradient,
+                  color: AppColors.hero,
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Column(
@@ -299,13 +385,20 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                         const Spacer(),
                         Text(
                           _order!['client']?['full_name'] ?? '',
-                          style: GoogleFonts.inter(color: Colors.white70, fontSize: 13),
+                          style: GoogleFonts.sourceSans3(
+                              color: Colors.white70, fontSize: 13),
                         ),
                       ],
                     ),
                     const SizedBox(height: 16),
-                    Text('Total', style: GoogleFonts.inter(color: Colors.white70, fontSize: 12)),
-                    Text(formatAmount(total), style: GoogleFonts.spaceGrotesk(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w700)),
+                    Text('Total',
+                        style: GoogleFonts.sourceSans3(
+                            color: Colors.white70, fontSize: 12)),
+                    Text(formatAmount(total),
+                        style: GoogleFonts.sourceSans3(
+                            color: Colors.white,
+                            fontSize: 28,
+                            fontWeight: FontWeight.w700)),
                     const SizedBox(height: 12),
                     ClipRRect(
                       borderRadius: BorderRadius.circular(4),
@@ -320,8 +413,14 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('Payé: ${formatAmount(paid)}', style: GoogleFonts.inter(color: Colors.white70, fontSize: 12)),
-                        Text('Reste: ${formatAmount(remaining)}', style: GoogleFonts.inter(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
+                        Text('Payé: ${formatAmount(paid)}',
+                            style: GoogleFonts.sourceSans3(
+                                color: Colors.white70, fontSize: 12)),
+                        Text('Reste: ${formatAmount(remaining)}',
+                            style: GoogleFonts.sourceSans3(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600)),
                       ],
                     ),
                   ],
@@ -331,54 +430,72 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
               const SizedBox(height: 20),
 
               // Articles
-              Text('Articles', style: GoogleFonts.spaceGrotesk(fontSize: 16, fontWeight: FontWeight.w700)),
+              Text('Articles',
+                  style: GoogleFonts.sourceSans3(
+                      fontSize: 16, fontWeight: FontWeight.w700)),
               const SizedBox(height: 12),
               ...(_order!['items'] as List? ?? []).map((item) => Container(
-                margin: const EdgeInsets.only(bottom: 8),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.borderSoft),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(item['article_name'] ?? '', style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
-                          Text('${item['quantity']} x ${formatAmount(item['unit_price'] ?? 0)}', style: GoogleFonts.inter(color: AppColors.sub, fontSize: 12)),
-                        ],
-                      ),
+                    margin: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.borderSoft),
                     ),
-                    Text(formatAmount(item['total_price'] ?? 0), style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700)),
-                  ],
-                ),
-              )),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(item['article_name'] ?? '',
+                                  style: GoogleFonts.sourceSans3(
+                                      fontWeight: FontWeight.w600)),
+                              Text(
+                                  '${item['quantity']} x ${formatAmount(item['unit_price'] ?? 0)}',
+                                  style: GoogleFonts.sourceSans3(
+                                      color: AppColors.sub, fontSize: 12)),
+                            ],
+                          ),
+                        ),
+                        Text(formatAmount(item['total_price'] ?? 0),
+                            style: GoogleFonts.sourceSans3(
+                                fontWeight: FontWeight.w700)),
+                      ],
+                    ),
+                  )),
 
               const SizedBox(height: 20),
 
               // Payments
               if ((_order!['payments'] as List?)?.isNotEmpty == true) ...[
-                Text('Paiements', style: GoogleFonts.spaceGrotesk(fontSize: 16, fontWeight: FontWeight.w700)),
+                Text('Paiements',
+                    style: GoogleFonts.sourceSans3(
+                        fontSize: 16, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 12),
                 ...(_order!['payments'] as List).map((p) => Container(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: AppColors.successLight,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.check_circle, color: AppColors.success, size: 20),
-                      const SizedBox(width: 8),
-                      Expanded(child: Text(p['payment_method'] ?? '', style: GoogleFonts.inter(fontSize: 13))),
-                      Text(formatAmount(p['amount'] ?? 0), style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700, color: AppColors.success)),
-                    ],
-                  ),
-                )),
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.successLight,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.check_circle,
+                              color: AppColors.success, size: 20),
+                          const SizedBox(width: 8),
+                          Expanded(
+                              child: Text(p['payment_method'] ?? '',
+                                  style:
+                                      GoogleFonts.sourceSans3(fontSize: 13))),
+                          Text(formatAmount(p['amount'] ?? 0),
+                              style: GoogleFonts.sourceSans3(
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.success)),
+                        ],
+                      ),
+                    )),
                 const SizedBox(height: 20),
               ],
 
@@ -390,11 +507,14 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                   child: ElevatedButton.icon(
                     onPressed: _payOnline,
                     icon: const Icon(Icons.credit_card, color: Colors.white),
-                    label: Text('Payer en ligne (Wave, OM...)', style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600)),
+                    label: Text('Payer en ligne (Wave, OM...)',
+                        style: GoogleFonts.sourceSans3(
+                            color: Colors.white, fontWeight: FontWeight.w600)),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.blue,
+                      backgroundColor: AppColors.green,
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
                     ),
                   ),
                 ),
@@ -405,10 +525,13 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                   child: OutlinedButton.icon(
                     onPressed: _recordPayment,
                     icon: const Icon(Icons.money),
-                    label: Text('Paiement manuel (espèces)', style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
+                    label: Text('Paiement manuel (espèces)',
+                        style: GoogleFonts.sourceSans3(
+                            fontWeight: FontWeight.w600)),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
                     ),
                   ),
                 ),
@@ -422,7 +545,9 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                     Expanded(
                       child: OutlinedButton(
                         onPressed: () => _updateStatus('cancelled'),
-                        style: OutlinedButton.styleFrom(foregroundColor: Colors.red, padding: const EdgeInsets.symmetric(vertical: 12)),
+                        style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.red,
+                            padding: const EdgeInsets.symmetric(vertical: 12)),
                         child: const Text('Annuler'),
                       ),
                     ),
@@ -430,8 +555,12 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                     Expanded(
                       child: ElevatedButton(
                         onPressed: () => _updateStatus('confirmed'),
-                        style: ElevatedButton.styleFrom(backgroundColor: AppColors.success, padding: const EdgeInsets.symmetric(vertical: 12)),
-                        child: Text('Confirmer', style: GoogleFonts.inter(color: Colors.white)),
+                        style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.success,
+                            padding: const EdgeInsets.symmetric(vertical: 12)),
+                        child: Text('Confirmer',
+                            style:
+                                GoogleFonts.sourceSans3(color: Colors.white)),
                       ),
                     ),
                   ],
@@ -442,8 +571,11 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () => _updateStatus('preparing'),
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, padding: const EdgeInsets.symmetric(vertical: 14)),
-                    child: Text('Démarrer préparation', style: GoogleFonts.inter(color: Colors.white)),
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.orange,
+                        padding: const EdgeInsets.symmetric(vertical: 14)),
+                    child: Text('Démarrer préparation',
+                        style: GoogleFonts.sourceSans3(color: Colors.white)),
                   ),
                 ),
 
@@ -452,8 +584,11 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () => _updateStatus('ready'),
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.purple, padding: const EdgeInsets.symmetric(vertical: 14)),
-                    child: Text('Marquer prête', style: GoogleFonts.inter(color: Colors.white)),
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.purple,
+                        padding: const EdgeInsets.symmetric(vertical: 14)),
+                    child: Text('Marquer prête',
+                        style: GoogleFonts.sourceSans3(color: Colors.white)),
                   ),
                 ),
 
@@ -462,8 +597,11 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () => _updateStatus('delivered'),
-                    style: ElevatedButton.styleFrom(backgroundColor: AppColors.success, padding: const EdgeInsets.symmetric(vertical: 14)),
-                    child: Text('Confirmer livraison', style: GoogleFonts.inter(color: Colors.white)),
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.success,
+                        padding: const EdgeInsets.symmetric(vertical: 14)),
+                    child: Text('Confirmer livraison',
+                        style: GoogleFonts.sourceSans3(color: Colors.white)),
                   ),
                 ),
             ],
@@ -485,8 +623,13 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
     final c = config[status] ?? config['pending']!;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
-      child: Text(c['label'] as String, style: GoogleFonts.inter(color: c['color'] as Color, fontSize: 12, fontWeight: FontWeight.w600)),
+      decoration: BoxDecoration(
+          color: Colors.white, borderRadius: BorderRadius.circular(20)),
+      child: Text(c['label'] as String,
+          style: GoogleFonts.sourceSans3(
+              color: c['color'] as Color,
+              fontSize: 12,
+              fontWeight: FontWeight.w600)),
     );
   }
 }

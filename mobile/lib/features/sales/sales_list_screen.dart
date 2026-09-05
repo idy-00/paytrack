@@ -45,7 +45,7 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
       backgroundColor: AppColors.background,
       floatingActionButton: Container(
         decoration: BoxDecoration(
-          gradient: AppColors.heroGradient,
+          color: AppColors.green,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
@@ -91,7 +91,7 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
                   const SizedBox(width: 14),
                   Text(
                     'Ventes',
-                    style: GoogleFonts.spaceGrotesk(
+                    style: GoogleFonts.sourceSans3(
                       fontSize: 24,
                       fontWeight: FontWeight.w700,
                       color: AppColors.ink,
@@ -100,14 +100,15 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
                   ),
                   const SizedBox(width: 10),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: AppColors.blueLight,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       '${state.sales.length}',
-                      style: GoogleFonts.spaceGrotesk(
+                      style: GoogleFonts.sourceSans3(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
                         color: AppColors.blue,
@@ -130,18 +131,22 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
                 ),
                 child: TextField(
                   onChanged: (v) => setState(() => _searchQuery = v),
-                  style: GoogleFonts.inter(fontSize: 14, color: AppColors.ink),
+                  style: GoogleFonts.sourceSans3(
+                      fontSize: 14, color: AppColors.ink),
                   cursorColor: AppColors.blue,
                   decoration: InputDecoration(
                     hintText: 'Rechercher client, article, réf...',
-                    hintStyle: GoogleFonts.inter(fontSize: 13, color: AppColors.hint),
+                    hintStyle: GoogleFonts.sourceSans3(
+                        fontSize: 13, color: AppColors.hint),
                     prefixIcon: const Padding(
                       padding: EdgeInsets.only(left: 14, right: 10),
-                      child: Icon(Icons.search_rounded, size: 20, color: AppColors.muted),
+                      child: Icon(Icons.search_rounded,
+                          size: 20, color: AppColors.muted),
                     ),
                     prefixIconConstraints: const BoxConstraints(minWidth: 0),
                     suffixIcon: _searchQuery.isNotEmpty
                         ? IconButton(
+                            tooltip: 'Effacer la recherche',
                             icon: const Icon(Icons.clear_rounded, size: 16),
                             color: AppColors.sub,
                             onPressed: () => setState(() => _searchQuery = ''),
@@ -149,7 +154,8 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
                         : null,
                     filled: true,
                     fillColor: Colors.transparent,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 14),
                     border: InputBorder.none,
                     enabledBorder: InputBorder.none,
                     focusedBorder: InputBorder.none,
@@ -186,7 +192,8 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
                 alignment: Alignment.centerLeft,
                 child: Text(
                   '${filtered.length} résultat${filtered.length != 1 ? 's' : ''}',
-                  style: GoogleFonts.inter(fontSize: 12, color: AppColors.sub),
+                  style: GoogleFonts.sourceSans3(
+                      fontSize: 12, color: AppColors.sub),
                 ),
               ),
             ),
@@ -216,23 +223,24 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          gradient: isSelected ? AppColors.heroGradient : null,
-          color: isSelected ? null : AppColors.surface,
+          color: isSelected ? AppColors.green : AppColors.surface,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: isSelected ? Colors.transparent : AppColors.border,
           ),
-          boxShadow: isSelected ? [
-            BoxShadow(
-              color: AppColors.blue.withValues(alpha: 0.2),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ] : null,
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: AppColors.blue.withValues(alpha: 0.2),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
         ),
         child: Text(
           label,
-          style: GoogleFonts.inter(
+          style: GoogleFonts.sourceSans3(
             fontSize: 12,
             fontWeight: FontWeight.w600,
             color: isSelected ? Colors.white : AppColors.sub,
@@ -268,26 +276,19 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        AppColors.blue.withValues(alpha: 0.12),
-                        AppColors.blue.withValues(alpha: 0.04),
-                      ],
-                    ),
+                    color: AppColors.greenLight,
                     borderRadius: BorderRadius.circular(13),
                     border: Border.all(
-                      color: AppColors.blue.withValues(alpha: 0.1),
+                      color: AppColors.green.withValues(alpha: 0.14),
                     ),
                   ),
                   child: Center(
                     child: Text(
                       initials,
-                      style: GoogleFonts.spaceGrotesk(
+                      style: GoogleFonts.sourceSans3(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.blue,
+                        color: AppColors.greenDeep,
                       ),
                     ),
                   ),
@@ -299,7 +300,7 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
                     children: [
                       Text(
                         sale.clientName,
-                        style: GoogleFonts.inter(
+                        style: GoogleFonts.sourceSans3(
                           fontWeight: FontWeight.w600,
                           fontSize: 14,
                           color: AppColors.ink,
@@ -308,7 +309,7 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
                       const SizedBox(height: 2),
                       Text(
                         sale.articleName,
-                        style: GoogleFonts.inter(
+                        style: GoogleFonts.sourceSans3(
                           fontSize: 12,
                           color: AppColors.sub,
                         ),
@@ -334,7 +335,7 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
               children: [
                 Text(
                   '${formatAmount(sale.paidAmount)} / ${formatAmount(sale.totalAmount)}',
-                  style: GoogleFonts.spaceGrotesk(
+                  style: GoogleFonts.sourceSans3(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                     color: AppColors.ink,
@@ -343,7 +344,7 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
                 ),
                 Text(
                   '${sale.installmentCount} tranches · ${sale.frequency}',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.sourceSans3(
                     fontSize: 10,
                     color: AppColors.muted,
                   ),
@@ -376,7 +377,7 @@ class _SalesListScreenState extends ConsumerState<SalesListScreen> {
           const SizedBox(height: 16),
           Text(
             'Aucune vente trouvée',
-            style: GoogleFonts.inter(
+            style: GoogleFonts.sourceSans3(
               fontSize: 15,
               fontWeight: FontWeight.w500,
               color: AppColors.sub,

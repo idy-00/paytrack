@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/services/api_service.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/utils/json_parsers.dart';
 
 class InventoryScreen extends ConsumerStatefulWidget {
   const InventoryScreen({super.key});
@@ -29,6 +31,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
         ApiService.getInventories(),
         ApiService.getArticles(),
       ]);
+      if (!mounted) return;
       setState(() {
         _inventories = results[0]['data'] ?? [];
         _products = results[1]['data'] ?? [];
@@ -36,11 +39,14 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
         _error = null;
       });
     } on ApiException catch (e) {
+      if (!mounted) return;
       setState(() {
         _loading = false;
-        _error = e.statusCode == 403 ? 'Plan Pro ou Business requis' : e.message;
+        _error =
+            e.statusCode == 403 ? 'Plan Pro ou Business requis' : e.message;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _loading = false;
         _error = '$e';
@@ -57,15 +63,18 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
     }
 
     final nameController = TextEditingController(
-      text: 'Inventaire - ${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year}',
+      text:
+          'Inventaire - ${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year}',
     );
     final notesController = TextEditingController();
-    List<Map<String, dynamic>> countItems = _products.map((p) => {
-      'article_id': p['id'],
-      'name': p['name'],
-      'system_quantity': p['stock'] ?? p['quantity'] ?? 0,
-      'counted_quantity': null as int?,
-    }).toList();
+    List<Map<String, dynamic>> countItems = _products
+        .map((p) => {
+              'article_id': p['id'],
+              'name': p['name'],
+              'system_quantity': jsonInt(p['stock'] ?? p['quantity']),
+              'counted_quantity': null as int?,
+            })
+        .toList();
 
     final result = await showModalBottomSheet<bool>(
       context: context,
@@ -73,7 +82,8 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
       backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setModalState) {
-          final countedCount = countItems.where((i) => i['counted_quantity'] != null).length;
+          final countedCount =
+              countItems.where((i) => i['counted_quantity'] != null).length;
 
           return Container(
             height: MediaQuery.of(ctx).size.height * 0.9,
@@ -87,7 +97,8 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+                    border:
+                        Border(bottom: BorderSide(color: Colors.grey.shade200)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -97,10 +108,12 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                           Expanded(
                             child: Text(
                               'Nouvel inventaire',
-                              style: GoogleFonts.spaceGrotesk(fontSize: 18, fontWeight: FontWeight.w700),
+                              style: GoogleFonts.sourceSans3(
+                                  fontSize: 18, fontWeight: FontWeight.w700),
                             ),
                           ),
                           IconButton(
+                            tooltip: 'Fermer',
                             icon: const Icon(Icons.close),
                             onPressed: () => Navigator.pop(ctx),
                           ),
@@ -111,8 +124,10 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                         controller: nameController,
                         decoration: InputDecoration(
                           labelText: 'Nom de l\'inventaire',
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 14),
                         ),
                       ),
                     ],
@@ -121,21 +136,25 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
 
                 // Progress
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   color: Colors.grey.shade50,
                   child: Row(
                     children: [
-                      Icon(Icons.inventory_2, size: 18, color: AppColors.blue),
+                      const Icon(Icons.inventory_2, size: 18, color: AppColors.blue),
                       const SizedBox(width: 8),
                       Text(
                         '$countedCount / ${countItems.length} articles comptés',
-                        style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13),
+                        style: GoogleFonts.sourceSans3(
+                            fontWeight: FontWeight.w600, fontSize: 13),
                       ),
                       const Spacer(),
                       if (countedCount > 0)
                         Text(
                           '${((countedCount / countItems.length) * 100).round()}%',
-                          style: GoogleFonts.spaceGrotesk(color: AppColors.blue, fontWeight: FontWeight.w700),
+                          style: GoogleFonts.sourceSans3(
+                              color: AppColors.blue,
+                              fontWeight: FontWeight.w700),
                         ),
                     ],
                   ),
@@ -150,17 +169,23 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                     itemBuilder: (_, i) {
                       final item = countItems[i];
                       final counted = item['counted_quantity'] as int?;
-                      final system = item['system_quantity'] as int;
+                      final system = jsonInt(item['system_quantity']);
                       final diff = counted != null ? counted - system : null;
 
                       return Container(
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: counted != null ? (diff == 0 ? Colors.green.shade50 : Colors.amber.shade50) : Colors.grey.shade50,
+                          color: counted != null
+                              ? (diff == 0
+                                  ? Colors.green.shade50
+                                  : Colors.amber.shade50)
+                              : Colors.grey.shade50,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: counted != null
-                                ? (diff == 0 ? Colors.green.shade200 : Colors.amber.shade200)
+                                ? (diff == 0
+                                    ? Colors.green.shade200
+                                    : Colors.amber.shade200)
                                 : Colors.grey.shade200,
                           ),
                         ),
@@ -170,11 +195,15 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(item['name'], style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14)),
+                                  Text(item['name'],
+                                      style: GoogleFonts.sourceSans3(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 14)),
                                   const SizedBox(height: 4),
                                   Text(
                                     'Stock système: $system',
-                                    style: GoogleFonts.inter(color: AppColors.sub, fontSize: 12),
+                                    style: GoogleFonts.sourceSans3(
+                                        color: AppColors.sub, fontSize: 12),
                                   ),
                                 ],
                               ),
@@ -186,15 +215,18 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                                 textAlign: TextAlign.center,
                                 decoration: InputDecoration(
                                   hintText: '-',
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                                  contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+                                  border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8)),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 10),
                                   isDense: true,
                                   filled: true,
                                   fillColor: Colors.white,
                                 ),
                                 onChanged: (v) {
                                   setModalState(() {
-                                    countItems[i]['counted_quantity'] = v.isNotEmpty ? int.tryParse(v) : null;
+                                    countItems[i]['counted_quantity'] =
+                                        v.isNotEmpty ? int.tryParse(v) : null;
                                   });
                                 },
                               ),
@@ -206,9 +238,13 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                                   ? Text(
                                       '${diff > 0 ? '+' : ''}$diff',
                                       textAlign: TextAlign.center,
-                                      style: GoogleFonts.spaceGrotesk(
+                                      style: GoogleFonts.sourceSans3(
                                         fontWeight: FontWeight.w700,
-                                        color: diff > 0 ? Colors.green : (diff < 0 ? Colors.red : Colors.grey),
+                                        color: diff > 0
+                                            ? Colors.green
+                                            : (diff < 0
+                                                ? Colors.red
+                                                : Colors.grey),
                                       ),
                                     )
                                   : const SizedBox(),
@@ -225,7 +261,8 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: Colors.grey.shade50,
-                    border: Border(top: BorderSide(color: Colors.grey.shade200)),
+                    border:
+                        Border(top: BorderSide(color: Colors.grey.shade200)),
                   ),
                   child: Row(
                     children: [
@@ -234,7 +271,8 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                           onPressed: () => Navigator.pop(ctx),
                           style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
                           ),
                           child: const Text('Annuler'),
                         ),
@@ -247,12 +285,15 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                               : () async {
                                   try {
                                     final items = countItems
-                                        .where((i) => i['counted_quantity'] != null)
+                                        .where((i) =>
+                                            i['counted_quantity'] != null)
                                         .map((i) => {
-                                          'article_id': i['article_id'],
-                                          'system_quantity': i['system_quantity'],
-                                          'counted_quantity': i['counted_quantity'],
-                                        })
+                                              'article_id': i['article_id'],
+                                              'system_quantity':
+                                                  i['system_quantity'],
+                                              'counted_quantity':
+                                                  i['counted_quantity'],
+                                            })
                                         .toList();
                                     await ApiService.createInventory({
                                       'name': nameController.text,
@@ -262,16 +303,21 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                                     if (ctx.mounted) Navigator.pop(ctx, true);
                                   } catch (e) {
                                     if (ctx.mounted) {
-                                      ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text('$e')));
+                                      ScaffoldMessenger.of(ctx).showSnackBar(
+                                          SnackBar(content: Text('$e')));
                                     }
                                   }
                                 },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.blue,
+                            backgroundColor: AppColors.green,
                             padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
                           ),
-                          child: Text('Créer', style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600)),
+                          child: Text('Créer',
+                              style: GoogleFonts.sourceSans3(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600)),
                         ),
                       ),
                     ],
@@ -284,8 +330,10 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
       ),
     );
 
+    if (!mounted) return;
     if (result == true) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Inventaire créé')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Inventaire créé')));
       _loadData();
     }
   }
@@ -295,21 +343,31 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Terminer l\'inventaire'),
-        content: const Text('Les écarts seront appliqués au stock. Confirmer ?'),
+        content:
+            const Text('Les écarts seront appliqués au stock. Confirmer ?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Confirmer')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Annuler')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Confirmer')),
         ],
       ),
     );
 
+    if (!mounted) return;
     if (confirm == true) {
       try {
         await ApiService.completeInventory(id);
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Inventaire terminé, stock ajusté')));
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Inventaire terminé, stock ajusté')));
         _loadData();
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+        if (!mounted) return;
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('$e')));
       }
     }
   }
@@ -319,10 +377,22 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text('Inventaires', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700)),
+        leading: IconButton(
+          tooltip: 'Retour',
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/dashboard');
+            }
+          },
+        ),
+        title: Text('Inventaires',
+            style: GoogleFonts.sourceSans3(fontWeight: FontWeight.w700)),
         backgroundColor: AppColors.surface,
         actions: [
-          IconButton(icon: const Icon(Icons.add), onPressed: _createInventory),
+          IconButton(tooltip: 'Créer un inventaire', icon: const Icon(Icons.add), onPressed: _createInventory),
         ],
       ),
       body: _loading
@@ -334,12 +404,16 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.lock, size: 48, color: AppColors.muted),
+                        const Icon(Icons.lock, size: 48, color: AppColors.muted),
                         const SizedBox(height: 16),
-                        Text(_error!, textAlign: TextAlign.center, style: GoogleFonts.inter(color: AppColors.sub)),
+                        Text(_error!,
+                            textAlign: TextAlign.center,
+                            style:
+                                GoogleFonts.sourceSans3(color: AppColors.sub)),
                         const SizedBox(height: 16),
                         ElevatedButton(
-                          onPressed: () => Navigator.pushNamed(context, '/subscription'),
+                          onPressed: () =>
+                              Navigator.pushNamed(context, '/subscription'),
                           child: const Text('Voir les plans'),
                         ),
                       ],
@@ -357,9 +431,12 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                                 child: Column(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(Icons.inventory_outlined, size: 64, color: AppColors.muted),
+                                    const Icon(Icons.inventory_outlined,
+                                        size: 64, color: AppColors.muted),
                                     const SizedBox(height: 16),
-                                    Text('Aucun inventaire', style: GoogleFonts.inter(color: AppColors.sub)),
+                                    Text('Aucun inventaire',
+                                        style: GoogleFonts.sourceSans3(
+                                            color: AppColors.sub)),
                                     const SizedBox(height: 16),
                                     ElevatedButton.icon(
                                       onPressed: _createInventory,
@@ -411,8 +488,16 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
-                  isCompleted ? Icons.check_circle : isCancelled ? Icons.cancel : Icons.pending,
-                  color: isCompleted ? Colors.green : isCancelled ? Colors.red : Colors.amber,
+                  isCompleted
+                      ? Icons.check_circle
+                      : isCancelled
+                          ? Icons.cancel
+                          : Icons.pending,
+                  color: isCompleted
+                      ? Colors.green
+                      : isCancelled
+                          ? Colors.red
+                          : Colors.amber,
                   size: 20,
                 ),
               ),
@@ -421,10 +506,13 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(inv['name'] ?? inv['reference'] ?? '', style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
+                    Text(inv['name'] ?? inv['reference'] ?? '',
+                        style: GoogleFonts.sourceSans3(
+                            fontWeight: FontWeight.w600)),
                     Text(
                       _formatDate(inv['created_at'] ?? ''),
-                      style: GoogleFonts.inter(color: AppColors.sub, fontSize: 12),
+                      style: GoogleFonts.sourceSans3(
+                          color: AppColors.sub, fontSize: 12),
                     ),
                   ],
                 ),
@@ -433,17 +521,25 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    isCompleted ? 'Terminé' : isCancelled ? 'Annulé' : 'En cours',
-                    style: GoogleFonts.inter(
+                    isCompleted
+                        ? 'Terminé'
+                        : isCancelled
+                            ? 'Annulé'
+                            : 'En cours',
+                    style: GoogleFonts.sourceSans3(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: isCompleted ? Colors.green : isCancelled ? Colors.red : Colors.amber.shade700,
+                      color: isCompleted
+                          ? Colors.green
+                          : isCancelled
+                              ? Colors.red
+                              : Colors.amber.shade700,
                     ),
                   ),
                   if (isCompleted && adjustment != 0)
                     Text(
                       '${adjustment > 0 ? '+' : ''}$adjustment',
-                      style: GoogleFonts.spaceGrotesk(
+                      style: GoogleFonts.sourceSans3(
                         fontWeight: FontWeight.w700,
                         color: adjustment > 0 ? Colors.green : Colors.red,
                       ),
@@ -461,13 +557,18 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                     onPressed: () async {
                       try {
                         await ApiService.cancelInventory(inv['id']);
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Inventaire annulé')));
+                        if (!mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Inventaire annulé')));
                         _loadData();
                       } catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+                        if (!mounted) return;
+                        ScaffoldMessenger.of(context)
+                            .showSnackBar(SnackBar(content: Text('$e')));
                       }
                     },
-                    style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
+                    style:
+                        OutlinedButton.styleFrom(foregroundColor: Colors.red),
                     child: const Text('Annuler'),
                   ),
                 ),
@@ -475,8 +576,10 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () => _completeInventory(inv['id']),
-                    style: ElevatedButton.styleFrom(backgroundColor: AppColors.blue),
-                    child: Text('Terminer', style: GoogleFonts.inter(color: Colors.white)),
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.green),
+                    child: Text('Terminer',
+                        style: GoogleFonts.sourceSans3(color: Colors.white)),
                   ),
                 ),
               ],

@@ -228,8 +228,8 @@ export function getProgressPercent(paid, total) {
 
 export function getStatusConfig(status) {
   const configs = {
-    actif:      { label: 'Actif',      className: 'badge-active',  dot: '#1D4ED8' },
-    paye:       { label: 'Payé',       className: 'badge-paid',    dot: '#15803D' },
+    actif:      { label: 'Actif',      className: 'badge-active',  dot: '#3768AF' },
+    paye:       { label: 'Payé',       className: 'badge-paid',    dot: '#44AC45' },
     retard:     { label: 'Retard',     className: 'badge-late',    dot: '#C2410C' },
     litige:     { label: 'Litige',     className: 'badge-dispute', dot: '#BE123C' },
     solde:      { label: 'Soldé',      className: 'badge-settled', dot: '#475569' },

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/services/api_service.dart';
 import '../../core/theme/app_colors.dart';
@@ -27,17 +28,22 @@ class _SuppliersScreenState extends ConsumerState<SuppliersScreen> {
     setState(() => _loading = true);
     try {
       final res = await ApiService.getSuppliers();
+      if (!mounted) return;
       setState(() {
         _suppliers = res['data'] ?? [];
         _loading = false;
         _error = null;
       });
     } on ApiException catch (e) {
+      if (!mounted) return;
       setState(() {
         _loading = false;
-        _error = e.statusCode == 403 ? 'Cette fonctionnalité nécessite le plan Business' : e.message;
+        _error = e.statusCode == 403
+            ? 'Cette fonctionnalité nécessite le plan Business'
+            : e.message;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _loading = false;
         _error = e.toString();
@@ -61,13 +67,16 @@ class _SuppliersScreenState extends ConsumerState<SuppliersScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Nouveau fournisseur', style: GoogleFonts.spaceGrotesk(fontSize: 18, fontWeight: FontWeight.w700)),
+              Text('Nouveau fournisseur',
+                  style: GoogleFonts.sourceSans3(
+                      fontSize: 18, fontWeight: FontWeight.w700)),
               const SizedBox(height: 16),
               TextField(
                 controller: nameController,
                 decoration: InputDecoration(
                   labelText: 'Nom *',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
               ),
               const SizedBox(height: 12),
@@ -76,7 +85,8 @@ class _SuppliersScreenState extends ConsumerState<SuppliersScreen> {
                 keyboardType: TextInputType.phone,
                 decoration: InputDecoration(
                   labelText: 'Téléphone',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
               ),
               const SizedBox(height: 12),
@@ -85,7 +95,8 @@ class _SuppliersScreenState extends ConsumerState<SuppliersScreen> {
                 keyboardType: TextInputType.emailAddress,
                 decoration: InputDecoration(
                   labelText: 'Email',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
               ),
               const SizedBox(height: 20),
@@ -94,7 +105,8 @@ class _SuppliersScreenState extends ConsumerState<SuppliersScreen> {
                 child: ElevatedButton(
                   onPressed: () async {
                     if (nameController.text.isEmpty) {
-                      ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Nom requis')));
+                      ScaffoldMessenger.of(ctx).showSnackBar(
+                          const SnackBar(content: Text('Nom requis')));
                       return;
                     }
                     try {
@@ -106,16 +118,20 @@ class _SuppliersScreenState extends ConsumerState<SuppliersScreen> {
                       if (ctx.mounted) Navigator.pop(ctx, true);
                     } catch (e) {
                       if (ctx.mounted) {
-                        ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text('$e')));
+                        ScaffoldMessenger.of(ctx)
+                            .showSnackBar(SnackBar(content: Text('$e')));
                       }
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.blue,
+                    backgroundColor: AppColors.green,
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: Text('Créer', style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600)),
+                  child: Text('Créer',
+                      style: GoogleFonts.sourceSans3(
+                          color: Colors.white, fontWeight: FontWeight.w600)),
                 ),
               ),
             ],
@@ -124,8 +140,10 @@ class _SuppliersScreenState extends ConsumerState<SuppliersScreen> {
       ),
     );
 
+    if (!mounted) return;
     if (result == true) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Fournisseur créé')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Fournisseur créé')));
       _loadData();
     }
   }
@@ -137,19 +155,29 @@ class _SuppliersScreenState extends ConsumerState<SuppliersScreen> {
         title: const Text('Supprimer'),
         content: const Text('Confirmer la suppression ?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Supprimer', style: TextStyle(color: Colors.red))),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Annuler')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child:
+                  const Text('Supprimer', style: TextStyle(color: Colors.red))),
         ],
       ),
     );
 
+    if (!mounted) return;
     if (confirm == true) {
       try {
         await ApiService.deleteSupplier(id);
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Supprimé')));
+        if (!mounted) return;
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Supprimé')));
         _loadData();
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+        if (!mounted) return;
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('$e')));
       }
     }
   }
@@ -159,11 +187,23 @@ class _SuppliersScreenState extends ConsumerState<SuppliersScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text('Fournisseurs', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700)),
+        leading: IconButton(
+          tooltip: 'Retour',
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/dashboard');
+            }
+          },
+        ),
+        title: Text('Fournisseurs',
+            style: GoogleFonts.sourceSans3(fontWeight: FontWeight.w700)),
         backgroundColor: AppColors.surface,
         elevation: 0,
         actions: [
-          IconButton(icon: const Icon(Icons.add), onPressed: _addSupplier),
+          IconButton(tooltip: 'Ajouter un fournisseur', icon: const Icon(Icons.add), onPressed: _addSupplier),
         ],
       ),
       body: _loading
@@ -175,9 +215,13 @@ class _SuppliersScreenState extends ConsumerState<SuppliersScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.lock, size: 48, color: AppColors.muted),
+                        const Icon(Icons.lock,
+                            size: 48, color: AppColors.muted),
                         const SizedBox(height: 16),
-                        Text(_error!, textAlign: TextAlign.center, style: GoogleFonts.inter(color: AppColors.sub)),
+                        Text(_error!,
+                            textAlign: TextAlign.center,
+                            style:
+                                GoogleFonts.sourceSans3(color: AppColors.sub)),
                       ],
                     ),
                   ),
@@ -193,9 +237,12 @@ class _SuppliersScreenState extends ConsumerState<SuppliersScreen> {
                                 child: Column(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(Icons.local_shipping_outlined, size: 64, color: AppColors.muted),
+                                    const Icon(Icons.local_shipping_outlined,
+                                        size: 64, color: AppColors.muted),
                                     const SizedBox(height: 16),
-                                    Text('Aucun fournisseur', style: GoogleFonts.inter(color: AppColors.sub)),
+                                    Text('Aucun fournisseur',
+                                        style: GoogleFonts.sourceSans3(
+                                            color: AppColors.sub)),
                                     const SizedBox(height: 16),
                                     ElevatedButton.icon(
                                       onPressed: _addSupplier,
@@ -211,7 +258,8 @@ class _SuppliersScreenState extends ConsumerState<SuppliersScreen> {
                       : ListView.builder(
                           padding: const EdgeInsets.all(16),
                           itemCount: _suppliers.length,
-                          itemBuilder: (_, i) => _buildSupplierCard(_suppliers[i]),
+                          itemBuilder: (_, i) =>
+                              _buildSupplierCard(_suppliers[i]),
                         ),
                 ),
     );
@@ -239,7 +287,10 @@ class _SuppliersScreenState extends ConsumerState<SuppliersScreen> {
             child: Center(
               child: Text(
                 (supplier['name'] ?? 'F')[0].toUpperCase(),
-                style: GoogleFonts.spaceGrotesk(color: AppColors.blue, fontWeight: FontWeight.w700, fontSize: 18),
+                style: GoogleFonts.sourceSans3(
+                    color: AppColors.blue,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 18),
               ),
             ),
           ),
@@ -248,21 +299,29 @@ class _SuppliersScreenState extends ConsumerState<SuppliersScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(supplier['name'] ?? '', style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 15)),
+                Text(supplier['name'] ?? '',
+                    style: GoogleFonts.sourceSans3(
+                        fontWeight: FontWeight.w600, fontSize: 15)),
                 if (supplier['phone'] != null)
-                  Text(supplier['phone'], style: GoogleFonts.inter(color: AppColors.sub, fontSize: 12)),
+                  Text(supplier['phone'],
+                      style: GoogleFonts.sourceSans3(
+                          color: AppColors.sub, fontSize: 12)),
                 if (debt > 0)
                   Padding(
                     padding: const EdgeInsets.only(top: 4),
                     child: Text(
                       'Dette: ${formatAmount(debt)}',
-                      style: GoogleFonts.inter(color: Colors.red, fontSize: 12, fontWeight: FontWeight.w600),
+                      style: GoogleFonts.sourceSans3(
+                          color: Colors.red,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600),
                     ),
                   ),
               ],
             ),
           ),
           IconButton(
+            tooltip: 'Supprimer',
             icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20),
             onPressed: () => _deleteSupplier(supplier['id']),
           ),

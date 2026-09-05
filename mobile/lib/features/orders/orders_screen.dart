@@ -6,7 +6,8 @@ import '../../core/services/api_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/formatters.dart';
 
-final ordersProvider = StateNotifierProvider<OrdersNotifier, OrdersState>((ref) => OrdersNotifier());
+final ordersProvider = StateNotifierProvider<OrdersNotifier, OrdersState>(
+    (ref) => OrdersNotifier());
 
 class OrdersState {
   final List<dynamic> orders;
@@ -61,8 +62,20 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text('Commandes', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700)),
-        backgroundColor: AppColors.surface,
+        leading: IconButton(
+          tooltip: 'Retour',
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/dashboard');
+            }
+          },
+        ),
+        title: Text('Commandes',
+            style: GoogleFonts.sourceSans3(fontWeight: FontWeight.w700)),
+        backgroundColor: AppColors.background,
         elevation: 0,
         actions: [
           IconButton(
@@ -73,9 +86,65 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
       ),
       body: Column(
         children: [
+          Container(
+            margin: const EdgeInsets.fromLTRB(16, 6, 16, 0),
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: AppColors.blue,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: .16),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Icon(Icons.local_shipping_outlined,
+                      color: Colors.white),
+                ),
+                const SizedBox(width: 13),
+                Expanded(
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Flux des commandes',
+                            style: GoogleFonts.sourceSans3(
+                                fontSize: 17,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white)),
+                        const SizedBox(height: 3),
+                        Text(
+                            '${state.orders.length} commande${state.orders.length > 1 ? 's' : ''} à suivre aujourd’hui',
+                            style: GoogleFonts.sourceSans3(
+                                fontSize: 12,
+                                color: Colors.white.withValues(alpha: .76))),
+                      ]),
+                ),
+                Semantics(
+                  button: true,
+                  label: 'Créer une commande',
+                  child: GestureDetector(
+                    onTap: () => context.push('/commandes/nouvelle'),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 9, vertical: 6),
+                      decoration: BoxDecoration(
+                          color: AppColors.green,
+                          borderRadius: BorderRadius.circular(99)),
+                      child: const Icon(Icons.add_rounded,
+                          color: Colors.white, size: 17),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
           // Filters
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 18, 16, 12),
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
@@ -97,18 +166,25 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.shopping_cart_outlined, size: 64, color: AppColors.muted),
+                            const Icon(Icons.shopping_cart_outlined,
+                                size: 64, color: AppColors.muted),
                             const SizedBox(height: 16),
-                            Text('Aucune commande', style: GoogleFonts.inter(color: AppColors.sub)),
+                            Text('Aucune commande',
+                                style: GoogleFonts.sourceSans3(
+                                    color: AppColors.sub)),
                           ],
                         ),
                       )
                     : RefreshIndicator(
-                        onRefresh: () => ref.read(ordersProvider.notifier).fetchOrders(status: _filter.isEmpty ? null : _filter),
+                        onRefresh: () => ref
+                            .read(ordersProvider.notifier)
+                            .fetchOrders(
+                                status: _filter.isEmpty ? null : _filter),
                         child: ListView.builder(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           itemCount: state.orders.length,
-                          itemBuilder: (_, i) => _buildOrderCard(state.orders[i]),
+                          itemBuilder: (_, i) =>
+                              _buildOrderCard(state.orders[i]),
                         ),
                       ),
           ),
@@ -126,12 +202,14 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
         selected: selected,
         onSelected: (_) {
           setState(() => _filter = value);
-          ref.read(ordersProvider.notifier).fetchOrders(status: value.isEmpty ? null : value);
+          ref
+              .read(ordersProvider.notifier)
+              .fetchOrders(status: value.isEmpty ? null : value);
         },
         backgroundColor: AppColors.surface,
-        selectedColor: AppColors.blueLight,
-        labelStyle: GoogleFonts.inter(
-          color: selected ? AppColors.blue : AppColors.sub,
+        selectedColor: AppColors.greenLight,
+        labelStyle: GoogleFonts.sourceSans3(
+          color: selected ? AppColors.greenDeep : AppColors.sub,
           fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
         ),
       ),
@@ -150,28 +228,39 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.borderSoft),
+          border:
+              Border.all(color: statusConfig['color'].withValues(alpha: .22)),
+          boxShadow: AppColors.cardShadow,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
+                Container(
+                    width: 4,
+                    height: 34,
+                    margin: const EdgeInsets.only(right: 11),
+                    decoration: BoxDecoration(
+                        color: statusConfig['color'],
+                        borderRadius: BorderRadius.circular(99))),
                 Expanded(
                   child: Text(
                     order['reference'] ?? 'N/A',
-                    style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700, fontSize: 15),
+                    style: GoogleFonts.sourceSans3(
+                        fontWeight: FontWeight.w700, fontSize: 15),
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: statusConfig['color'].withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     statusConfig['label'],
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.sourceSans3(
                       color: statusConfig['color'],
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
@@ -183,25 +272,33 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
             const SizedBox(height: 8),
             Text(
               order['client']?['full_name'] ?? 'Client inconnu',
-              style: GoogleFonts.inter(color: AppColors.ink, fontSize: 14),
+              style:
+                  GoogleFonts.sourceSans3(color: AppColors.ink, fontSize: 14),
             ),
             const SizedBox(height: 4),
             Row(
               children: [
                 Text(
                   formatAmount(order['total_amount'] ?? 0),
-                  style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700, color: AppColors.blue),
+                  style: GoogleFonts.sourceSans3(
+                      fontWeight: FontWeight.w700, color: AppColors.blue),
                 ),
                 const Spacer(),
                 if (status == 'pending')
                   TextButton(
-                    onPressed: () => ref.read(ordersProvider.notifier).updateStatus(order['id'], 'confirmed'),
-                    child: Text('Confirmer', style: GoogleFonts.inter(fontSize: 12)),
+                    onPressed: () => ref
+                        .read(ordersProvider.notifier)
+                        .updateStatus(order['id'], 'confirmed'),
+                    child: Text('Confirmer',
+                        style: GoogleFonts.sourceSans3(fontSize: 12)),
                   ),
                 if (status == 'ready')
                   TextButton(
-                    onPressed: () => ref.read(ordersProvider.notifier).updateStatus(order['id'], 'delivered'),
-                    child: Text('Livrer', style: GoogleFonts.inter(fontSize: 12)),
+                    onPressed: () => ref
+                        .read(ordersProvider.notifier)
+                        .updateStatus(order['id'], 'delivered'),
+                    child: Text('Livrer',
+                        style: GoogleFonts.sourceSans3(fontSize: 12)),
                   ),
               ],
             ),

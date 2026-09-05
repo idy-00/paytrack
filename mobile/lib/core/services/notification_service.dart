@@ -8,20 +8,22 @@ class NotificationService {
   static bool _initialized = false;
 
   /// Initialize notification service
-  static Future<void> initialize() async {
+  static Future<void> initialize({bool requestPermission = false}) async {
     if (_initialized) return;
 
-    // Request permission first
-    await PermissionService.requestNotificationPermission();
+    // Permission is requested only after an explicit action in the settings
+    // screen. Asking at cold launch makes the first experience feel broken.
+    if (requestPermission) await PermissionService.requestNotificationPermission();
 
     // Android settings
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
 
     // iOS settings
     const iosSettings = DarwinInitializationSettings(
-      requestAlertPermission: true,
-      requestBadgePermission: true,
-      requestSoundPermission: true,
+      requestAlertPermission: false,
+      requestBadgePermission: false,
+      requestSoundPermission: false,
     );
 
     const initSettings = InitializationSettings(
@@ -40,11 +42,9 @@ class NotificationService {
   /// Handle notification tap
   static void _onNotificationTapped(NotificationResponse response) {
     // Handle notification tap - navigate to relevant screen
-    final payload = response.payload;
-    if (payload != null) {
-      // TODO: Parse payload and navigate
-      print('Notification tapped with payload: $payload');
-    }
+    // Navigation is delegated to the app router. Never log notification
+    // payloads: they can contain identifiers or payment metadata.
+    response.payload;
   }
 
   /// Show a local notification

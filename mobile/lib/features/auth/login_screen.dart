@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/theme/app_colors.dart';
+import '../../shared/widgets/paytrack_mark.dart';
 import 'auth_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -17,20 +17,16 @@ class LoginScreen extends ConsumerStatefulWidget {
 class _LoginScreenState extends ConsumerState<LoginScreen>
     with SingleTickerProviderStateMixin {
   final _emailCtrl = TextEditingController();
-  final _passCtrl  = TextEditingController();
-  final _formKey   = GlobalKey<FormState>();
-  bool _obscure    = true;
+  final _passCtrl = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  bool _obscure = true;
   bool _rememberMe = false;
-  bool _isLoading  = false;
+  bool _isLoading = false;
   String? _error;
 
-  static const _secureStorage = FlutterSecureStorage(
-    aOptions: AndroidOptions(encryptedSharedPreferences: true),
-  );
-
   late final AnimationController _animCtrl;
-  late final Animation<double>   _fadeAnim;
-  late final Animation<Offset>   _slideAnim;
+  late final Animation<double> _fadeAnim;
+  late final Animation<Offset> _slideAnim;
 
   @override
   void initState() {
@@ -76,10 +72,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final email    = _emailCtrl.text.trim();
+    final email = _emailCtrl.text.trim();
     final password = _passCtrl.text;
 
-    setState(() { _isLoading = true; _error = null; });
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
 
     await ref.read(authProvider.notifier).login(email, password);
     if (!mounted) return;
@@ -100,11 +99,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     } else {
       await prefs.remove('remember_email');
     }
-
-    final token = auth.user!.role == 'vendeur'
-        ? 'tok_vendor_${auth.user!.id}'
-        : 'tok_client_${auth.user!.id}';
-    await _secureStorage.write(key: 'auth_token', value: token);
 
     if (!mounted) return;
     if (auth.user!.role == 'client') {
@@ -137,29 +131,29 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                       child: Column(
                         children: [
                           Container(
-                            width: 64,
-                            height: 64,
+                            width: 72,
+                            height: 72,
+                            padding: const EdgeInsets.all(11),
                             decoration: BoxDecoration(
-                              gradient: AppColors.heroGradient,
-                              borderRadius: BorderRadius.circular(18),
+                              color: AppColors.greenLight,
+                              borderRadius: BorderRadius.circular(22),
+                              border: Border.all(
+                                  color: AppColors.green.withValues(alpha: .2)),
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppColors.blue.withValues(alpha: 0.3),
+                                  color:
+                                      AppColors.green.withValues(alpha: 0.22),
                                   blurRadius: 20,
                                   offset: const Offset(0, 8),
                                 ),
                               ],
                             ),
-                            child: const Icon(
-                              Icons.receipt_long_rounded,
-                              color: Colors.white,
-                              size: 30,
-                            ),
+                            child: const PayTrackMark(size: 45),
                           ),
                           const SizedBox(height: 16),
                           Text(
                             'PayTrack',
-                            style: GoogleFonts.spaceGrotesk(
+                            style: GoogleFonts.sourceSans3(
                               fontSize: 28,
                               fontWeight: FontWeight.w700,
                               color: AppColors.ink,
@@ -169,7 +163,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                           const SizedBox(height: 4),
                           Text(
                             'Suivi de paiements intelligent',
-                            style: GoogleFonts.inter(
+                            style: GoogleFonts.sourceSans3(
                               fontSize: 13,
                               color: AppColors.sub,
                             ),
@@ -183,7 +177,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                     // ── Titre ────────────────────────────────────────────────
                     Text(
                       'Connexion',
-                      style: GoogleFonts.spaceGrotesk(
+                      style: GoogleFonts.sourceSans3(
                         fontSize: 22,
                         fontWeight: FontWeight.w700,
                         color: AppColors.ink,
@@ -193,73 +187,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                     const SizedBox(height: 4),
                     Text(
                       'Accédez à votre espace',
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.sourceSans3(
                         fontSize: 14,
                         color: AppColors.sub,
-                      ),
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // ── Hint démo ────────────────────────────────────────────
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: AppColors.blueLight,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: AppColors.blueMid),
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: BoxDecoration(
-                              color: AppColors.blue.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: const Icon(
-                              Icons.info_outline_rounded,
-                              size: 14,
-                              color: AppColors.blue,
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text.rich(
-                              TextSpan(
-                                style: GoogleFonts.inter(
-                                  fontSize: 12,
-                                  height: 1.7,
-                                  color: AppColors.blueDark,
-                                ),
-                                children: const [
-                                  TextSpan(
-                                    text: 'Admin : ',
-                                    style: TextStyle(fontWeight: FontWeight.w600),
-                                  ),
-                                  TextSpan(text: 'admin@paytrack.com (admin2024)\n'),
-                                  TextSpan(
-                                    text: 'Démo : ',
-                                    style: TextStyle(fontWeight: FontWeight.w600),
-                                  ),
-                                  TextSpan(text: 'moussa@phoneshop-dakar.com\n'),
-                                  TextSpan(
-                                    text: 'Vendeur : ',
-                                    style: TextStyle(fontWeight: FontWeight.w600),
-                                  ),
-                                  TextSpan(text: 'fatou@phoneshop-dakar.com\n'),
-                                  TextSpan(
-                                    text: 'Mot de passe démo : ',
-                                    style: TextStyle(fontWeight: FontWeight.w600),
-                                  ),
-                                  TextSpan(text: 'demo1234'),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
                       ),
                     ),
 
@@ -273,7 +203,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                       keyboardType: TextInputType.emailAddress,
                       textInputAction: TextInputAction.next,
                       autocorrect: false,
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.sourceSans3(
                         fontSize: 15,
                         color: AppColors.ink,
                       ),
@@ -283,9 +213,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                         prefix: Icons.email_outlined,
                       ),
                       validator: (v) {
-                        if (v == null || v.trim().isEmpty) return 'Email requis';
+                        if (v == null || v.trim().isEmpty) {
+                          return 'Email requis';
+                        }
                         final re = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
-                        if (!re.hasMatch(v.trim())) return 'Format e-mail invalide';
+                        if (!re.hasMatch(v.trim())) {
+                          return 'Format e-mail invalide';
+                        }
                         return null;
                       },
                     ),
@@ -302,7 +236,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                       onFieldSubmitted: (_) {
                         if (!_isLoading) _submit();
                       },
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.sourceSans3(
                         fontSize: 15,
                         color: AppColors.ink,
                       ),
@@ -325,7 +259,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                         ),
                       ),
                       validator: (v) {
-                        if (v == null || v.isEmpty) return 'Mot de passe requis';
+                        if (v == null || v.isEmpty) {
+                          return 'Mot de passe requis';
+                        }
                         if (v.length < 8) return 'Minimum 8 caractères';
                         return null;
                       },
@@ -334,11 +270,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                     const SizedBox(height: 16),
 
                     // ── Se souvenir + oublié ────────────────────────────────
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    Wrap(
+                      alignment: WrapAlignment.spaceBetween,
+                      runSpacing: 4,
                       children: [
                         GestureDetector(
-                          onTap: () => setState(() => _rememberMe = !_rememberMe),
+                          onTap: () =>
+                              setState(() => _rememberMe = !_rememberMe),
                           child: Row(
                             children: [
                               AnimatedContainer(
@@ -346,21 +284,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                                 width: 20,
                                 height: 20,
                                 decoration: BoxDecoration(
-                                  color: _rememberMe ? AppColors.blue : Colors.transparent,
+                                  color: _rememberMe
+                                      ? AppColors.blue
+                                      : Colors.transparent,
                                   borderRadius: BorderRadius.circular(6),
                                   border: Border.all(
-                                    color: _rememberMe ? AppColors.blue : AppColors.border,
+                                    color: _rememberMe
+                                        ? AppColors.blue
+                                        : AppColors.border,
                                     width: 1.5,
                                   ),
                                 ),
                                 child: _rememberMe
-                                    ? const Icon(Icons.check, size: 14, color: Colors.white)
+                                    ? const Icon(Icons.check,
+                                        size: 14, color: Colors.white)
                                     : null,
                               ),
                               const SizedBox(width: 8),
                               Text(
                                 'Se souvenir',
-                                style: GoogleFonts.inter(
+                                style: GoogleFonts.sourceSans3(
                                   fontSize: 13,
                                   color: AppColors.sub,
                                 ),
@@ -369,18 +312,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                           ),
                         ),
                         TextButton(
-                          onPressed: () {},
+                          onPressed: () => context.push('/mot-de-passe-oublie'),
                           style: TextButton.styleFrom(
-                            padding: EdgeInsets.zero,
-                            minimumSize: Size.zero,
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            foregroundColor: AppColors.blue,
                           ),
                           child: Text(
                             'Mot de passe oublié ?',
-                            style: GoogleFonts.inter(
+                            style: GoogleFonts.sourceSans3(
                               fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.blue,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
                         ),
@@ -411,7 +352,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                             Expanded(
                               child: Text(
                                 _error!,
-                                style: GoogleFonts.inter(
+                                style: GoogleFonts.sourceSans3(
                                   fontSize: 13,
                                   color: AppColors.danger,
                                   fontWeight: FontWeight.w500,
@@ -431,16 +372,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                       height: 54,
                       child: DecoratedBox(
                         decoration: BoxDecoration(
-                          gradient: _isLoading ? null : AppColors.heroGradient,
-                          color: _isLoading ? AppColors.blue.withValues(alpha: 0.5) : null,
+                          color: _isLoading
+                              ? AppColors.green.withValues(alpha: 0.5)
+                              : AppColors.green,
                           borderRadius: BorderRadius.circular(14),
-                          boxShadow: _isLoading ? null : [
-                            BoxShadow(
-                              color: AppColors.blue.withValues(alpha: 0.3),
-                              blurRadius: 16,
-                              offset: const Offset(0, 6),
-                            ),
-                          ],
+                          boxShadow: _isLoading
+                              ? null
+                              : [
+                                  BoxShadow(
+                                    color:
+                                        AppColors.blue.withValues(alpha: 0.3),
+                                    blurRadius: 16,
+                                    offset: const Offset(0, 6),
+                                  ),
+                                ],
                         ),
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
@@ -463,7 +408,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                                 )
                               : Text(
                                   'Se connecter',
-                                  style: GoogleFonts.inter(
+                                  style: GoogleFonts.sourceSans3(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w600,
                                     color: Colors.white,
@@ -475,94 +420,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
 
                     const SizedBox(height: 24),
 
-                    // ── Divider ──────────────────────────────────────────────
-                    Row(
-                      children: [
-                        Expanded(child: Divider(color: AppColors.border)),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: Text(
-                            'ou continuer avec',
-                            style: GoogleFonts.inter(
-                              fontSize: 12,
-                              color: AppColors.sub,
-                            ),
-                          ),
-                        ),
-                        Expanded(child: Divider(color: AppColors.border)),
-                      ],
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // ── OAuth Buttons ────────────────────────────────────────
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: () {
-                              // TODO: Google Sign-In
-                            },
-                            icon: Image.network(
-                              'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg',
-                              width: 20,
-                              height: 20,
-                              errorBuilder: (_, __, ___) => const Icon(Icons.g_mobiledata, size: 24),
-                            ),
-                            label: Text(
-                              'Google',
-                              style: GoogleFonts.inter(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: AppColors.ink,
-                              ),
-                            ),
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              side: const BorderSide(color: AppColors.border),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: () {
-                              // TODO: Apple Sign-In
-                            },
-                            icon: const Icon(Icons.apple, size: 22, color: Colors.black),
-                            label: Text(
-                              'Apple',
-                              style: GoogleFonts.inter(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: AppColors.ink,
-                              ),
-                            ),
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              side: const BorderSide(color: AppColors.border),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 24),
-
                     // ── Lien inscription ─────────────────────────────────────
                     Center(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                      child: Wrap(
+                        alignment: WrapAlignment.center,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 3,
                         children: [
                           Text(
-                            'Pas encore de compte ? ',
-                            style: GoogleFonts.inter(
+                            'Pas encore de compte ?',
+                            style: GoogleFonts.sourceSans3(
                               fontSize: 13,
                               color: AppColors.sub,
                             ),
@@ -571,7 +438,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                             onTap: () => context.go('/register'),
                             child: Text(
                               "S'inscrire",
-                              style: GoogleFonts.inter(
+                              style: GoogleFonts.sourceSans3(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
                                 color: AppColors.blue,
@@ -594,13 +461,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   }
 
   Widget _fieldLabel(String text) => Text(
-    text,
-    style: GoogleFonts.inter(
-      fontSize: 13,
-      fontWeight: FontWeight.w500,
-      color: AppColors.ink,
-    ),
-  );
+        text,
+        style: GoogleFonts.sourceSans3(
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+          color: AppColors.ink,
+        ),
+      );
 
   InputDecoration _fieldDeco({
     required String hint,
@@ -609,7 +476,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   }) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: GoogleFonts.inter(
+      hintStyle: GoogleFonts.sourceSans3(
         fontSize: 14,
         color: AppColors.hint,
       ),
@@ -643,7 +510,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
         borderRadius: BorderRadius.circular(14),
         borderSide: const BorderSide(color: AppColors.danger, width: 1.5),
       ),
-      errorStyle: GoogleFonts.inter(
+      errorStyle: GoogleFonts.sourceSans3(
         fontSize: 11,
         color: AppColors.danger,
       ),

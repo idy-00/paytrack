@@ -33,103 +33,120 @@ cd paytrack/mobile && flutter run
 ## Déploiement Hostinger
 
 ```
-HOST: 82.198.228.133
-PORT: 65002
-USER: u166382491
-PASS: At@@b@Expertise2828
-REMOTE: /home/u166382491/domains/lightsalmon-eel-638395.hostingersite.com/public_html/backend
+Les paramètres d’accès sont fournis uniquement via les variables
+`HOSTINGER_SSH_HOST`, `HOSTINGER_SSH_PORT`, `HOSTINGER_SSH_USER`,
+`HOSTINGER_SSH_PASS` et `HOSTINGER_REMOTE_PATH`. Ne jamais les versionner.
 ```
 
 ---
 
-# Module de Paiement Réutilisable
+# Module de Paiement DexPay
 
 ## Description
 
-Module générique pour intégrer les paiements mobile money (Wave, Orange Money, Free Money) via l'API Intech GROUP. Ce module peut être réutilisé dans tout projet Laravel.
+Module générique pour intégrer les paiements mobile money (Wave, Orange Money, MTN, Moov) via l'API DexPay. Ce module gère à la fois le Cash In (encaissement) et le Cash Out (payout).
 
 ## Emplacement
 
-`app/Modules/Payment/` contient :
-- `Contracts/` : Interfaces (WalletInterface, CashOutInterface, CallbackVerifierInterface)
-- `README.md` : Documentation complète
+`app/Services/DexpayService.php` — Service unique pour tous les paiements
 
 ## Intégration dans un nouveau projet
 
 ### 1. Variables d'environnement
 
 ```env
-INTECH_API_KEY=your_key
-INTECH_API_SECRET=your_secret
-INTECH_HMAC_SECRET=optional_hmac
-INTECH_BASE_URL=https://api.intech.sn
-INTECH_ENV=test
+DEXPAY_PUBLIC_KEY=pk_live_xxxxx
+DEXPAY_SECRET_KEY=sk_live_xxxxx
+DEXPAY_BASE_URL=https://api.dexpay.africa/api/v1
+DEXPAY_ENV=live
 ```
 
 ### 2. Configuration services.php
 
 ```php
-'intech' => [
-    'api_key'     => env('INTECH_API_KEY'),
-    'api_secret'  => env('INTECH_API_SECRET'),
-    'hmac_secret' => env('INTECH_HMAC_SECRET'),
-    'base_url'    => env('INTECH_BASE_URL', 'https://api.intech.sn'),
-    'env'         => env('INTECH_ENV', 'test'),
+'dexpay' => [
+    'public_key' => env('DEXPAY_PUBLIC_KEY'),
+    'secret_key' => env('DEXPAY_SECRET_KEY'),
+    'base_url'   => env('DEXPAY_BASE_URL', 'https://api.dexpay.africa/api/v1'),
+    'env'        => env('DEXPAY_ENV', 'live'),
 ],
 ```
 
-### 3. Service IntechService
+### 3. Service DexpayService
 
-Le service `App\Services\IntechService` fournit :
+Le service `App\Services\DexpayService` fournit :
 
 ```php
 // Vérifier si configuré
-$intech->isConfigured(): bool
+$dexpay->isConfigured(): bool
 
-// Obtenir solde ATAABA
-$intech->getBalance(): ?array
+// === CASH IN (Encaissement) ===
 
-// Vérifier solde suffisant
-$intech->hasEnoughBalance(int $amount): bool
+// Créer une checkout session
+$dexpay->createCheckoutSession([
+    'reference' => 'ORD-123',
+    'item_name' => 'Commande #123',
+    'amount' => 5000,
+    'currency' => 'XOF',
+    'success_url' => 'https://...',
+    'failure_url' => 'https://...',
+    'webhook_url' => 'https://...',
+]): array
 
-// Initier un CashOut
-$intech->cashOut(
-    phone: '77 123 45 67',
-    amount: 50000,
-    provider: 'wave',  // wave, orange_money, free_money
-    externalId: 'WD-123-abc'
+// === CASH OUT (Payout) ===
+
+// Créer un payout
+$dexpay->createPayout(
+    phone: '+221781194805',
+    amount: 10000,
+    provider: 'wave_sn_payout',  // wave_sn_payout, om_sn_payout, etc.
+    recipientName: 'John Doe',
+    reference: 'WD-123'
 ): array
 
-// Calculer les frais
-$intech->calculateFees(50000, 'wave'): int  // retourne 1000 (2%)
+// Calculer les frais de payout
+$dexpay->calculatePayoutFees(10000, 'wave_sn_payout'): int  // retourne 150 (1.5%)
 
-// Vérifier signature callback
-$intech->verifyCallbackSignature(array $payload, string $signature): bool
+// Liste des providers disponibles
+$dexpay->getPayoutProviders('SN'): array  // ['wave_sn_payout' => [...], 'om_sn_payout' => [...]]
+
+// === WEBHOOK ===
+
+// Vérifier signature webhook
+$dexpay->verifyWebhookSignature(array $payload, string $signature): bool
 ```
 
-### 4. Webhook
+### 4. Providers de payout
 
-Route : `POST /api/webhooks/intech`
+| Provider ID | Nom | Pays | Frais |
+|-------------|-----|------|-------|
+| `wave_sn_payout` | Wave Sénégal | SN | 1.5% |
+| `om_sn_payout` | Orange Money Sénégal | SN | 1.4% |
+| `mixx_sn_payout` | Mixx By Yas Sénégal | SN | 1.5% |
+| `mtn_ci_payout` | MTN Côte d'Ivoire | CI | 1.5% |
+| `om_ci_payout` | Orange Money CI | CI | 2.0% |
+| `moov_ci_payout` | Moov CI | CI | 2.0% |
 
-Le webhook vérifie la signature SHA256 ou HMAC, puis :
-- Si `SUCCESS/COMPLETED` : marque le retrait comme `completed`, débite le wallet
-- Si `FAILED/REJECTED` : remet le retrait en `pending` pour traitement manuel
+### 5. Webhook
 
-### 5. Modèle économique
+Route : `POST /api/webhooks/dexpay`
 
-- **Prépayé** : Le compte Intech ATAABA est alimenté par virement bancaire
-- **Délais** : Dépôt avant 11h = dispo le jour même, après 11h = lendemain
-- **Frais** :
-  - Wave : 2%
-  - Orange Money : 1.5%
-  - Free Money : 1.5%
-  - Virement bancaire : 2% + 100 FCFA
+Le webhook vérifie la signature HMAC-SHA256 (header `x-dexchange-signature`), puis traite les événements :
+- `checkout.completed` : Paiement réussi
+- `checkout.failed` : Paiement échoué
+- `checkout.refunded` : Remboursement
+
+### 6. Modèle économique
+
+- **Prépayé** : Le compte DexPay ATAABA doit être alimenté (Wave, virement)
+- **Pas d'endpoint /balance** : Vérifier le solde via dashboard DexPay
+- **Frais** : Variables selon provider (1.4% à 2%)
 
 ## Règles de sécurité (NON NÉGOCIABLES)
 
-1. **Signature obligatoire** : `SHA256(transactionId|externalTransactionId|appKey)`
-2. **Idempotence** : Utiliser `intech_external_id` unique
-3. **Pas de confiance frontend** : Crédits/débits uniquement via callback serveur
+1. **Signature webhook** : HMAC-SHA256 avec secret key
+2. **Idempotence** : `dexpay_webhooks` table avec `transaction_id` unique
+3. **Pas de confiance frontend** : Crédits/débits uniquement via webhook serveur
 4. **Verrouillage DB** : `lockForUpdate()` pour éviter les race conditions
 5. **KYC obligatoire** : Vérifier `tenant->isKycApproved()` avant tout retrait
 
@@ -138,6 +155,7 @@ Le webhook vérifie la signature SHA256 ou HMAC, puis :
 - `wallets` : Solde par tenant
 - `wallet_transactions` : Historique crédits/débits
 - `withdrawal_requests` : Demandes de retrait avec statut
+- `dexpay_webhooks` : Logs des webhooks reçus (idempotence)
 - `tenant_kyc_documents` : Documents KYC (identité + domicile)
 
 ## Flux retrait
@@ -146,19 +164,26 @@ Le webhook vérifie la signature SHA256 ou HMAC, puis :
 2. Vérification KYC approuvé
 3. Vérification solde suffisant (balance - pending)
 4. Création `WithdrawalRequest` en `pending`
-5. Admin ATAABA : soit CashOut automatique, soit traitement manuel
-6. Si CashOut auto : appel API Intech, statut `processing`
-7. Callback Intech → mise à jour statut + débit wallet
+5. Admin ATAABA : CashOut automatique via DexPay
+6. Appel API DexPay `/payouts`, statut `processing`
+7. Payout instantané (Wave/OM), statut `completed`
 
 ---
 
-## État actuel (2026-08-15)
+## État actuel (2026-08-29)
 
-### Fonctionnel
-- Backend API 100% avec wallet, retraits, KYC, Intech
+### Fonctionnel ✓
+- Backend API 100% avec wallet, retraits, KYC
+- DexPay Cash In (checkout sessions Wave, Orange Money, MTN, Moov)
+- DexPay Cash Out (payouts Wave, Orange Money) — **TESTÉ EN PRODUCTION**
 - Frontend web avec WalletPage, KYC upload, admin ATAABA
 - Mobile Flutter avec wallet, KYC
 
-### En attente
-- Clés API Intech (demander au dashboard développeur)
-- Tests en production avec vraies transactions
+### Tests réels effectués (2026-08-29)
+- Payout Wave 100 XOF → SUCCÈS (TX: TIDXVII2D0112F)
+- Payout Orange Money 100 XOF → SUCCÈS (TX: TIDMI9IC176WJ)
+- Frais vérifiés : 2 XOF pour 100 XOF (1.5% Wave, 1.4% OM)
+
+### À déployer
+- Migration `dexpay_webhooks` sur Hostinger
+- Configurer webhook URL dans dashboard DexPay

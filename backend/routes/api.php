@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\OtpController;
 use App\Http\Controllers\Api\ClientController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\MobilePaymentController;
+use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\SaleController;
@@ -22,10 +23,10 @@ use App\Http\Controllers\Api\ExportController;
 use App\Http\Controllers\Api\KycController;
 use App\Http\Controllers\Api\SocialAuthController;
 use App\Http\Controllers\Api\WalletController;
+use App\Http\Controllers\Api\Webhook\DexpayWebhookController;
 use App\Http\Controllers\Api\Webhook\FreeMoneyWebhookController;
 use App\Http\Controllers\Api\Webhook\IntechWebhookController;
 use App\Http\Controllers\Api\Webhook\OrangeMoneyWebhookController;
-use App\Http\Controllers\Api\Webhook\PaytechWebhookController;
 use App\Http\Controllers\Api\Webhook\WaveWebhookController;
 use App\Http\Middleware\CheckPlanFeature;
 use App\Http\Middleware\CheckSubscription;
@@ -62,11 +63,7 @@ Route::get('/qr/{uuid}', [SaleController::class, 'publicQr'])
 // CSRF is exempt because these are server-to-server POST calls.
 // Laravel's VerifyCsrfToken middleware is web-only; API routes use Sanctum tokens.
 Route::prefix('webhooks')->middleware('throttle:60,1')->group(function () {
-    Route::post('/wave',         WaveWebhookController::class);
-    Route::post('/orange-money', OrangeMoneyWebhookController::class);
-    Route::post('/free-money',   FreeMoneyWebhookController::class);
-    Route::post('/paytech',      PaytechWebhookController::class)->name('webhooks.paytech');
-    Route::post('/intech',       IntechWebhookController::class)->name('webhooks.intech');
+    Route::post('/dexpay',       [DexpayWebhookController::class, 'handle'])->name('webhooks.dexpay');
 });
 
 // ── Public subscription plans ─────────────────────────────────────────────────
@@ -82,6 +79,13 @@ Route::middleware(['auth:sanctum', 'tenant'])->group(function () {
     // Auth
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::get('/auth/me',      [AuthController::class, 'me']);
+    Route::put('/auth/profile', [AuthController::class, 'updateProfile']);
+    Route::put('/auth/password', [AuthController::class, 'updatePassword']);
+
+    // Notifications du compte
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead']);
+    Route::post('/notifications/{notification}/read', [NotificationController::class, 'markRead']);
 
     // Sales
     Route::get('/sales',          [SaleController::class, 'index']);
@@ -148,6 +152,7 @@ Route::middleware(['auth:sanctum', 'tenant'])->group(function () {
     Route::prefix('wallet')->group(function () {
         Route::get('/', [WalletController::class, 'show']);
         Route::get('/transactions', [WalletController::class, 'transactions']);
+        Route::post('/withdraw/quote', [WalletController::class, 'withdrawalQuote']);
         Route::post('/withdraw', [WalletController::class, 'requestWithdrawal']);
         Route::get('/withdrawals', [WalletController::class, 'withdrawalHistory']);
     });
@@ -204,8 +209,8 @@ Route::middleware(['auth:sanctum', 'tenant'])->group(function () {
     });
 });
 
-// ── ATAABA Super Admin routes (separate auth) ─────────────────────────────────
-Route::prefix('ataaba-admin')->middleware(['auth:sanctum'])->group(function () {
+// ── ATAABA Super Admin routes (separate auth + role check) ────────────────────
+Route::prefix('ataaba-admin')->middleware(['auth:sanctum', 'super_admin'])->group(function () {
     Route::get('/dashboard', [AtaabaAdminController::class, 'dashboard']);
     Route::get('/tenants', [AtaabaAdminController::class, 'tenants']);
     Route::get('/tenants/{tenant}', [AtaabaAdminController::class, 'tenantDetail']);
@@ -222,4 +227,14 @@ Route::prefix('ataaba-admin')->middleware(['auth:sanctum'])->group(function () {
     Route::get('/intech-balance', [AtaabaAdminController::class, 'intechBalance']);
     Route::get('/kyc-documents', [AtaabaAdminController::class, 'kycDocuments']);
     Route::post('/kyc-documents/{document}/review', [AtaabaAdminController::class, 'reviewKycDocument']);
+
+    // Gestion fonds carte (retenus, réserves, chargebacks)
+    Route::get('/card-funds', [AtaabaAdminController::class, 'cardFundsDashboard']);
+    Route::get('/held-transactions', [AtaabaAdminController::class, 'heldTransactions']);
+    Route::post('/held-transactions/{transaction}/release', [AtaabaAdminController::class, 'releaseHeldFunds']);
+    Route::get('/reserves', [AtaabaAdminController::class, 'reserves']);
+    Route::post('/reserves', [AtaabaAdminController::class, 'createReserve']);
+    Route::post('/reserves/{reserve}/release', [AtaabaAdminController::class, 'releaseReserve']);
+    Route::post('/reserves/{reserve}/chargeback', [AtaabaAdminController::class, 'convertToChargeback']);
+    Route::post('/chargeback', [AtaabaAdminController::class, 'applyChargeback']);
 });

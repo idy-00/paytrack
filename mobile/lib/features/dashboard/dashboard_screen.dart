@@ -10,6 +10,7 @@ import '../../features/auth/auth_provider.dart';
 import '../../features/dashboard/dashboard_provider.dart';
 import '../../features/sales/sales_provider.dart';
 import '../../shared/widgets/status_badge.dart';
+import '../../shared/widgets/paytrack_mark.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -38,10 +39,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     }
     setState(() => _navIndex = index);
     switch (index) {
-      case 0: context.go('/dashboard'); break;
-      case 1: context.go('/commandes'); break;
-      case 2: context.go('/ventes'); break;
-      case 3: context.go('/portefeuille'); break;
+      case 0:
+        context.go('/dashboard');
+        break;
+      case 1:
+        context.go('/commandes');
+        break;
+      case 2:
+        context.go('/ventes');
+        break;
+      case 3:
+        context.go('/paiements');
+        break;
     }
   }
 
@@ -81,17 +90,16 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                           child: Row(
                             children: [
                               Container(
-                                padding: const EdgeInsets.all(10),
+                                padding: const EdgeInsets.all(7),
                                 decoration: BoxDecoration(
-                                  gradient: AppColors.heroGradient,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: const Icon(Icons.apps_rounded, color: Colors.white, size: 20),
+                                    color: AppColors.greenLight,
+                                    borderRadius: BorderRadius.circular(12)),
+                                child: const PayTrackMark(size: 27),
                               ),
                               const SizedBox(width: 12),
                               Text(
                                 'Menu',
-                                style: GoogleFonts.spaceGrotesk(
+                                style: GoogleFonts.sourceSans3(
                                   fontSize: 20,
                                   fontWeight: FontWeight.w700,
                                   color: AppColors.ink,
@@ -100,12 +108,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                               const Spacer(),
                               IconButton(
                                 onPressed: () => Navigator.pop(ctx),
-                                icon: Icon(Icons.close, color: AppColors.sub),
+                                icon: const Icon(Icons.close,
+                                    color: AppColors.sub),
                               ),
                             ],
                           ),
                         ),
-                        Divider(color: AppColors.borderSoft, height: 1),
+                        const Divider(color: AppColors.borderSoft, height: 1),
 
                         // Menu items
                         Expanded(
@@ -113,32 +122,59 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                             padding: const EdgeInsets.symmetric(vertical: 8),
                             children: [
                               _buildDrawerSection('Gestion'),
-                              _buildDrawerItem(ctx, Icons.people_rounded, 'Clients', '/clients'),
-                              _buildDrawerItem(ctx, Icons.payments_rounded, 'Paiements', '/paiements'),
-                              _buildDrawerItem(ctx, Icons.qr_code_scanner_rounded, 'Scanner QR', '/qr-scan'),
-
+                              _buildDrawerItem(ctx, Icons.people_rounded,
+                                  'Clients', '/clients'),
+                              _buildDrawerItem(ctx, Icons.payments_rounded,
+                                  'Paiements', '/paiements'),
+                              _buildDrawerItem(
+                                  ctx,
+                                  Icons.account_balance_wallet_rounded,
+                                  'Portefeuille & retraits',
+                                  '/portefeuille'),
+                              _buildDrawerItem(
+                                  ctx,
+                                  Icons.qr_code_scanner_rounded,
+                                  'Scanner QR',
+                                  '/qr-scan'),
+                              const SizedBox(height: 8),
+                              _buildDrawerSection('Mon compte'),
+                              _buildDrawerItem(ctx, Icons.person_outline_rounded,
+                                  'Profil', '/profil'),
+                              _buildDrawerItem(ctx, Icons.star_outline_rounded,
+                                  'Abonnement', '/abonnement'),
+                              _buildDrawerItem(
+                                  ctx,
+                                  Icons.notifications_none_rounded,
+                                  'Notifications',
+                                  '/notifications'),
                               const SizedBox(height: 8),
                               _buildDrawerSection('Stock'),
-                              _buildDrawerItem(ctx, Icons.inventory_2_rounded, 'Articles', '/stock'),
-                              _buildDrawerItem(ctx, Icons.checklist_rounded, 'Inventaires', '/inventaires'),
-                              _buildDrawerItem(ctx, Icons.local_shipping_rounded, 'Fournisseurs', '/fournisseurs'),
-                              _buildDrawerItem(ctx, Icons.receipt_long_rounded, 'Cmd fournisseurs', '/commandes-fournisseurs'),
-
-                              const SizedBox(height: 8),
-                              _buildDrawerSection('Compte'),
-                              _buildDrawerItem(ctx, Icons.person_rounded, 'Profil', '/profil'),
-                              _buildDrawerItem(ctx, Icons.star_rounded, 'Abonnement', '/abonnement'),
+                              _buildDrawerItem(ctx, Icons.inventory_2_rounded,
+                                  'Articles', '/stock'),
+                              _buildDrawerItem(ctx, Icons.checklist_rounded,
+                                  'Inventaires', '/inventaires'),
+                              _buildDrawerItem(
+                                  ctx,
+                                  Icons.local_shipping_rounded,
+                                  'Fournisseurs',
+                                  '/fournisseurs'),
+                              _buildDrawerItem(
+                                  ctx,
+                                  Icons.receipt_long_rounded,
+                                  'Cmd fournisseurs',
+                                  '/commandes-fournisseurs'),
                             ],
                           ),
                         ),
 
                         // Footer
-                        Divider(color: AppColors.borderSoft, height: 1),
+                        const Divider(color: AppColors.borderSoft, height: 1),
                         Padding(
                           padding: const EdgeInsets.all(16),
                           child: Text(
                             'PayTrack v1.0',
-                            style: GoogleFonts.inter(fontSize: 11, color: AppColors.muted),
+                            style: GoogleFonts.sourceSans3(
+                                fontSize: 11, color: AppColors.muted),
                           ),
                         ),
                       ],
@@ -158,7 +194,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
       child: Text(
         title.toUpperCase(),
-        style: GoogleFonts.inter(
+        style: GoogleFonts.sourceSans3(
           fontSize: 11,
           fontWeight: FontWeight.w600,
           color: AppColors.muted,
@@ -168,7 +204,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
-  Widget _buildDrawerItem(BuildContext ctx, IconData icon, String label, String route) {
+  Widget _buildDrawerItem(
+      BuildContext ctx, IconData icon, String label, String route) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -192,14 +229,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               const SizedBox(width: 14),
               Text(
                 label,
-                style: GoogleFonts.inter(
+                style: GoogleFonts.sourceSans3(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                   color: AppColors.ink,
                 ),
               ),
               const Spacer(),
-              Icon(Icons.chevron_right_rounded, color: AppColors.muted, size: 20),
+              const Icon(Icons.chevron_right_rounded,
+                  color: AppColors.muted, size: 20),
             ],
           ),
         ),
@@ -219,13 +257,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final stats = dashState.stats;
     final sales = salesState.sales;
 
-    final retardSales = sales.where((s) => s.status == SaleStatus.retard).toList();
+    final retardSales =
+        sales.where((s) => s.status == SaleStatus.retard).toList();
     final recentSales = sales.take(4).toList();
     final soldeCount = stats?.ventesSoldees ?? 0;
     final actifCount = stats?.ventesActives ?? 0;
     final totalRestant = stats?.totalRestant ?? 0;
     final totalEncaisse = stats?.totalEncaisse ?? 0;
-    final encaisseMois = 0; // API doesn't return this yet
+    const encaisseMois = 0; // API doesn't return this yet
     final today = DateFormat('EEEE d MMMM', 'fr_FR').format(DateTime.now());
 
     return Scaffold(
@@ -246,9 +285,22 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          Row(
+                            children: [
+                              const PayTrackMark(size: 28),
+                              const SizedBox(width: 8),
+                              Text('PAYTRACK',
+                                  style: GoogleFonts.sourceSans3(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.blue,
+                                      letterSpacing: 1.3)),
+                            ],
+                          ),
+                          const SizedBox(height: 7),
                           Text(
                             'Bonjour, $firstName',
-                            style: GoogleFonts.spaceGrotesk(
+                            style: GoogleFonts.sourceSans3(
                               fontSize: 24,
                               fontWeight: FontWeight.w700,
                               color: AppColors.ink,
@@ -258,7 +310,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                           const SizedBox(height: 2),
                           Text(
                             today,
-                            style: GoogleFonts.inter(
+                            style: GoogleFonts.sourceSans3(
                               fontSize: 13,
                               color: AppColors.sub,
                               fontWeight: FontWeight.w400,
@@ -276,8 +328,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             // ── Hero revenue card ───────────────────────────────────────
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
-                child: _buildHeroCard(totalEncaisse, totalRestant, encaisseMois),
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                child:
+                    _buildHeroCard(totalEncaisse, totalRestant, encaisseMois),
               ),
             ),
 
@@ -287,21 +340,24 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
                 child: Row(
                   children: [
-                    Expanded(child: _buildMiniKpi(
+                    Expanded(
+                        child: _buildMiniKpi(
                       icon: Icons.check_circle_rounded,
                       iconColor: AppColors.success,
                       label: 'Soldées',
                       value: '$soldeCount',
                     )),
                     const SizedBox(width: 12),
-                    Expanded(child: _buildMiniKpi(
+                    Expanded(
+                        child: _buildMiniKpi(
                       icon: Icons.autorenew_rounded,
                       iconColor: AppColors.blue,
                       label: 'Actives',
                       value: '$actifCount',
                     )),
                     const SizedBox(width: 12),
-                    Expanded(child: _buildMiniKpi(
+                    Expanded(
+                        child: _buildMiniKpi(
                       icon: Icons.warning_amber_rounded,
                       iconColor: AppColors.warning,
                       label: 'Retards',
@@ -330,7 +386,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       const SizedBox(width: 10),
                       Text(
                         'Retards',
-                        style: GoogleFonts.spaceGrotesk(
+                        style: GoogleFonts.sourceSans3(
                           fontSize: 17,
                           fontWeight: FontWeight.w700,
                           color: AppColors.ink,
@@ -338,14 +394,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       ),
                       const SizedBox(width: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
                           color: AppColors.warningLight,
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
                           '${retardSales.length}',
-                          style: GoogleFonts.spaceGrotesk(
+                          style: GoogleFonts.sourceSans3(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
                             color: AppColors.warning,
@@ -387,7 +444,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     Expanded(
                       child: Text(
                         'Ventes récentes',
-                        style: GoogleFonts.spaceGrotesk(
+                        style: GoogleFonts.sourceSans3(
                           fontSize: 17,
                           fontWeight: FontWeight.w700,
                           color: AppColors.ink,
@@ -397,14 +454,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     GestureDetector(
                       onTap: () => context.go('/ventes'),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
                           color: AppColors.blueLight,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           'Voir tout',
-                          style: GoogleFonts.inter(
+                          style: GoogleFonts.sourceSans3(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                             color: AppColors.blue,
@@ -433,88 +491,114 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   // ── Hero Card ─────────────────────────────────────────────────────────────
   Widget _buildHeroCard(int totalEncaisse, int totalRestant, int encaisseMois) {
+    final rate = (totalEncaisse + totalRestant) > 0
+        ? ((totalEncaisse / (totalEncaisse + totalRestant)) * 100).round()
+        : 0;
     return Container(
-      padding: const EdgeInsets.all(24),
+      key: const ValueKey('dashboard-treasury-card'),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        gradient: AppColors.heroGradient,
-        borderRadius: BorderRadius.circular(24),
+        color: AppColors.hero,
+        borderRadius: BorderRadius.circular(28),
         boxShadow: AppColors.heroShadow,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(
-                  Icons.trending_up_rounded,
-                  color: Colors.white,
-                  size: 18,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Text(
-                'Total encaissé',
-                style: GoogleFonts.inter(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.white.withValues(alpha: 0.8),
-                ),
-              ),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.2),
-                  ),
-                ),
-                child: Text(
-                  'Ce mois : ${formatAmount(encaisseMois)}',
-                  style: GoogleFonts.inter(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white.withValues(alpha: 0.9),
-                  ),
-                ),
-              ),
-            ],
+          const Positioned(
+            right: -18,
+            top: -12,
+            child: Opacity(
+                opacity: .13, child: PayTrackMark(size: 126, onDark: true)),
           ),
-          const SizedBox(height: 20),
-          Text(
-            formatAmount(totalEncaisse),
-            style: GoogleFonts.spaceGrotesk(
-              fontSize: 34,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
-              letterSpacing: -1.0,
-              fontFeatures: [const FontFeature.tabularFigures()],
+          Padding(
+            padding: const EdgeInsets.all(18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                          color: AppColors.green,
+                          borderRadius: BorderRadius.circular(99)),
+                      child: Row(children: [
+                        const Icon(Icons.north_east_rounded,
+                            size: 14, color: Colors.white),
+                        const SizedBox(width: 4),
+                        Text('VOTRE TRÉSORERIE',
+                            style: GoogleFonts.sourceSans3(
+                                fontSize: 10,
+                                letterSpacing: .7,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white)),
+                      ]),
+                    ),
+                    const Spacer(),
+                    const Icon(Icons.more_horiz_rounded, color: Colors.white70),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text('Déjà encaissé',
+                    style: GoogleFonts.sourceSans3(
+                        fontSize: 13,
+                        color: Colors.white.withValues(alpha: .72))),
+                const SizedBox(height: 4),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(formatAmount(totalEncaisse),
+                      maxLines: 1,
+                      style: GoogleFonts.sourceSans3(
+                          fontSize: 33,
+                          height: 1,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          letterSpacing: -1.3,
+                          fontFeatures: [const FontFeature.tabularFigures()])),
+                ),
+                const SizedBox(height: 14),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: .10),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                          color: Colors.white.withValues(alpha: .12))),
+                  child: Row(children: [
+                    Expanded(
+                        child: _buildHeroStat(
+                            'À sécuriser', formatAmount(totalRestant))),
+                    Container(
+                        width: 1,
+                        height: 35,
+                        color: Colors.white.withValues(alpha: .18)),
+                    Expanded(
+                        child: Padding(
+                            padding: const EdgeInsets.only(left: 15),
+                            child: _buildHeroStat('Progression', '$rate%'))),
+                  ]),
+                ),
+                const SizedBox(height: 10),
+                Row(children: [
+                  const Icon(Icons.auto_graph_rounded,
+                      size: 15, color: AppColors.greenGlow),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      'Chaque paiement construit votre élan.',
+                      style: GoogleFonts.sourceSans3(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.white.withValues(alpha: .75)),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ]),
+              ],
             ),
-          ),
-          const SizedBox(height: 18),
-          Container(
-            height: 1,
-            color: Colors.white.withValues(alpha: 0.15),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              _buildHeroStat('À encaisser', formatAmount(totalRestant)),
-              Container(
-                width: 1,
-                height: 32,
-                margin: const EdgeInsets.symmetric(horizontal: 20),
-                color: Colors.white.withValues(alpha: 0.15),
-              ),
-              _buildHeroStat('Taux', '${(totalEncaisse + totalRestant) > 0 ? ((totalEncaisse / (totalEncaisse + totalRestant)) * 100).round() : 0}%'),
-            ],
           ),
         ],
       ),
@@ -522,30 +606,31 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   Widget _buildHeroStat(String label, String value) {
-    return Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: GoogleFonts.inter(
-              fontSize: 11,
-              color: Colors.white.withValues(alpha: 0.6),
-              fontWeight: FontWeight.w400,
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.sourceSans3(
+            fontSize: 11,
+            color: Colors.white.withValues(alpha: 0.6),
+            fontWeight: FontWeight.w400,
           ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: GoogleFonts.spaceGrotesk(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
-              fontFeatures: [const FontFeature.tabularFigures()],
-            ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: GoogleFonts.sourceSans3(
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+            fontFeatures: [const FontFeature.tabularFigures()],
           ),
-        ],
-      ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ],
     );
   }
 
@@ -561,7 +646,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.borderSoft),
+        border: Border.all(color: iconColor.withValues(alpha: .16)),
         boxShadow: AppColors.cardShadow,
       ),
       child: Column(
@@ -577,9 +662,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             child: Icon(icon, size: 17, color: iconColor),
           ),
           const SizedBox(height: 12),
+          Container(
+              width: 22,
+              height: 3,
+              decoration: BoxDecoration(
+                  color: iconColor, borderRadius: BorderRadius.circular(99))),
+          const SizedBox(height: 9),
           Text(
             value,
-            style: GoogleFonts.spaceGrotesk(
+            style: GoogleFonts.sourceSans3(
               fontSize: 22,
               fontWeight: FontWeight.w700,
               color: AppColors.ink,
@@ -588,7 +679,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           const SizedBox(height: 2),
           Text(
             label,
-            style: GoogleFonts.inter(
+            style: GoogleFonts.sourceSans3(
               fontSize: 11,
               color: AppColors.sub,
               fontWeight: FontWeight.w400,
@@ -632,7 +723,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               child: Center(
                 child: Text(
                   sale.clientName.split(' ').map((p) => p[0]).take(2).join(),
-                  style: GoogleFonts.spaceGrotesk(
+                  style: GoogleFonts.sourceSans3(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                     color: color,
@@ -648,7 +739,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 children: [
                   Text(
                     sale.clientName,
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.sourceSans3(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                       color: AppColors.ink,
@@ -659,7 +750,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   const SizedBox(height: 2),
                   Text(
                     sale.articleName,
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.sourceSans3(
                       fontSize: 11,
                       color: AppColors.sub,
                     ),
@@ -669,7 +760,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   const SizedBox(height: 6),
                   Text(
                     formatAmount(sale.remainingAmount),
-                    style: GoogleFonts.spaceGrotesk(
+                    style: GoogleFonts.sourceSans3(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
                       color: color,
@@ -679,7 +770,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 ],
               ),
             ),
-            Icon(
+            const Icon(
               Icons.chevron_right_rounded,
               size: 18,
               color: AppColors.muted,
@@ -715,14 +806,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               width: 46,
               height: 46,
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    AppColors.blue.withValues(alpha: 0.1),
-                    AppColors.blue.withValues(alpha: 0.05),
-                  ],
-                ),
+                color: AppColors.greenLight,
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
                   color: AppColors.blue.withValues(alpha: 0.1),
@@ -731,7 +815,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               child: Center(
                 child: Text(
                   initials,
-                  style: GoogleFonts.spaceGrotesk(
+                  style: GoogleFonts.sourceSans3(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                     color: AppColors.blue,
@@ -746,7 +830,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 children: [
                   Text(
                     sale.clientName,
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.sourceSans3(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: AppColors.ink,
@@ -755,7 +839,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   const SizedBox(height: 2),
                   Text(
                     sale.articleName,
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.sourceSans3(
                       fontSize: 12,
                       color: AppColors.sub,
                     ),
@@ -773,7 +857,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 const SizedBox(height: 6),
                 Text(
                   formatAmount(sale.totalAmount),
-                  style: GoogleFonts.spaceGrotesk(
+                  style: GoogleFonts.sourceSans3(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                     color: AppColors.ink,
@@ -794,20 +878,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   Widget _buildAvatarMenu(user) {
     final initials = user?.name
-        .split(' ')
-        .map((p) => p.isNotEmpty ? p[0] : '')
-        .take(2)
-        .join() ?? 'MD';
+            .split(' ')
+            .map((p) => p.isNotEmpty ? p[0] : '')
+            .take(2)
+            .join() ??
+        'MD';
 
-    return CompositedTransformTarget(
-      link: _avatarLayerLink,
-      child: GestureDetector(
-        onTap: () => _showAvatarMenu(user),
-        child: Container(
+    // Le menu « Plus » est l'unique accès aux réglages du compte.
+    return Container(
           width: 44,
           height: 44,
           decoration: BoxDecoration(
-            gradient: AppColors.darkGradient,
+            color: AppColors.darkSurface,
             borderRadius: BorderRadius.circular(22),
             boxShadow: [
               BoxShadow(
@@ -820,15 +902,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           child: Center(
             child: Text(
               initials,
-              style: GoogleFonts.spaceGrotesk(
+              style: GoogleFonts.sourceSans3(
                 fontSize: 14,
                 color: Colors.white.withValues(alpha: 0.9),
                 fontWeight: FontWeight.w600,
               ),
             ),
           ),
-        ),
-      ),
     );
   }
 
@@ -889,13 +969,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                               width: 40,
                               height: 40,
                               decoration: BoxDecoration(
-                                gradient: AppColors.heroGradient,
+                                color: AppColors.green,
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Center(
                                 child: Text(
-                                  user?.name?.split(' ').map((p) => p.isNotEmpty ? p[0] : '').take(2).join() ?? 'MD',
-                                  style: GoogleFonts.spaceGrotesk(
+                                  user?.name
+                                          ?.split(' ')
+                                          .map((p) => p.isNotEmpty ? p[0] : '')
+                                          .take(2)
+                                          .join() ??
+                                      'MD',
+                                  style: GoogleFonts.sourceSans3(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w700,
                                     color: Colors.white,
@@ -910,7 +995,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                 children: [
                                   Text(
                                     user?.name ?? 'Utilisateur',
-                                    style: GoogleFonts.spaceGrotesk(
+                                    style: GoogleFonts.sourceSans3(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w700,
                                       color: AppColors.ink,
@@ -919,7 +1004,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                   ),
                                   Text(
                                     user?.email ?? '',
-                                    style: GoogleFonts.inter(
+                                    style: GoogleFonts.sourceSans3(
                                       fontSize: 11,
                                       color: AppColors.sub,
                                     ),
@@ -931,20 +1016,27 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                           ],
                         ),
                       ),
-                      Divider(height: 1, color: AppColors.borderSoft),
+                      const Divider(height: 1, color: AppColors.borderSoft),
                       // Menu items
-                      _buildAvatarMenuItem(Icons.person_outline_rounded, 'Profil', () {
+                      _buildAvatarMenuItem(
+                          Icons.person_outline_rounded, 'Profil', () {
                         _hideAvatarMenu();
+                        context.go('/profil');
                       }),
-                      _buildAvatarMenuItem(Icons.star_outline_rounded, 'Abonnement', () {
+                      _buildAvatarMenuItem(
+                          Icons.star_outline_rounded, 'Abonnement', () {
                         _hideAvatarMenu();
                         context.go('/abonnement');
                       }),
-                      _buildAvatarMenuItem(Icons.notifications_none_rounded, 'Notifications', () {
+                      _buildAvatarMenuItem(
+                          Icons.notifications_none_rounded, 'Notifications',
+                          () {
                         _hideAvatarMenu();
+                        context.go('/notifications');
                       }),
-                      Divider(height: 1, color: AppColors.borderSoft),
-                      _buildAvatarMenuItem(Icons.logout_rounded, 'Déconnexion', () {
+                      const Divider(height: 1, color: AppColors.borderSoft),
+                      _buildAvatarMenuItem(Icons.logout_rounded, 'Déconnexion',
+                          () {
                         _hideAvatarMenu();
                         ref.read(authProvider.notifier).logout();
                         context.go('/login');
@@ -967,7 +1059,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     _avatarOverlay = null;
   }
 
-  Widget _buildAvatarMenuItem(IconData icon, String label, VoidCallback onTap, {bool isDestructive = false}) {
+  Widget _buildAvatarMenuItem(IconData icon, String label, VoidCallback onTap,
+      {bool isDestructive = false}) {
     final color = isDestructive ? AppColors.danger : AppColors.ink;
     return InkWell(
       onTap: onTap,
@@ -979,7 +1072,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             const SizedBox(width: 12),
             Text(
               label,
-              style: GoogleFonts.inter(
+              style: GoogleFonts.sourceSans3(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: color,
@@ -996,7 +1089,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface,
-        border: Border(
+        border: const Border(
           top: BorderSide(color: AppColors.borderSoft, width: 1),
         ),
         boxShadow: [
@@ -1013,11 +1106,26 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildNavItem(0, Icons.home_outlined, Icons.home_rounded, 'Accueil'),
-              _buildNavItem(1, Icons.shopping_bag_outlined, Icons.shopping_bag_rounded, 'Commandes'),
-              _buildNavItem(2, Icons.receipt_long_outlined, Icons.receipt_long_rounded, 'Ventes'),
-              _buildNavItem(3, Icons.account_balance_wallet_outlined, Icons.account_balance_wallet_rounded, 'Portefeuille'),
-              _buildNavItem(4, Icons.menu_rounded, Icons.menu_rounded, 'Plus'),
+              Expanded(
+                child: _buildNavItem(
+                    0, Icons.home_outlined, Icons.home_rounded, 'Accueil'),
+              ),
+              Expanded(
+                child: _buildNavItem(1, Icons.shopping_bag_outlined,
+                    Icons.shopping_bag_rounded, 'Commandes'),
+              ),
+              Expanded(
+                child: _buildNavItem(2, Icons.receipt_long_outlined,
+                    Icons.receipt_long_rounded, 'Ventes'),
+              ),
+              Expanded(
+                child: _buildNavItem(3, Icons.payments_outlined,
+                    Icons.payments_rounded, 'Paiements'),
+              ),
+              Expanded(
+                child: _buildNavItem(
+                    4, Icons.menu_rounded, Icons.menu_rounded, 'Plus'),
+              ),
             ],
           ),
         ),
@@ -1025,16 +1133,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
-  Widget _buildNavItem(int index, IconData icon, IconData activeIcon, String label) {
+  Widget _buildNavItem(
+      int index, IconData icon, IconData activeIcon, String label) {
     final isActive = _navIndex == index;
     return GestureDetector(
       onTap: () => _onNavTap(index),
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 8),
         decoration: BoxDecoration(
-          color: isActive ? AppColors.blueLight : Colors.transparent,
+          color: isActive ? AppColors.greenLight : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
@@ -1043,15 +1152,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             Icon(
               isActive ? activeIcon : icon,
               size: 22,
-              color: isActive ? AppColors.blue : AppColors.muted,
+              color: isActive ? AppColors.greenDeep : AppColors.muted,
             ),
             const SizedBox(height: 4),
-            Text(
-              label,
-              style: GoogleFonts.inter(
-                fontSize: 10,
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-                color: isActive ? AppColors.blue : AppColors.muted,
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                label,
+                maxLines: 1,
+                style: GoogleFonts.sourceSans3(
+                  fontSize: 10,
+                  fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                  color: isActive ? AppColors.greenDeep : AppColors.muted,
+                ),
               ),
             ),
           ],

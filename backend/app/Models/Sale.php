@@ -16,10 +16,10 @@ class Sale extends Model
     protected $fillable = [
         // tenant_id is intentionally excluded — managed automatically by BelongsToTenant trait
         'shop_id', 'client_id', 'article_id', 'created_by',
-        'reference', 'qr_uuid', 'article_name',
+        'reference', 'qr_uuid', 'article_name', 'quantity',
         'total_amount', 'down_payment', 'paid_amount', 'remaining_amount',
         'payment_mode',
-        'installment_count', 'installment_amount', 'frequency',
+        'installment_count', 'installment_amount', 'frequency', 'custom_interval_days',
         'start_date', 'end_date', 'status', 'notes',
     ];
 
@@ -27,10 +27,12 @@ class Sale extends Model
         'start_date' => 'date',
         'end_date'   => 'date',
         'total_amount'     => 'integer',
+        'quantity'         => 'integer',
         'down_payment'     => 'integer',
         'paid_amount'      => 'integer',
         'remaining_amount' => 'integer',
         'installment_amount' => 'integer',
+        'custom_interval_days' => 'integer',
     ];
 
     public function getActivitylogOptions(): LogOptions
@@ -52,7 +54,10 @@ class Sale extends Model
     public function generateSchedule(): void
     {
         $remaining = $this->total_amount - $this->down_payment;
-        $perInstallment = (int) ceil($remaining / $this->installment_count);
+        // Distribute the remainder over the first installments. Using ceil()
+        // would make small balances exceed the amount due (e.g. 1 XOF / 3).
+        $baseAmount = intdiv($remaining, $this->installment_count);
+        $remainder = $remaining % $this->installment_count;
         $current = $this->start_date->copy();
 
         for ($i = 1; $i <= $this->installment_count; $i++) {
@@ -61,13 +66,12 @@ class Sale extends Model
                 'bimestriel'   => $current->copy()->addWeeks($i * 2),
                 'mensuel'      => $current->copy()->addMonths($i),
                 'trimestriel'  => $current->copy()->addMonths($i * 3),
+                'quotidien'    => $current->copy()->addDays($i),
+                'personnalise' => $current->copy()->addDays($i * $this->custom_interval_days),
                 default        => $current->copy()->addMonths($i),
             };
 
-            // Last installment adjusts for rounding
-            $amount = ($i === $this->installment_count)
-                ? $remaining - ($perInstallment * ($this->installment_count - 1))
-                : $perInstallment;
+            $amount = $baseAmount + ($i <= $remainder ? 1 : 0);
 
             $this->schedules()->create([
                 'tenant_id'           => $this->tenant_id,

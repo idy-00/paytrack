@@ -117,7 +117,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text('Mon profil', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700)),
+        leading: IconButton(
+          tooltip: 'Retour',
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/dashboard');
+            }
+          },
+        ),
+        title: Text('Mon profil',
+            style: GoogleFonts.sourceSans3(fontWeight: FontWeight.w700)),
         backgroundColor: AppColors.surface,
         elevation: 0,
       ),
@@ -132,13 +144,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 width: 80,
                 height: 80,
                 decoration: BoxDecoration(
-                  gradient: AppColors.heroGradient,
+                  color: AppColors.green,
                   borderRadius: BorderRadius.circular(40),
                 ),
                 child: Center(
                   child: Text(
-                    user?.name.split(' ').map((p) => p.isNotEmpty ? p[0] : '').take(2).join() ?? 'U',
-                    style: GoogleFonts.spaceGrotesk(
+                    user?.name
+                            .split(' ')
+                            .map((p) => p.isNotEmpty ? p[0] : '')
+                            .take(2)
+                            .join() ??
+                        'U',
+                    style: GoogleFonts.sourceSans3(
                       fontSize: 28,
                       fontWeight: FontWeight.w700,
                       color: Colors.white,
@@ -151,7 +168,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             Center(
               child: Text(
                 user?.role ?? '',
-                style: GoogleFonts.inter(color: AppColors.sub, fontSize: 13),
+                style:
+                    GoogleFonts.sourceSans3(color: AppColors.sub, fontSize: 13),
               ),
             ),
 
@@ -160,11 +178,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             // Info section
             _buildSectionTitle('Informations'),
             const SizedBox(height: 12),
-            _buildTextField('Nom complet', _nameController, Icons.person_outline),
+            _buildTextField(
+                'Nom complet', _nameController, Icons.person_outline),
             const SizedBox(height: 12),
-            _buildTextField('Email', _emailController, Icons.email_outlined, enabled: false),
+            _buildTextField('Email', _emailController, Icons.email_outlined,
+                enabled: false),
             const SizedBox(height: 12),
-            _buildTextField('Téléphone', _phoneController, Icons.phone_outlined),
+            _buildTextField(
+                'Téléphone', _phoneController, Icons.phone_outlined),
 
             const SizedBox(height: 16),
             SizedBox(
@@ -172,13 +193,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               child: ElevatedButton(
                 onPressed: _saving ? null : _saveProfile,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.blue,
+                  backgroundColor: AppColors.green,
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
                 child: _saving
-                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                    : Text('Enregistrer', style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600)),
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white))
+                    : Text('Enregistrer',
+                        style: GoogleFonts.sourceSans3(
+                            color: Colors.white, fontWeight: FontWeight.w600)),
               ),
             ),
 
@@ -194,8 +222,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 icon: const Icon(Icons.lock_outline),
                 label: const Text('Changer le mot de passe'),
                 style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
               )
             else
@@ -208,28 +238,40 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
                 child: Column(
                   children: [
-                    _buildPasswordField('Mot de passe actuel', _currentPasswordController),
+                    _buildPasswordField(
+                        'Mot de passe actuel', _currentPasswordController),
                     const SizedBox(height: 12),
-                    _buildPasswordField('Nouveau mot de passe', _newPasswordController),
+                    _buildPasswordField(
+                        'Nouveau mot de passe', _newPasswordController),
                     const SizedBox(height: 12),
-                    _buildPasswordField('Confirmer', _confirmPasswordController),
+                    _buildPasswordField(
+                        'Confirmer', _confirmPasswordController),
                     const SizedBox(height: 16),
                     Row(
                       children: [
                         Expanded(
                           child: OutlinedButton(
-                            onPressed: () => setState(() => _showPasswordSection = false),
+                            onPressed: () =>
+                                setState(() => _showPasswordSection = false),
                             child: const Text('Annuler'),
                           ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: ElevatedButton(
-                            onPressed: _changingPassword ? null : _changePassword,
-                            style: ElevatedButton.styleFrom(backgroundColor: AppColors.blue),
+                            onPressed:
+                                _changingPassword ? null : _changePassword,
+                            style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.green),
                             child: _changingPassword
-                                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                                : Text('Modifier', style: GoogleFonts.inter(color: Colors.white)),
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2, color: Colors.white))
+                                : Text('Modifier',
+                                    style: GoogleFonts.sourceSans3(
+                                        color: Colors.white)),
                           ),
                         ),
                       ],
@@ -243,9 +285,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             // Legal section
             _buildSectionTitle('Légal'),
             const SizedBox(height: 12),
-            _buildLegalItem('Mentions légales', () => context.push('/mentions-legales')),
+            _buildLegalItem(
+                'Mentions légales', () => context.push('/mentions-legales')),
             _buildLegalItem('CGU', () => context.push('/cgu')),
-            _buildLegalItem('Politique de confidentialité', () => context.push('/confidentialite')),
+            _buildLegalItem('Politique de confidentialité',
+                () => context.push('/confidentialite')),
 
             const SizedBox(height: 32),
 
@@ -258,11 +302,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   context.go('/login');
                 },
                 icon: const Icon(Icons.logout, color: Colors.red),
-                label: Text('Déconnexion', style: GoogleFonts.inter(color: Colors.red)),
+                label: Text('Déconnexion',
+                    style: GoogleFonts.sourceSans3(color: Colors.red)),
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   side: const BorderSide(color: Colors.red),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
               ),
             ),
@@ -277,7 +323,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Widget _buildSectionTitle(String title) {
     return Text(
       title,
-      style: GoogleFonts.spaceGrotesk(
+      style: GoogleFonts.sourceSans3(
         fontSize: 16,
         fontWeight: FontWeight.w700,
         color: AppColors.ink,
@@ -285,7 +331,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller, IconData icon, {bool enabled = true}) {
+  Widget _buildTextField(
+      String label, TextEditingController controller, IconData icon,
+      {bool enabled = true}) {
     return TextField(
       controller: controller,
       enabled: enabled,
@@ -319,13 +367,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         borderRadius: BorderRadius.circular(12),
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             border: Border(bottom: BorderSide(color: AppColors.borderSoft)),
           ),
           child: Row(
             children: [
-              Expanded(child: Text(title, style: GoogleFonts.inter(fontSize: 14))),
-              Icon(Icons.chevron_right, color: AppColors.muted, size: 20),
+              Expanded(
+                  child: Text(title,
+                      style: GoogleFonts.sourceSans3(fontSize: 14))),
+              const Icon(Icons.chevron_right, color: AppColors.muted, size: 20),
             ],
           ),
         ),

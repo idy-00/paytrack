@@ -13,7 +13,8 @@ SaleScheduleItem _item(
   int amount,
   String status, [
   String? paidDate,
-]) => SaleScheduleItem(
+]) =>
+    SaleScheduleItem(
       num: num,
       dueDate: dueDate,
       amount: amount,
